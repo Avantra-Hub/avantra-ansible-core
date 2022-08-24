@@ -18,3 +18,16 @@ $ git pull origin main
 $ git push origin main
 ```
 
+## Folder Structure ##
+
+### meta/runtime.yml ###
+
+https://docs.ansible.com/ansible/latest/dev_guide/developing_collections_structure.html#meta-directory-and-runtime-yml
+
+
+
+## Testing ## 
+
+```shell
+$ ansible-test sanity --docker default -v
+```
