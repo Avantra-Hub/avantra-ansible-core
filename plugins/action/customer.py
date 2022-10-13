@@ -4,6 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
+from typing import Dict
+
 from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError, AnsibleActionFail
 from datetime import datetime
@@ -12,40 +14,41 @@ from ansible.utils.display import Display
 display = Display()
 
 
+def _load_key(module_args: Dict, task_vars: Dict, key: str):
+    if key not in module_args and key in task_vars:
+        module_args[key] = task_vars[key]
+
+
 class ActionModule(ActionBase):
+
     def run(self, tmp=None, task_vars=None):
-        with open('/tmp/avantra-ansible-module.log', 'a', encoding="utf-8") as f:
-            f.write(f"Action-Plugin: run(...) {datetime.now()}\n")
+        display.v(f"{datetime.now()} |ansible.core.customer |ACTION | run")
+        super(ActionModule, self).run(tmp, task_vars)
 
-            super(ActionModule, self).run(tmp, task_vars)
+        module_args = self._task.args.copy()
+        display.v(f"{datetime.now()} |ansible.core.customer |ACTION |module_name={self._task.action}")
+        display.v(f"{datetime.now()} |ansible.core.customer |ACTION |module_args={module_args}")
+        display.v(f"{datetime.now()} |ansible.core.customer |ACTION |task_vars={task_vars}")
 
-            module_args = self._task.args.copy()
-            f.write(f"Action-Plugin: module_name={self._task.action}\n")
-            f.write(f"Action-Plugin: module_args={module_args}\n")
-            f.write(f"Action-Plugin: task_vars={task_vars}\n")
-            f.flush()
+        # We have to check for those variables if the task does not define it.
+        for p in ["avantra_api_user", "avantra_api_password", "avantra_api_url"]:
+            _load_key(module_args, task_vars, p)
+            if p not in module_args:
+                raise AnsibleActionFail(f"Couldn't find value for parameter: '{p}'")
 
-            try:
-                avantra_api_user = task_vars['avantra_api_user']
-                avantra_api_password = task_vars['avantra_api_password']
-                avantra_api_url = task_vars['avantra_api_url']
-            except KeyError as e:
-                raise AnsibleActionFail(f"Undefined variable '{e.args[0]}'")
+        display.v(f"{datetime.now()} |ansible.core.customer |ACTION |execute_module: invoke")
+        module_return = self._execute_module(module_args=module_args, task_vars=task_vars)
+        if module_return.get("warnings") is not None:
+            for w in module_return["warnings"]:
+                display.warning(w)
 
-            module_args['avantra_api_user'] = avantra_api_user
-            module_args['avantra_api_password'] = avantra_api_password
-            module_args['avantra_api_url'] = avantra_api_url
+        display.v(f"{datetime.now()} |ansible.core.customer |ACTION |execute_module: module_return={module_return}")
 
-            module_return = self._execute_module(module_args=module_args, task_vars=task_vars)
-            if module_return.get("warnings") is not None:
-                for w in module_return["warnings"]:
-                    display.warning(w)
+        # ret = dict()
+        # if not module_return.get('failed'):
+        #     for key, value in module_return.items():
+        #         if key in ['message', 'original_message', 'changed', 'ansible_facts']:
+        #             display.display(str(key))
+        #             ret[key] = value
 
-            ret = dict()
-            if not module_return.get('failed'):
-                for key, value in module_return.items():
-                    if key in ['message', 'original_message', 'changed', 'ansible_facts']:
-                        display.display(f"{key} => {value}")
-                        ret[key] = value
-
-            return dict(ret)
+        return dict(module_return)

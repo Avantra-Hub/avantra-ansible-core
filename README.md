@@ -31,6 +31,12 @@ Per default this will do the job:
 $ rm -rf ~/.ansible/collections/ansible_collections/avantra/core
 ```
 
+## Defining the Avantra API variables ##
+
+```shell
+ansible-playbook release.yml --extra-vars "avantra_api_user=user avantra_api_password=foo avantra_api_url=https://localhost:8090/xn"
+```
+
 ## Development ##
 
 ### Setup .venv for Python Development ###
@@ -56,3 +62,14 @@ Test whether you can find the avantra.core collection.
 $ ansible-galaxy collection list
 ```
 
+### Cycle ###
+
+1. Develop
+2. Install
+   ```shell
+   ansible-galaxy collection install . --upgrade
+   ```
+3. Run
+   ```shell
+   ansible localhost -m avantra.core.customer -vv --extra-vars "avantra_api_user=user avantra_api_password=foo avantra_api_endpoint=https://localhost:8090/xn"
+   ```

@@ -1,0 +1,13 @@
+---
+- name: Simple Test
+  hosts: localhost
+  tasks:
+    - name: Check customer module
+      avantra.core.customer:
+        name: httpd
+        state: latest
+      register: result
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: result
+        verbosity: 2

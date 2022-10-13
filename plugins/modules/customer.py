@@ -2,10 +2,13 @@
 
 # Copyright: (c) 2022 Avantra
 from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils.basic import AnsibleModule
+from datetime import datetime
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra_api import hello
+
 
 __metaclass__ = type
-
-import json
 
 DOCUMENTATION = r'''
 ---
@@ -69,50 +72,69 @@ message:
     sample: 'goodbye'
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from datetime import datetime
 
 def run_module():
-    # define available arguments/parameters a user can pass to the module
-    module_args = dict(
-        name=dict(type='str', required=True),
-        new=dict(type='bool', required=False, default=False),
-        avantra_api_url=dict(type='str', required=True),
-        avantra_api_user=dict(type='str', required=True),
-        avantra_api_password=dict(type='str', required=True)
-    )
+    try:
+        out = open('/Users/mis/dev/collections/ansible_collections/avantra/core/avantra-ansible-module.log', 'a',
+                   encoding="utf-8")
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE "
+                  f"|------------------------------------------------------------\n")
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |test module_utils: {hello()}\n")
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |run_module()\n")
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
-    result = dict(
-        changed=False,
-        original_message='',
-        message=''
-    )
+        # define available arguments/parameters a user can pass to the module
+        module_args = dict(
+            # name=dict(type='str', required=True),
+            # new=dict(type='bool', required=False, default=False),
+            avantra_api_url=dict(type='str', required=True),
+            avantra_api_user=dict(type='str', required=True),
+            avantra_api_password=dict(type='str', required=True)
+        )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=True
-    )
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |module_args={module_args}\n")
 
-    with open('/tmp/avantra-ansible-module.log', 'a', encoding="utf-8") as f:
-        f.write(f'Module: run(...) {datetime.now()}\n')
+        # seed the result dict in the object
+        # we primarily care about changed and state
+        # changed is if this module effectively modified the target
+        # state will include any data that you want your module to pass back
+        # for consumption, for example, in a subsequent task
+        result = dict(
+            changed=False,
+            original_message='',
+            message=''
+        )
+
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |result={result}\n")
+
+        # the AnsibleModule object will be our abstraction working with Ansible
+        # this includes instantiation, a couple of common attr would be the
+        # args/params passed to the execution, as well as if the module
+        # supports check mode
+        module = AnsibleModule(
+            argument_spec=module_args,
+            supports_check_mode=True
+        )
+
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |module.params={module.params}\n")
+
         for p in module.params:
-            f.write(f"{p}\n")
-        f.flush()
+            out.write(f"{datetime.now()} |ansible.core.customer |MODULE |{p}\n")
+
+    except Exception as e:
+        out.write(e)
+
+    finally:
+        out.flush()
+        out.close()
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
+
+
+
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
