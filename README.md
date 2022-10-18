@@ -71,5 +71,19 @@ $ ansible-galaxy collection list
    ```
 3. Run
    ```shell
-   ansible localhost -m avantra.core.customer -vv --extra-vars "avantra_api_user=user avantra_api_password=foo avantra_api_endpoint=https://localhost:8090/xn"
+   ansible localhost -m avantra.core.customer -vv --extra-vars "avantra_api_user=user avantra_api_password=foo avantra_api_urk=https://localhost:8090/xn"
    ```
+   
+### HTTP Requests ###
+
+To not have to import another python dependency ansible offers an own 'requests' like module to 
+use to execute HTTP requests: https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/urls.py
+
+### Testing ###
+
+#### Unit Test ###
+
+- tests/units ... 
+- uses pytest
+- ansible-test units --requirements
+- ansible-test units --requirements --python 3.10 

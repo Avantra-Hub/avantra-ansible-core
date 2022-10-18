@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from datetime import datetime
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import hello
+from ansible_collections.avantra.core.plugins.module_utils.avantra_api import login
 
 
 __metaclass__ = type
@@ -79,7 +79,6 @@ def run_module():
                    encoding="utf-8")
         out.write(f"{datetime.now()} |ansible.core.customer |MODULE "
                   f"|------------------------------------------------------------\n")
-        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |test module_utils: {hello()}\n")
         out.write(f"{datetime.now()} |ansible.core.customer |MODULE |run_module()\n")
 
         # define available arguments/parameters a user can pass to the module
@@ -114,6 +113,8 @@ def run_module():
             argument_spec=module_args,
             supports_check_mode=True
         )
+
+        out.write(f"{datetime.now()} |ansible.core.customer |MODULE |test module_utils: {login(module)}\n")
 
         out.write(f"{datetime.now()} |ansible.core.customer |MODULE |module.params={module.params}\n")
 
