@@ -1,0 +1,21 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+  vars:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: mis2
+    avantra_api_password: REDACTED
+
+  tasks:
+
+    - name: Login to Avantra API and fetch a token
+      avantra.core.login:
+      register: token
+      ignore_errors: true
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: token
+
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts

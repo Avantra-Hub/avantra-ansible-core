@@ -1,11 +1,4 @@
-#!/usr/bin/python
-# Make coding more python3-ish, this is required for contributions to Ansible
-from __future__ import (absolute_import, division, print_function)
-
-__metaclass__ = type
-
 from typing import Dict
-
 from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError, AnsibleActionFail
 from datetime import datetime
@@ -19,11 +12,12 @@ def _load_key(module_args: Dict, task_vars: Dict, key: str):
         module_args[key] = task_vars[key]
 
 
-class ActionModule(ActionBase):
+class AvantraActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+
         display.v(f"{datetime.now()} |ansible.core.customer |ACTION | run")
-        super(ActionModule, self).run(tmp, task_vars)
+        super(AvantraActionModule, self).run(tmp, task_vars)
 
         module_args = self._task.args.copy()
         display.v(f"{datetime.now()} |ansible.core.customer |ACTION |module_name={self._task.action}")
@@ -43,12 +37,5 @@ class ActionModule(ActionBase):
                 display.warning(w)
 
         display.v(f"{datetime.now()} |ansible.core.customer |ACTION |execute_module: module_return={module_return}")
-
-        # ret = dict()
-        # if not module_return.get('failed'):
-        #     for key, value in module_return.items():
-        #         if key in ['message', 'original_message', 'changed', 'ansible_facts']:
-        #             display.display(str(key))
-        #             ret[key] = value
 
         return dict(module_return)
