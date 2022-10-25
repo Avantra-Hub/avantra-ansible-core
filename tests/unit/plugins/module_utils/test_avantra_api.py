@@ -1,7 +1,12 @@
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import _compute_avantra_auth_url, \
-    create_argument_spec, AVANTRA_API_URL, AVANTRA_API_USER, AVANTRA_API_PASSWORD, AVANTRA_TOKEN
+from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
+    _compute_avantra_auth_url,
+    _compute_avantra_graphql_url,
+    create_argument_spec, AVANTRA_API_URL,
+    AVANTRA_API_USER, AVANTRA_API_PASSWORD,
+    AVANTRA_TOKEN, dict_get)
 
 import pytest
+import json
 
 
 class AnsibleModuleExit(Exception):
@@ -46,39 +51,54 @@ def test_compute_avantra_auth_url():
     _assert_equals_str(_compute_avantra_auth_url("test/api/auth"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("test/api/auth/"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("test/api/graphql"), "https://test/api/auth")
-
+    _assert_equals_str(_compute_avantra_auth_url("test/api/graphql/"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("https://test"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("https://test/api"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("https://test/api/"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("https://test/api/auth"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("https://test/api/auth/"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("https://test/api/graphql"), "https://test/api/auth")
-
+    _assert_equals_str(_compute_avantra_auth_url("https://test/api/graphql/"), "https://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("http://test"), "http://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("http://test/api"), "http://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("http://test/api/"), "http://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("http://test/api/auth"), "http://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("http://test/api/auth/"), "http://test/api/auth")
     _assert_equals_str(_compute_avantra_auth_url("http://test/api/graphql"), "http://test/api/auth")
+    _assert_equals_str(_compute_avantra_auth_url("http://test/api/graphql/"), "http://test/api/auth")
+
+
+def test_compute_avantra_graphql_url():
+    _assert_equals_str(_compute_avantra_graphql_url("test"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("test/api"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("test/api/"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("test/api/auth"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("test/api/auth/"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("test/api/graphql"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("test/api/graphql/"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test/api"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test/api/"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test/api/auth"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test/api/auth/"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test/api/graphql"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("https://test/api/graphql/"), "https://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test"), "http://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test/api"), "http://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test/api/"), "http://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test/api/auth"), "http://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test/api/auth/"), "http://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test/api/graphql"), "http://test/api/graphql")
+    _assert_equals_str(_compute_avantra_graphql_url("http://test/api/graphql/"), "http://test/api/graphql")
 
 
 def test_default_create_argument_spec():
     default_argument_spec = create_argument_spec()
     assert default_argument_spec == dict(
         avantra_api_url=dict(type='str', required=True),
-        avantra_api_user=dict(type='str', required=True),
-        avantra_api_password=dict(type='str', required=True, no_log=True),
+        avantra_api_user=dict(type='str', required=False),
+        avantra_api_password=dict(type='str', required=False, no_log=True),
         avantra_token=dict(type='str', required=False, no_log=True),
-        # We don't need the mutually exclusive here as if the token is present it will be taken.
-        # mutually_exclusive=[
-        #     ("avantra_api_url", "avantra_token"),
-        # ],
-        required_together=[
-            (AVANTRA_API_URL, AVANTRA_API_USER, AVANTRA_API_PASSWORD),
-        ],
-        required_one_of=[
-            (AVANTRA_API_URL, AVANTRA_TOKEN),
-        ],
     )
 
 
@@ -86,6 +106,11 @@ def test_no_token_create_argument_spec():
     default_argument_spec = create_argument_spec(allow_token=False)
     assert default_argument_spec == dict(
         avantra_api_url=dict(type='str', required=True),
-        avantra_api_user=dict(type='str', required=True),
-        avantra_api_password=dict(type='str', required=True, no_log=True)
+        avantra_api_user=dict(type='str', required=False),
+        avantra_api_password=dict(type='str', required=False, no_log=True)
     )
+
+
+def test_dict_get():
+    result = json.loads('{"data": {"sapSystem": {"id": "5", "name": "SMA_REMOTE"}}}')
+    assert dict_get(result, "data", "sapSystem") is not None

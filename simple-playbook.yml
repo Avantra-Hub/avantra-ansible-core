@@ -9,13 +9,54 @@
 
     - name: Login to Avantra API and fetch a token
       avantra.core.login:
-      register: token
-      ignore_errors: true
+      register: auth
 
     - name: Print return information from the previous task
       ansible.builtin.debug:
-        var: token
+        var: auth.token
 
-    - name: Print all available facts
+    - name: Load information for a SAP system via the system ID 5
+      avantra.core.sapsystem_get:
+        avantra_token: "{{auth.token}}"
+        system_id: 5
+
+    - name: Load information for a SAP system via the Unified SAP SID and customer name
+      avantra.core.sapsystem_get:
+        avantra_token: "{{auth.token}}"
+        unified_sap_sid: SMA_REMOTE
+        customer_name: mis
+      register: result
+
+    - name: Print return information from the previous task
       ansible.builtin.debug:
-        var: ansible_facts
+        var: result
+
+    - name: Load information for a SAP system via the system ID 7
+      avantra.core.sapsystem_get:
+        avantra_token: "{{auth.token}}"
+        system_id: 7
+        fail_if_not_found: false
+      register: find_sap
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: find_sap
+
+    - name: Load information for a server via the system ID 1
+      avantra.core.server_get:
+        avantra_token: "{{auth.token}}"
+        system_id: 1
+        fail_if_not_found: true
+      register: find_server
+
+    - name: Load information for a server via the server_name and the customer_name
+      avantra.core.server_get:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmc-mis"
+        customer_name: "mis"
+        fail_if_not_found: true
+      register: find_server
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: find_server

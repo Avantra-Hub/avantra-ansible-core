@@ -1,0 +1,4728 @@
+extend type Query {
+    performanceResourceTypes: [PerformanceResourceType]!
+    pagedPerformanceResourceTypes(pageRequest: PageRequest!):PerformanceResourceTypePage
+    performanceResources(systemId: ID!): [PerformanceResource!]!
+    performanceResourcesRelay( first: Int
+        after: String
+        systemId: ID!): PerformanceResourceConnection
+    performanceValues(performanceResourceId: ID!, from: DateTime!, to: DateTime!, resolution: Resolution!): [PerformanceValue!]!
+    performanceValuesRelay(first: Int, after: String, performanceResourceId: ID!, from: DateTime!, to: DateTime!, resolution: Resolution!): PerformanceValueConnection
+}
+
+type PerformanceValue {
+    min: Float
+    max: Float
+    avg: Float
+    timestamp: DateTime
+}
+
+type PerformanceResource {
+    id: ID!
+    name: String
+    systemId: ID!
+    systemName: String
+    performanceResourceType: PerformanceResourceType
+    timestamp: DateTime
+
+    """
+    Performance values are directly accessible over the performance resource.
+    """
+    values(from: DateTime!, to: DateTime!, resolution: Resolution!): [PerformanceValue!]!
+
+    """
+    The performance resource type
+    """
+    type: PerformanceResourceType!
+}
+
+type PerformanceResourceType {
+    id: ID!
+    name: String
+    unit: String
+    mst: Int
+    itbf: Int
+    """
+    Use if unit is 'Number' to specify the subunit of values
+    """
+    numberUnit: String
+    """
+    A performance resource type always has a monitored system type.
+    """
+    monitoredSystemType: MonitoredSystemType!
+}
+
+type PerformanceResourceConnection {
+    totalCount: Int
+    #
+    edges: [PerformanceResourceConnectionEdge]
+
+    #
+    pageInfo: PageInfo
+}
+
+#
+type PerformanceResourceConnectionEdge {
+    #
+    cursor: String
+
+    #
+    node: PerformanceResource
+}
+
+type PerformanceValueConnection {
+    totalCount: Int
+    #
+    edges: [PerformanceValueConnectionEdge]
+
+    #
+    pageInfo: PageInfo
+}
+
+#
+type PerformanceValueConnectionEdge {
+    #
+    cursor: String
+
+    #
+    node: PerformanceValue
+}
+
+type PerformanceResourceTypePage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [PerformanceResourceType]!
+}
+
+
+
+type Chart {
+    id: ID!
+    name: String!
+    description: String
+    path: [String!]!
+    type: MonitoredSystemType!
+    series: [ChartSeries!]
+    templateId: String!
+    resourceName: String
+}
+
+type ChartSeries {
+    name: String!
+    unit: ChartSeriesUnit
+    resource: PerformanceResource
+}
+
+enum ChartSeriesUnit {
+    PERCENT
+    BYTE
+    KILOBYTE
+    MEGABYTE
+    KILOBYTEPERSEC
+    MILLISECONDS
+    NUMBER
+    UNKNOWN
+}
+"""
+"""
+enum FilterOperator {
+    like
+    eq
+    isNull
+    gt
+    lt
+    ge
+    le
+    isIn
+}
+
+"""
+"""
+input FilterByInput {
+    name: String!
+    operator: FilterOperator!
+    value: String
+    values: [String]
+    negate: Boolean = false
+}
+
+"""
+Filter which parts are AND combined. Does not support OR at
+the moment. Negate can be used if the negate flag on the by
+input is set to true. All the given possibilities to filter
+the content intersects with each other (filterBy AND searchTerm
+AND selectorIds).
+"""
+input FilterInput {
+    """
+    A list of filter expression on fields.
+    """
+    filterBy: [FilterByInput!]!
+
+    """
+    A search term
+    """
+    searchTerm: String
+
+    """
+    The selectorIds to filter the content. Make sure the selector's
+    object type corresponds to the resulting type. Otherwise a selector
+    will be ignored. An empty selector ID list and a null list will be
+    ignored.
+    """
+    selectorIds: [ID!]
+
+}
+
+
+"""
+Type for a service level agreement (SLA).
+"""
+type ServiceLevelAgreement {
+    """
+    The SLA's ID.
+    """
+    id: ID!
+    """
+    The name of this SLA.
+    """
+    name: String!
+    """
+    This SLA's description.
+    """
+    description: String
+}
+extend type Query {
+    roles: [Role]
+    role(id: ID!): Role
+}
+
+type Role {
+    id: ID!
+    name: String!
+    description: String
+    deletable: Boolean
+    editable: Boolean
+    timestamp: String
+    customer: Customer
+    groups: [Group!]!
+    users: [User!]!
+    assignedCustomers: [Customer!]!
+}
+
+extend type Query {
+
+    """ Query all users. """
+    users: [User]
+    """ Query user by his id. """
+    user(id: ID!): User
+
+    validatePassword(userId: ID!, password: String!): ValidatePasswordInfo
+
+    """ Returns the currently logged on user alongside with its permissions. """
+    currentUser: User
+
+    """
+    This query returns the list of customers for which the current user has the permission given by permissionName.
+    E.g. to get the list of customer for which the current user has the permission 'SYSTEM_VIEW' the query would look
+    like:
+
+    query {
+    currentUserPermissionOnCustomers(permissionName:'SYSTEM_VIEW') {
+    id label
+    }
+    }
+
+    If the permission is invalid an error will be returned.
+    """
+    currentUserPermissionOnCustomers(permissionName: String!, indent: Boolean = true): [CustomerReference!]!
+}
+
+extend type Mutation {
+    """
+    Register a device (either iOS or Android) for the authenticated user.
+    If there is no authenticated user an error will be returned.
+    """
+    registerDevice(device: DeviceTokenInput!): DeviceToken!
+}
+
+"""
+This input type is used to register push notification tokens for the mobile apps
+on Android and iOS.
+"""
+input DeviceTokenInput {
+    # At the moment either 'ios' or 'android'
+    platform: String!
+    # The device token to send the push notifications to
+    token: String!
+    # Description of the device
+    description: String
+}
+
+"""
+Represents one device used for push notifications.
+"""
+type DeviceToken {
+    # The id of the device token
+    id: ID!
+    # Description of the device
+    description: String
+    # At the moment either 'ios' or 'android'
+    platform: String
+    # The device token to send the push notifications to
+    token: String!
+    # Creational timestamp
+    createdAt: DateTime!
+    # Last update of this device token
+    updatedAt: DateTime!
+}
+
+enum UserDirectory {
+    ACTIVE_DIRECTORY
+    SAML
+}
+
+type User {
+    id: ID!
+    principal: String
+    title: String
+    firstname: String!
+    middlename: String
+    lastname: String!
+    description: String
+    #password: String
+    address: String
+    postBox: String
+    postalCode: String
+    city: String
+    country: String
+    email: String
+    """
+    Alternative email address sometimes used in notification actions.
+    """
+    emailAlternative: String
+    phone: String
+    mobile: String
+    fax: String
+    locked: Boolean
+    lockReason: String
+    timezone: String
+    notificationDisabled: Boolean
+    customData: String
+    """
+    If this user identity is managed by an external user directory.
+    """
+    userDirectory: UserDirectory
+    customerRestricted: Boolean
+    sapRouters: String
+    passwordChanged: DateTime
+    passwordDeprecated: DateTime
+    lastLogin: DateTime
+    validFrom: DateTime
+    validUntil: DateTime
+    termsOfServiceAccepted: Boolean
+    timestamp: DateTime
+    customer: Customer
+    """
+    The groups assigned to this user.
+    """
+    groups: [Group!]!
+    """
+    The roles assigned to this user.
+    """
+    roles: [Role!]!
+    """
+    The device tokens
+    """
+    tokens: [DeviceToken!]!
+
+    """ The permission this users has on which customer. """
+    permissions: PermissionsForUser
+
+}
+
+type ValidatePasswordInfo {
+    valid: Boolean
+    validationErrors: [String]
+}
+
+"""
+Permission information contained in an user type.
+"""
+type  PermissionsForUser {
+    """ Flag to tell whether a user is a super user or not. """
+    superUser: Boolean!
+    """ All the permissions for the user in shape of: list of permissions with list of allowed customers. """
+    permissions: [CustomersForPermission]
+}
+
+"""
+Type to hold the information about for which customers a permission is available.
+"""
+type CustomersForPermission {
+    """ The permission id (see Permission type). """
+    permission: Permission!
+    """ If the permission is available for all customers the all customers flag is set and the customers list won't be set. """
+    allCustomers: Boolean
+    """ The list of customers for which the user has the permission. """
+    customers: [Customer]
+}
+
+extend type Query {
+    businessObjects: [SapBusinessObject!]!
+    businessObject(id: ID!): SapBusinessObject
+    pagedBusinessObjects(pageRequest: PageRequest!,
+        # Filter for sap business objects
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):SapBusinessObjectPage
+}
+
+extend type Mutation {
+    """ Turns the monitoring on for the given business object. """
+    turnMonitoringOnForBusinessObject(id: ID!, cascade: Boolean, note: String): SapBusinessObject!
+    """ Turns the monitoring off for the given business object. """
+    turnMonitoringOffForBusinessObject(id: ID!, cascade: Boolean, note: String, until: DateTime): SapBusinessObject!
+}
+
+type SapBusinessObject implements MonitoredSystem & InfoProvider {
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    type: MonitoredSystemType!
+    timestamp: DateTime
+    uuid: String
+
+    baseUrl: String
+    cmsUser: UserPassword
+    windowsServiceName: String
+    server: Server
+    database: Database
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+type SapBusinessObjectPage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [SapBusinessObject!]!
+}
+
+extend type Query {
+    # Provides all pre-defined system selectors
+    getPublicSystemSelectors(
+        mst: Int
+    ): [Selector]
+
+    # Provides all pre-defined check selectors. Use following types
+    # null: to return all check selectors
+    # rtm only checks: 1000
+    # daily check details: 1001
+    # all checks: 1002
+    # dailys checks only: 1003
+    getPublicCheckSelectors(
+        type: Int
+    ): [Selector]
+}
+
+type Selector {
+    # primary key of the system selector
+    id: Int
+    # customer for this system selector, can be null
+    customer: Customer
+    # monitored system type of the system selector
+    # mst: Int
+    # monitored system type of the system selector, or check selector type if its a check selector
+    type: Int
+    # name of the system selector
+    name: String
+    # description of the system selector
+    description: String
+    # 1: shared, 0: not shared/ad-hoc
+    shared: Boolean
+    # configuration of the system selector
+    selectorData: String
+}
+
+"""
+"""
+enum InfoType {
+    TEXT
+    NUMBER
+    BOOLEAN
+    BYTE
+    DATETIME
+}
+
+"""
+"""
+type InfoNode {
+    """
+    The label for this node.
+    """
+    label: String!
+    """
+    This node's value type
+    """
+    type: InfoType!
+    """
+    The value for this node.
+    """
+    value: String
+    """
+    An action associated with this node
+    """
+    action: String
+    """
+    Children for this node
+    """
+    children: [InfoNode!]
+}
+
+interface InfoProvider {
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+}
+extend type Query {
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks (
+        # The filter conditions for this query.
+        where: FilterInput
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check by ID. As a default it tries to return a RTM check.
+    """
+    check(id:ID!, kind: CheckKind! = RTM): Check
+
+    # https://www.graphql-java-kickstart.com/tools/relay/
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    # get all visible check types
+    checkTypes (mst: Int): [CheckType]
+
+    # get all visible custom checks
+    customChecks: [CustomCheck]
+
+    # get all visible composite checks
+    compositeChecks: [CompositeCheck]
+}
+
+extend type Mutation {
+    """
+    Confirms a check.
+    """
+    confirm(
+        # The check ID to be confirmed
+        id: ID!
+        # The confirmation message
+        message: String
+        # The timestamp until the confirmation lasts
+        until: DateTime
+    ): Check!
+
+    """
+    Unconfirms a check.
+    """
+    unconfirm(
+        # The check ID to be unconfirmed
+        id: ID!
+    ): Check!
+}
+
+"""
+A type holding the confirmation information for a check.
+"""
+type Confirmation {
+    # The user who confirmed the check.
+    user: User!
+    # The confirmation message.
+    message: String
+    # Until when the confirmation lasts.
+    until: DateTime
+    # When the check was confirmed.
+    timestamp: DateTime
+}
+
+enum ResultMode {
+    HTML
+    TEXT
+    # Do not change anything for the result and let the consumer handle the display.
+    PLAIN
+}
+
+"""
+An Avantra check type.
+"""
+type CheckType {
+    chktId: Int
+    chktText: String
+    mst: Int
+    cat: Int
+    cct: Int
+    chktDescr: String
+    dbtId: Int
+    octId: Int
+    instanceTypeBf: Int
+    hidden: Int
+    managedStatus: Int
+    parentCheck: Int
+    agentSupportBegin: String
+    agentSupportEnd: String
+
+    id: ID!
+}
+
+"""
+An Avantra custom check.
+"""
+type CustomCheck {
+    cchkTypeId: Int
+    cchkId: Int
+    cchkName: String
+    cchkDescription: String
+    active: Int
+    custId: Int
+    sysSelId: Int
+}
+
+"""
+An Avantra composite check.
+"""
+type CompositeCheck {
+    compcId: Int
+    custId: Int
+    name: String
+    description: String
+    scope: Int
+    status: Int
+}
+
+"""
+An Avantra check.
+"""
+interface Check {
+    # The ID of this check.
+    id: ID!
+    # The monitoring status during the last refresh
+    monitoring: Boolean
+    # The name of the check.
+    name: String!
+    # The status of the check.
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    # To which monitored system this check belongs.
+    system: MonitoredSystem!
+    # The result of this check. If it is fetch the user can decide which format he/she wants.
+    result(format:ResultMode = TEXT, maxLength: Int): String
+    # Confirmation information.
+    confirmation: Confirmation
+    # The customer this check belongs to.
+    customer: Customer!
+    # The last time the check got refreshed.
+    lastRefresh: DateTime
+    # The last time when the status changed
+    lastStatusChange: DateTime
+    """
+    What kind of check is it. At the moment the possible values are RTM, DAILY_CHECK_DETAIL.
+    """
+    kind: CheckKind!
+    """
+    The type of this check.
+    """
+    type: CheckType!
+}
+
+type RtmCheck implements Check {
+    # The ID of this check.
+    id: ID!
+    # The monitoring status during the last refresh
+    monitoring: Boolean
+    # The name of the check.
+    name: String!
+    # The status of the check.
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    # To which monitored system this check belongs.
+    system: MonitoredSystem!
+    # The result of this check. If it is fetch the user can decide which format he/she wants.
+    result(format:ResultMode = TEXT, maxLength: Int): String
+    # Confirmation information.
+    confirmation: Confirmation
+    # The customer this check belongs to.
+    customer: Customer!
+    # The last time the check got refreshed.
+    lastRefresh: DateTime
+    # The last time when the status changed
+    lastStatusChange: DateTime
+    """
+    What kind of check is it. At the moment the possible values are RTM, DAILY_CHECK_DETAIL.
+    """
+    kind: CheckKind!
+    """
+    The type of this check.
+    """
+    type: CheckType!
+}
+
+type DailyCheckDetail implements Check {
+    # The ID of this check.
+    id: ID!
+    # The monitoring status during the last refresh
+    monitoring: Boolean
+    # The name of the check.
+    name: String!
+    # The status of the check.
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    # To which monitored system this check belongs.
+    system: MonitoredSystem!
+    # The result of this check. If it is fetch the user can decide which format he/she wants.
+    result(format:ResultMode = TEXT, maxLength: Int): String
+    # Confirmation information.
+    confirmation: Confirmation
+    # The customer this check belongs to.
+    customer: Customer!
+    # The last time the check got refreshed.
+    lastRefresh: DateTime
+    # The last time when the status changed
+    lastStatusChange: DateTime
+    """
+    What kind of check is it. At the moment the possible values are RTM, DAILY_CHECK_DETAIL.
+    """
+    kind: CheckKind!
+    """
+    The type of this check.
+    """
+    type: CheckType!
+}
+
+"""
+The check kind
+"""
+enum CheckKind{
+    """
+    Real time monitoring checks have this kind (see type RtmCheck and interface Check).
+    """
+    RTM,
+    """
+    Daily check details have this kind (see type RtmCheck and interface Check).
+    """
+    DCD
+}
+
+
+type CheckConnection {
+    #
+    edges: [CheckConnectionEdge]
+
+    #
+    pageInfo: PageInfo
+}
+
+#
+type CheckConnectionEdge {
+    #
+    cursor: String
+
+    #
+    node: Check
+}
+
+interface Page {
+    totalElements: Int
+    totalPages: Int
+}
+
+input PageRequest {
+    page: Int
+    size: Int
+}
+
+schema {
+    query: Query
+    mutation: Mutation
+}
+
+type Query {
+}
+
+type Mutation {
+
+}
+
+"""
+A common result type for the create, update, delete operations.
+"""
+type OperationResult {
+    # Tells whether the operation was a success.
+    success: Boolean!
+    # A result message (can be null).
+    message: String
+    # A result code, for example an error code. It can be a string, number ...
+    code: ID
+}
+
+interface OperationResultContainer {
+    result: OperationResult!
+}
+
+type Property {
+    key: String!
+    value: String
+}
+
+"""
+A simple string based key value pair.
+"""
+input  PropertyInput {
+    key: String!
+    value: String
+}
+extend type Query {
+    ping: Pong!
+}
+
+type Pong {
+    """ The instance UUID of this Avantra server (it will change each time the server is restarted) """
+    instanceUUID: String!
+    """ The version of the Avantra GraphQL service. """
+    version: String
+}
+
+extend type Query {
+    cloudServices: [CloudService!]!
+    cloudService(id: ID!): CloudService
+    pagedCloudServices(pageRequest: PageRequest!,
+        # Filter for cloud services
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):CloudServicePage
+}
+
+extend type Mutation {
+    turnMonitoringOnForCloudService(id: ID!, cascade: Boolean, note: String): CloudService!
+    turnMonitoringOffForCloudService(id: ID!, cascade: Boolean, note: String, until: DateTime): CloudService!
+}
+
+
+type CloudService implements MonitoredSystem & InfoProvider {
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    timestamp: DateTime
+    type: MonitoredSystemType!
+    uuid: String
+
+    serviceTypeId: Int!
+    serviceTypeName: String!
+    configuration: String
+    credential: Credentials
+    """
+    Associated server (it is marked as nullable as there are records without
+    a server assigned.
+    """
+    server: Server
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+type CloudServicePage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [CloudService!]!
+}
+
+"""
+The Resolution of Performance Data
+"""
+enum Resolution {
+    Hourly
+    Daily
+    Monthly
+}
+enum OrderDirection  {
+    Asc
+    Desc
+}
+
+input OrderByInput {
+    # The name of the field to order by
+    name: String!
+    # The direction of the order (the default is ascending)
+    direction: OrderDirection = Asc
+}
+
+"""
+The order of a result. The sorting processes the given order by's starting
+from the beginning of the list.
+"""
+input OrderInput {
+    orderBy: [OrderByInput!]!
+}
+extend type Query {
+    groups: [Group]
+    group(id: ID!): Group
+}
+
+type Group {
+    id: ID!
+    name: String!
+    description: String
+    timestamp: String
+    users: [User!]!
+}
+
+"""
+The status enumeration used in monitored systems and checks.
+"""
+enum Status {
+    DISABLED
+    UNKNOWN
+    OK
+    WARNING
+    CRITICAL
+}
+extend type Query {
+    globalPerformanceResources(customerId: Int): [GlobalPerformanceResource]!
+    pagedGlobalPerformanceResources(pageRequest: PageRequest!, customerId: Int):GlobalPerformanceResourcePage
+    globalPerformanceResource(id: ID!): GlobalPerformanceResource
+    globalPerformanceValues(globalPerformanceResourceId: ID!, from: DateTime!, to: DateTime!, resolution: Resolution!): [PerformanceValue!]!
+}
+
+type GlobalPerformanceResource {
+    id: ID!
+    name: String
+    customerId: Int
+    resourceType: PerformanceResourceType
+    timestamp: DateTime
+}
+
+type GlobalPerformanceResourcePage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [GlobalPerformanceResource]!
+}
+
+extend type Query {
+    sapInstances: [SapInstance!]!
+    sapInstance(id: ID!): SapInstance
+    pagedSapInstances(pageRequest: PageRequest!,
+        # Filter for sap instances
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):SapInstancePage
+}
+
+extend type Mutation {
+    turnMonitoringOnForSapInstance(id: ID!, cascade: Boolean, note: String): SapInstance!
+    turnMonitoringOffForSapInstance(id: ID!, cascade: Boolean, note: String, until: DateTime): SapInstance!
+}
+
+type SapInstance implements MonitoredSystem & InfoProvider {
+
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    type: MonitoredSystemType!
+    timestamp: DateTime
+    uuid: String
+
+    instanceType: String!
+    instanceProfile: String
+    kernelRelease: String
+    kernelPatchLevel: Int
+    j2eeKernelRelease: String
+    j2eeKernelPatchLevel: String
+    sapControlUser: UserPassword
+    lastSeen: DateTime
+    """
+    The SAP system this instance belongs to.
+    """
+    sapSystem: SapSystem!
+    """
+    The server this SAP instance is monitored on.
+    """
+    server: Server
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+
+    """
+    Flag to know whether this instance is a central instance or not.
+    """
+    central: Boolean!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    SAP Instance number is a two-digit number between 00 to 99. SAP instances are numbered because system can contain
+    more than once instance at a specific point of time.
+    """
+    systemNumber: String
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The kernel make variant of this SAP instance.
+    """
+    kernelMakeVariant: String
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+type SapInstancePage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [SapInstance!]!
+}
+
+# implementing class: syslink.xandria.webservice.graphql.resolver.query.QuerySAPNotes
+
+extend type Query {
+    sapNotes(pageRequest: PageRequest,
+        # Filter for SAP notes
+        where: FilterInput,
+        # The order of the result
+        order: OrderInput
+    ):SAPNotesPage
+}
+
+type SAPNotesPage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [SAPNote!]!
+}
+
+type SAPNote {
+    snId: ID!
+    noteId: Int
+    noteVers: Int
+    description: String
+    component: String
+    lang: String
+
+    priority: String
+    category: String
+    secCategory: String
+    releaseDate: Date
+    isIndep: String
+    noteTypes: String
+
+    themk: OSSThemk
+    cih: [OSSNoteCih]!
+    civ: [OSSNoteCiv]!
+    pl: [OSSNotePl]!
+    spl: [OSSNoteSpl]!
+    validity: [OSSNoteValidity]!
+
+    timestamp: DateTime
+}
+
+type OSSThemk {
+    othId: ID!
+    themk: String
+    ltext: String
+}
+
+type OSSNoteCih {
+    ochId: ID!
+    insta: String
+    cname: String
+    event: String
+    vernr: String
+    typid: String
+    typid2: String
+    pakid: String
+    cnr: String
+}
+
+type  OSSNoteCiv {
+    ocvId: ID!
+    insta: String
+    cname: String
+    cversion: String
+    event: String
+    splF: String
+    splT: String
+    cnr: String
+    cvnr: String
+}
+
+type OSSNotePl {
+    cname: String
+    cversion: String
+    pl: String
+    spl: String
+    spname: String
+}
+
+type OSSNoteSpl {
+    cname: String
+    cversion: String
+    pl: String
+    spl: String
+    spname: String
+}
+
+type OSSNoteValidity {
+    cname: String
+    ctypes: String
+    cvF: String
+    cvT: String
+}
+extend type Query {
+    customers(
+        where: FilterInput
+        order : OrderInput): [Customer!]!
+
+    customersRelay( first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput): CustomerConnection
+
+    customer(id: ID!): Customer
+    customersCount(where: FilterInput): Int!
+}
+
+"""
+An Avantra customer.
+NOTE: If the current user has no CUSTOMER_VIEW permission for this customer the fields 'id'
+and 'name' are available to be read.
+"""
+type Customer {
+    """
+    The customer ID
+    """
+    id: ID!
+    """
+    The customer name
+    """
+    name: String!
+    sapCustomerNumber: String
+    description: String
+    remarks: String
+    phone: String
+    mobile: String
+    fax: String
+    email: String
+    timezone: String
+    address: String
+    postbox: String
+    postalCode: String
+    city: String
+    country: String
+    timestamp: DateTime
+    customerUrl: String
+    customData: String
+    guid: String
+    """ This customer's parent customer. If this is the root customer there is no parent customer."""
+    parent: Customer
+    children: [Customer]!
+
+    """
+    The number of child customers
+    """
+    childrenCount: Int!
+
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    # Get all the available monitored systems for the given status selection.
+    systems(
+        # Filter for monitored systems
+        where: FilterInput
+        order: OrderInput
+    ): [MonitoredSystem!]!
+
+    # Count the systems affected by the filter.
+    systemsCount(
+        # Filter for monitored systems
+        where: FilterInput
+    ): Int!
+
+    #
+    systemsRelay(
+        first: Int
+        after: String
+        # Filter for monitored systems
+        where: FilterInput
+        # The order of the result
+        order: OrderInput
+        # Filter for monitored systems
+    ): SystemsConnection
+
+    # Request summarizing information about this customer (system role, system type counts).
+    systemsSummary(
+        # Whether to include child customers in the system count or not.
+        includeChildCustomer: Boolean = false
+        # Whether to filter on the monitoring status if null is set monitored as well as non-monitored systems are
+        # returned.
+        monitoring: Boolean = null
+        # Whether to filter on the operational status of a monitored system if null is set monitored as well as
+        # non-monitored systems are returned.
+        operational: Boolean = null
+        # Filter the monitored systems
+        where: FilterInput
+    ): CustomerSystemSummary!
+}
+
+type CustomerConnection {
+    #
+    edges: [CustomerConnectionEdge]
+
+    #
+    pageInfo: PageInfo
+}
+
+#
+type CustomerConnectionEdge {
+    #
+    cursor: String
+
+    #
+    node: Customer
+}
+
+type CustomerSystemSummary {
+    count: Int!
+    roles: [CustomerSystemSummaryRolesWithSystemTypes!]!
+    types: [CustomerSystemSummarySystemTypeWithSystemRoles!]!
+}
+
+type CustomerSystemSummaryRoles {
+    # System role name
+    systemRole: String
+    # Count
+    count: Int!
+}
+
+type CustomerSystemSummaryRolesWithSystemTypes {
+    # System role name
+    systemRole: String
+    # Count
+    count: Int!
+    # Split up per type
+    types: [CustomerSystemSummarySystemType!]!
+}
+
+type CustomerSystemSummarySystemType {
+    # System type
+    type: MonitoredSystemType!
+    # Count
+    count: Int!
+}
+
+type CustomerSystemSummarySystemTypeWithSystemRoles {
+    # System type
+    type: MonitoredSystemType!
+    # Count
+    count: Int!
+    # Split up per roles
+    roles: [CustomerSystemSummaryRoles!]!
+}
+
+type CustomerReference {
+    id: ID!
+    label: String
+    customer: Customer
+}
+extend type Query {
+    systemRoles: [SystemRole]
+    systemRole(id: ID!): SystemRole
+}
+
+type SystemRole {
+    id: ID!
+    name: String!
+}
+
+extend type Query {
+    """
+    Get a list of allowed selector attributes for the given object type.
+    """
+    selectorAttributes(type: SelectorObjectType!): [SelectorAttribute!]
+    # Get one selector attribute for the given object type and id.
+    selectorAttribute(type: SelectorObjectType, id: String): SelectorAttribute
+    # Get all the system selector visible for the current user.
+    systemSelectors(where: FilterInput, order: OrderInput): [SystemSelector!]!
+    # Get the system selector for the given ID if it is available.
+    systemSelector(id: ID!): SystemSelector
+}
+
+
+input CreateSystemSelectorInput {
+    """
+    The name for the new system selector.
+    """
+    name: String!
+    """
+    The customer for which a selector should be created. Can be null ("public") if the current user is a super user otherwise
+    the current user needs the SYSTEM_EDIT permission for the set customer ID.
+    """
+    customerId: ID
+    """
+    For which system types the selector should be created. Valid types for system selectors are: SERVER, SAP_INSTANCE
+    SAP_SYSTEM, DATABASE BUSINESS_SERVICE, SAP_BUSINESS_OBJECT, CLOUD_SERVICE, SAP_SYSTEM_WITH_SAP_INSTANCE, ALL_MONITORED_SYSTEM_TYPES
+    """
+    type: SelectorObjectType!
+
+    """
+    A description for the new system selector
+    """
+    description: String
+    """
+    A flag deciding whether the new system selector is a public or ad-hoc selector.
+    """
+    shared: Boolean!
+    """
+    The typed criteria list to use to create the system selector.
+    """
+    criteria: [SelectorCriterionInput!]!
+
+    """
+    If raw is used the typeCriteria field will be ignored and the selector will be create from the XML data.
+    """
+    raw: RawSelectorDataInput
+}
+
+type CreateSystemSelectorPayload implements OperationResultContainer{
+    result: OperationResult!
+    selector: SystemSelector
+}
+
+input UpdateSystemSelectorInput {
+    """
+    To update a system selector an ID of an existing system selector is needed.
+    """
+    id: ID!
+    """
+    A new name - if omitted the name property won't be touched. If null is set an error will be returned.
+    """
+    name: String
+
+    """
+    A new description - if omitted the current description won't be changed.
+    """
+    description: String
+
+    """
+    To change the customer the following field can be used. Keep in mind that setting the customer
+    to null is only possible if the current user is a super user. To set a different customer the current
+    user needs to have SYSTEM_EDIT permission on both customers - the current one and the potential new one.
+    """
+    customerId: ID
+
+    """
+    The typed criteria list to use to update the system selector.
+    NOTE[mis/2022-06-23]: We could think about fields in the payload object to add/remove criteria from the list.
+    """
+    criteria: [SelectorCriterionInput!]
+
+    """
+    If raw is used the typeCriteria field will be ignored and the selector will be create from the XML data.
+    """
+    raw: RawSelectorDataInput
+}
+
+type UpdateSystemSelectorPayload implements OperationResultContainer{
+    result: OperationResult!
+    selector: SystemSelector
+}
+
+input DeleteSystemSelectorInput {
+    id: ID!
+}
+
+type DeleteSystemSelectorPayload implements OperationResultContainer {
+    result: OperationResult!
+}
+
+extend type Mutation {
+    createSystemSelector(input: CreateSystemSelectorInput!): CreateSystemSelectorPayload!
+    updateSystemSelector(input: UpdateSystemSelectorInput!): UpdateSystemSelectorPayload!
+    deleteSystemSelector(input: DeleteSystemSelectorInput!): DeleteSystemSelectorPayload!
+}
+
+
+
+enum SelectorObjectType {
+    SERVER
+    SAP_INSTANCE
+    SAP_SYSTEM
+    DATABASE
+    BUSINESS_SERVICE
+    SAP_BUSINESS_OBJECT
+    CLOUD_SERVICE
+    SAP_SYSTEM_WITH_SAP_INSTANCE
+    # SERVER | SAP_INSTANCE | SAP_SYSTEM | DATABASE | BUSINESS_SERVICE | SAP_BUSINESS_OBJECT | CLOUD_SERVICE
+    ALL_MONITORED_SYSTEM_TYPES
+    CHECK_RTM
+    CHECK_DAILY_DETAIL
+    CHECK_RTM_AND_DAILY_DETAIL
+    DAILY_CHECK
+}
+
+"""
+If the value and the label have the same content only the value field is filled.
+"""
+type SelectorAttributeValue {
+    value: String
+    label: String
+}
+
+enum SelectorAttributeType {
+    TEXT
+    BOOLEAN
+    SINGLE
+    MULTI
+    SAP_BASIS_RELEASE
+    PERFORMANCE
+    LAST_CHECKED
+    TIME_PERIOD
+    DB_FULL_VERSION
+}
+
+enum SelectorCategory {
+    BASIC
+    CUSTOMER
+    OPERATION
+    PERFORMANCE
+    CUSTOM
+}
+
+type SelectorAttribute {
+    id: ID!
+    label: String
+    objectType: SelectorObjectType!
+    description: String
+    attributeType: SelectorAttributeType!
+    # Returns the list of possible values
+    valueRange: [SelectorAttributeValue]
+}
+
+type SelectorCriterion {
+    """
+    The attribute used for this criterion.
+    """
+    attribute: SelectorAttribute!
+    """
+    The object type.
+    """
+    objectType: SelectorObjectType!
+    """
+    The assigned values.
+    """
+    values: [SelectorAttributeValue!]!
+    """
+    The value for exclude will be 'true' if this criterion should be used to exclude elements from
+    a selector and 'false' otherwise.
+    """
+    exclude: Boolean!
+}
+
+input SelectorCriterionInput {
+    """
+    Attribute IDs can be found using the selectorAttributes(...) query with the corresponding object type.
+    """
+    attribute: ID!
+    """
+    Possible values for the criterion can be found by requesting the information about an attribute either
+    using the selectorAttributes(...) query or the selectorAttribute(...) query accessing the valueRange field
+    for the attribute.
+    """
+    values: [String!]!
+    """
+    The value for exclude will be 'true' if this criterion should be used to exclude elements from
+    a selector and 'false' otherwise (The default is 'false').
+    """
+    exclude: Boolean! = false
+    """
+    The object type this criterion is meant for.
+    """
+    objectType: SelectorObjectType!
+
+}
+
+type SystemSelector {
+    id: ID!
+    name: String
+    type: SelectorObjectType!
+    description: String
+    # true: shared, false: not shared/ad-hoc
+    shared: Boolean!
+    """
+    The associated customer. If shared is false (=ad-hoc) then the customer will always be null. If this is a public
+    system selector the customer can be null as well but then it is a system selector visible to everyone.
+    """
+    customer: Customer
+    """
+    The list of criteria used for this system selector.
+    """
+    criteria: [SelectorCriterion!]!
+    """
+    If this field is queried the system selector is applied with the current user's permissions returns the list of
+    monitored systems. At the moment there is no filtering and sorting possible.
+    """
+    systems(includeMonitoringOff: Boolean = false): [MonitoredSystem!]!
+
+    """
+    If this field is queried the system selector is applied with the current user's permissions returns the list of
+    monitored system IDs. At the moment there is no filtering and sorting possible. If only the ID of the monitored
+    systems are needed this field has a better performance than the 'systems' field.
+    """
+    systemIds(includeMonitoringOff: Boolean = false): [ID!]!
+
+    """
+    This fields holds some raw data like the XML data of the selector.
+    """
+    raw: RawSelectorData!
+
+    """
+    When was this selector modified for the last time.
+    """
+    timestamp: DateTime
+}
+
+"""
+Holds raw selector data.
+"""
+type RawSelectorData {
+    """
+    If you want to have the raw XML data of the system selector this field can be queried.
+    """
+    xml: String
+}
+
+
+"""
+Input type for raw selector data used for the conversion to GraphQL types.
+"""
+input RawSelectorDataInput {
+    """
+    The raw XML data to convert.
+    """
+    xml: String!
+}
+
+extend input FilterInput {
+    """
+    """
+    selectorsInPlace: [FilterSelectorInput!]
+}
+
+input FilterSelectorInput {
+    """
+    The object type this selector should select.
+    """
+    type: SelectorObjectType!
+    """
+    A list of criteria to be evaluated.
+    """
+    criteria: [SelectorCriterionInput!]
+    """
+    If raw is used the typeCriteria field will be ignored and the selector will be create from the XML data.
+    """
+    raw: RawSelectorDataInput
+    """
+    Customer ID - evaluate the selector as if it would belong to this customer (optional).
+    """
+    customerId: Int = null
+}
+
+extend type Query {
+    creatableDashletTypes: [String]
+
+    dashboard(id: ID!): Dashboard
+
+    dashboards(pageRequest: PageRequest,
+        # Filter for servers
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):DashboardPage
+
+    #provides the data used to render the dashlets
+    dashboardValues(dashboardId: ID!): [DashletValues]
+
+    #public List<DashletValues> dashboardValuesEx(Integer customerId, String definition, List<String> dashletUuids) {
+    #provides dashlet data used in edit mode
+    dashboardValuesEx(customerId: ID, definition: String!, dashletUuids: [String] ): [DashletValues]
+}
+
+type DashletValues {
+    #unique ID (uuid) of the dashlet
+    uuid: String
+    #data use to render the dashlet (JSON)
+    data: String
+    #dashletClass used to render dashlet content
+    dashletClass: String
+}
+
+#range: 0..100
+#from: 0, to: 10, totalElements:10
+#
+#1. dashboards2{search: "klop"}: -> list of dashboards
+#2. next page
+#3. dashboards2{range: from: 100, to:200, search: "klop"}: -> list of dashboards
+
+extend type Mutation {
+    createDashboard(dashboard: DashboardInput!): Dashboard!
+
+    copyDashboard(id: ID!): Dashboard!
+
+    updateDashboard(id: ID!, dashboard: DashboardInput!, selective: Boolean = true): Dashboard!
+
+    deleteDashboard(id: ID!): Boolean!
+}
+
+input DashboardInput {
+    name: String
+    description: String
+    shared: Boolean
+    owner: ID
+    autoLoginUser: ID
+    customer: ID
+    """
+    The definition is Json, which describes the dashboard.
+    """
+    definition: String
+}
+
+type Dashboard {
+    id: ID!
+    name: String
+    description: String
+    type: DashboardType!
+    shared: Boolean
+    owner: User!
+    ownerId: ID
+    autoLoginUser: User
+    autoLoginUserId: ID
+    custId: Int
+    """
+    The definition is Json, which describes the dashboard.
+    """
+    definition: String
+    timestamp: DateTime
+}
+"""
+The type of a dashboard. Avantra has two types, the customer dashboard and the system dashboard.
+"""
+enum DashboardType {
+    CUSTOMER,
+    SYSTEM
+}
+
+type DashboardPage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [Dashboard!]!
+}
+
+extend type Query {
+    automationJob(id: ID!): AutomationJob
+    automationJobs: [AutomationJob!]!
+    #get runtime information about a current execution
+    automationExecution(id: ID!): AutomationExecution
+    automationExecutions: [AutomationExecution!]!
+
+    #get all automation actions which are available for the given system
+    getAvailableAutomationActionTypes(systemID: ID!): [SystemAction]
+    #execute an automation action on the given system. Returns the automation execution ID
+    #call automationExecutions to retrieve runtime information
+    executeAutomationAction(systemID: ID!, actionID: String): AutomationExecution
+}
+
+extend type Mutation {
+    """
+    Execute a system action.
+    """
+    executeSystemAction(
+        # The name of the automation execution to be created
+        executionName: String
+        # The ID of the action
+        actionId: ID!
+        # The monitored system IDs
+        systemIds: [ID!]
+        # The wanted parameter
+        parameter: [SystemActionParameterInput!]
+    ): AutomationExecution!
+
+    """
+    Execute an automation with the given id. An execution name can optionally be set, if you leave empty, an execution name is automatically set.
+    This call returns an object with information whether the start was successful or not. If the start was successful, use the automationExecutionID
+    to retrieve runtime information about the current job, call the function: automationExecution(id: ID!)
+    and pass
+    """
+    executeAutomationJob(automationJobID: ID!, executionName: String): StartStatus
+}
+
+"""
+Helper input type for the 'executeSystemAction' mutation.
+"""
+input SystemActionParameterInput {
+    key: String!
+    value: String
+}
+
+"""
+Contains status information of a automation job which was started.
+"""
+type StartStatus {
+    # true: automation could be started, false automation could not be started
+    success: Boolean
+    # set if success is true
+    automationExecutionID: Int
+    # set if success is false
+    error: String
+}
+
+type SystemAction {
+    id0: ID!
+    id: ID!
+    name: String
+    type: SystemActionType!
+    description: String
+    parameters: [SystemActionParameter!]
+}
+
+enum SystemActionType {
+    Start
+    Stop
+    Restart
+}
+
+type SystemActionParameter {
+    id: ID!
+    name: String
+    type: String
+    description: String
+    defaultValue: String
+}
+
+
+"""
+The status enumeration for an execution.
+"""
+enum AutomationExecutionStatus {
+    CREATED
+    STARTED
+    RUNNING
+    FINISHED_SUCCESS
+    FINISHED_PARTLY_SUCCESS
+    FINISHED_FAILED
+    FINISHED_STOPPED
+}
+
+"""
+Type for one automation definition.
+"""
+type AutomationJob {
+    # The job's ID
+    id: ID!
+    # The user that created this job
+    createdBy: User!
+    # The customer to which this job belongs to.
+    customer: Customer!
+    # The definition
+    definition: String!
+    # The description
+    description: String
+    # If an email is sent by this job this field contains the details otherwhise it is not set (null).
+    email: AutomationJobEmail
+    # The job's executions if you want all the executions not only the active ones set the 'onlyActive' argument to true.
+    executions(onlyActive: Boolean = true): [AutomationExecution!]!
+    # The user that made the last change to this job.
+    modifiedBy: User!
+    # This job's name.
+    name: String!
+    # Schedule of this job
+    scheduleId: ID
+    # The timestamp of the last change to this job.
+    timestamp: DateTime
+}
+
+type AutomationJobEmail {
+    # The recipients of the email
+    to: String
+    # The subject of the email
+    subject: String
+    # The body of the email
+    body: String
+    # The ID of the mail server supposedly sending the email.
+    mailServerId: ID
+}
+
+"""
+This type maps an automation execution.
+"""
+type AutomationExecution {
+    # The id of the execution
+    id: ID!
+    # The name of the execution
+    name: String!
+    # The customer this execution belongs to
+    customer: Customer
+    # This executions description
+    description: String
+    # This executions detail
+    detail: String
+    # The end time of this execution. If it is still running this contains the current timestamp.
+    end: DateTime
+    # The reference to the automation job. Can be empty if e.g. a system action gets executed without a job.
+    job: AutomationJob
+    # The log of this execution
+    log: String
+    # The message of this execution
+    message: String
+    # The start time of this execution.
+    start: DateTime
+    # The current status
+    status: AutomationExecutionStatus!
+    # The affected monitored system?
+    system: MonitoredSystem
+    # The timestamp of the last change to this execution.
+    timestamp: DateTime
+    # The user triggering this execution
+    user: User
+}
+
+"""
+An RFC-3339 compliant date time scalar that accepts string values like 1996-12-19T16:39:57-08:00 and produces
+java.time.OffsetDateTime objects at runtime.
+"""
+scalar DateTime
+
+"""
+An RFC-3339 compliant date scalar that accepts string values like 1996-12-19 and produces java.time.LocalDate
+objects at runtime.
+"""
+scalar Date
+
+"""
+An RFC-3339 compliant time scalar that accepts string values like 16:39:57-08:00 and produces java.time.LocalDate
+objects at runtime.
+"""
+scalar Time
+
+extend type Query {
+    # return the defined chart types (definitions.xml and custom charts)
+    chartTypes(mst:Int, dbtId:Int, octId: Int): [ChartType]
+
+    # return the chart data used to render a real chart
+    chartData(systemId: ID!, chartType: String!, resource:String, from: String, to: String, resolution: Resolution): ChartData
+}
+
+type ChartType {
+    type: String
+    name:String
+    mst:Int
+    dbtId:Int
+    octId:Int
+
+    properties: [ChartProperties]
+}
+
+type ChartData {
+    systemId: ID
+    systemName: String
+    chartType: String
+    resource: String
+    from: Date
+    to: Date
+    resolution: String
+
+    title: String
+
+    series: [TimeSeries]
+}
+
+type TimeSeries {
+    #    <series name="Used" prt="3003" style="dbused" forecast="true">
+    #<accessor>syslink.xandria.chart.accessor.DefaultAccessor$AvgAccessor</accessor>
+    #</series>
+    #    todo: forecast. How to implement that?
+    name:String
+    prt:Int
+    unit:String
+
+    values: [TimeSeriesValue]
+    style: [TimeSeriesStyle]
+
+    # the slope of the mathematical straight line which is used to forecast this timeseries
+    m:Float
+    # the y-intercept of the mathematical straight line which is used to forecast this timeseries
+    y0:Float
+    # the mathematical standard deviation of this timeseries data
+    standardDeviation:Float
+}
+
+type TimeSeriesValue {
+    value: Float
+    timestamp: String
+}
+
+type TimeSeriesStyle{
+    key:String
+    value:String
+}
+
+type ChartProperties{
+    key:String
+    value:String
+}
+extend type Query {
+    databases: [Database!]!
+    database(id: ID!): Database
+    pagedDatabases(pageRequest: PageRequest!,
+        # Filter for databases
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):DatabasePage
+}
+
+extend type Mutation {
+    turnMonitoringOnForDatabase(id: ID!, cascade: Boolean, note: String): Database!
+    turnMonitoringOffForDatabase(id: ID!, cascade: Boolean, note: String, until: DateTime): Database!
+}
+
+type Database implements MonitoredSystem & InfoProvider {
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    type: MonitoredSystemType!
+    timestamp: DateTime
+    uuid: String
+
+    """
+    The server this database is monitored on.
+    """
+    server: Server
+
+    """
+    The database type.
+    """
+    databaseType: String!
+    """
+    The credentials of the database user.
+    """
+    user: UserPassword @deprecated(reason: "Only available in the standalone database")
+    """
+    The credentials of the 2nd database user.
+    """
+    user2: UserPassword @deprecated(reason: "Only available in the standalone database")
+    """
+    Special attributes for the given database object.
+    """
+    attributes: String @deprecated(reason: "Only available in the standalone database")
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    The version of the underlying DMBS.
+    """
+    version: String
+    """
+    The DBMS production information.
+    """
+    dbmsProduct: String
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    The list of connected SAP business objects.
+    """
+    businessObjects: [SapBusinessObject!]!
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    Database kind. Either Standalone or SAP system database
+    """
+    kind: DatabaseKind!
+    """
+    The associated SAP system for if this database is a SAP database. Will be null for standalone databases.
+    """
+    sapSystem: SapSystem
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+"""
+The kind of database.
+"""
+enum DatabaseKind {
+    StandaloneDatabase,
+    SapSystemDatabase
+}
+
+type DatabasePage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [Database!]!
+}
+type PageInfo {
+    #
+    hasPreviousPage: Boolean!
+
+    #
+    hasNextPage: Boolean!
+
+    #
+    startCursor: String
+
+    #
+    endCursor: String
+}
+
+"""
+Marks UI only fields that may change its structure and fields
+in the future.
+"""
+directive @uionly on FIELD_DEFINITION
+
+extend type Query {
+    businessService(id: ID!): BusinessService
+    businessServices: [BusinessService!]!
+    pagedBusinessService(pageRequest: PageRequest!,
+        # Filter for business services
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):BusinessServicePage
+
+    businessServiceNodes(id: ID!): [NodeList]
+}
+
+extend type Mutation {
+    """ Turns the monitoring on for the given business service. """
+    turnMonitoringOnForBusinessService(id: ID!, cascade: Boolean, note: String): BusinessService!
+    """ Turns the monitoring off for the given business service. """
+    turnMonitoringOffForBusinessService(id: ID!, cascade: Boolean, note: String, until: DateTime): BusinessService!
+}
+
+type BusinessService implements MonitoredSystem & InfoProvider {
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    type: MonitoredSystemType!
+    timestamp: DateTime
+    uuid: String
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+type BusinessServicePage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [BusinessService!]!
+}
+
+type NodeList {
+    nodeId: String
+    nodeName: String
+}
+#extend type Query {
+#
+#}
+
+"""
+The type for one permission. Consists of the id of the permission its name and description.
+"""
+type Permission {
+    # The id of the permission.
+    id: ID!
+    # The name of the permission.
+    name: String!
+    # The description of the permission.
+    description: String
+}
+extend type Query {
+    servers: [Server!]!
+    server(id: ID!): Server
+    pagedServers(pageRequest: PageRequest!,
+        # Filter for servers
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):ServerPage
+}
+
+extend type Mutation {
+    """
+    Turns the monitoring on for the given server.
+    """
+    turnMonitoringOnForServer(id: ID!, cascade: Boolean, note: String): Server!
+    """
+    Turns the monitoring off for the given server.
+    """
+    turnMonitoringOffForServer(id: ID!, cascade: Boolean, note: String, until: DateTime): Server!
+
+    """
+    Create a server.
+    """
+    createServer(input: CreateServerInput!): CreateServerPayload!
+    """
+    Update a server.
+    """
+    updateServer(input: UpdateServerInput!): UpdateServerPayload!
+    """
+    Delete a server.
+    """
+    deleteServer(input: DeleteServerInput!): DeleteServerPayload!
+
+}
+
+"""
+Result of the createServer(...) operation
+"""
+type CreateServerPayload implements OperationResultContainer{
+    result: OperationResult!
+    """
+    This field holds the created server if the operation was successful.
+    """
+    server: Server
+    """
+    Credential operations.
+    """
+    credentials: MonitoredSystemCredentialOperations
+}
+
+"""
+Result of the updateServer(...) operation
+"""
+type UpdateServerPayload implements OperationResultContainer{
+    result: OperationResult!
+    """
+    This field holds the updated server if the operation was successful.
+    """
+    server: Server
+    """
+    Credential operations.
+    """
+    credentials: MonitoredSystemCredentialOperations
+}
+
+"""
+Result of the deleteServer(...) operation
+"""
+type DeleteServerPayload implements OperationResultContainer{
+    result: OperationResult!
+}
+
+"""
+The mandatory input field needed to create an Avantra server object.
+"""
+input CreateServerInput {
+    """
+    The name of the server.
+    """
+    name: String!
+    """
+    The description for this server.
+    """
+    description: String
+    """
+    Should the monitoring be turned on or off after the creation of the server.
+    """
+    monitoring: Boolean! = false
+    """
+    A dns domain known to Avantra: It has to be registered in Avantra's customizations. If
+    unknown the domain will be ignored.
+    """
+    dnsDomain: String
+    """
+    DNS aliases
+    """
+    dnsAliases: [String!]
+    """
+    IP address or FQDN
+    """
+    ipAddress: String!
+    """
+    Customer ID - for which avantra customer this server should be added. To fetch the list of
+    available IDs use e.g. the customers(...) query.
+    """
+    customerId: ID!
+    """
+    Application Type: Has to be one of Avantra's application types defined in the customizations.s
+    """
+    applicationType: String
+    """
+    This server's role.
+    """
+    systemRole: String
+    """
+    What is the server's timezone. If not set it will fall back to default.
+    """
+    timezone: String
+    """
+    The notes for this server.
+    """
+    notes: String
+    """
+    Custom attributes (see documentation) to set.
+    """
+    customAttributes: [CustomAttributeInput!]
+}
+
+input UpdateServerInput {
+    """
+    The id of the server to update.
+    """
+    id: ID!
+    """
+    The name of the server.
+    """
+    name: String
+    """
+    The description for this server.
+    """
+    description: String
+    """
+    Should the monitoring be turned on or off after the creation of the server.
+    """
+    monitoring: Boolean
+    """
+    A dns domain known to Avantra: It has to be registered in Avantra's customizations. If
+    unknown the domain will be ignored.
+    """
+    dnsDomain: String
+    """
+    DNS aliases
+    """
+    dnsAliases: [String!]
+    """
+    IP address or FQDN
+    """
+    ipAddress: String
+    """
+    Customer ID - for which avantra customer this server should be added. To fetch the list of
+    available IDs use e.g. the customers(...) query.
+    """
+    customerId: ID
+    """
+    Application Type: Has to be one of Avantra's application types defined in the customizations.s
+    """
+    applicationType: String
+    """
+    This server's role.
+    """
+    systemRole: String
+    """
+    What is the server's timezone. If not set it will fall back to default.
+    """
+    timezone: String
+    """
+    The notes for this server.
+    """
+    notes: String
+    """
+    Custom attributes (see documentation) to set.
+    """
+    customAttributes: [CustomAttributeInput!]
+}
+
+input DeleteServerInput {
+    """
+    The id of the server to delete.
+    """
+    id: ID!
+}
+
+
+enum AliveStatus {
+    EXCLUDED
+    """
+    This is the default.
+    """
+    INITIAL
+    DISABLED
+    UNKNOWN
+    OK
+    WARNING
+    CRITICAL
+}
+
+type Server implements MonitoredSystem & InfoProvider {
+
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    type: MonitoredSystemType!
+    timestamp: DateTime
+    uuid: String
+
+    # The ip address of this server.
+    ipAddress: String!
+    dnsAliases: [String!]!
+    dnsDomain: String
+    physicalMemory: Float
+    filesystemTotalSize: Float
+    filesystemTotalUsed: Float
+    sapHardwareKey: String
+    osType: String
+    osPlatform: String
+    osName: String
+    osLongName: String
+    osVersion: String
+    osArchitecture: String
+    notes: String
+    # True if this is a virtual cluster server
+    virtualClusterServer: Boolean!
+    aliveStatus: AliveStatus!
+    aliveLastUpdate: DateTime
+    aliveSince: DateTime
+    javaDetails: ServerJavaInfo
+    javaInfo: String @deprecated(reason: "Kept for backward compatibility with the mobile app. There is a typed alternative: javaDetails")
+    cpuDetails: ServerCpuInfo
+    cpuInfo: String @deprecated(reason: "Kept for backward compatibility with the mobile app. There is a typed alternative: cpuDetails")
+    cloudDetails: ServerCloudInfo
+    cloudInfo: String @deprecated(reason: "Kept for backward compatibility with the mobile app. There is a typed alternative: cloudDetails")
+    gateway: Boolean
+    natTraversal: Boolean
+    publicKey: String
+
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+
+    rtmStatus: Status
+    rtmDate: DateTime
+
+
+    """
+    The time zone of this server.
+    """
+    timezone: String
+
+    """
+    The list of virtual servers this server is part of as node. This is a list
+    as this server can be part of several virtual servers. (see virtualClusterServer)
+    """
+    nodeOf: [Server!]!
+    """
+    The server nodes of this server if it is a virtual server. If this is not a virtual server
+    this list is empty. (see virtualClusterServer)
+    """
+    nodes: [Server!]!
+    """
+    The active server node of this server if it is a virtual server. (see virtualClusterServer)
+    """
+    activeNode: Server
+    """
+    The list of SAP instances this server is monitoring.
+    """
+    sapInstances: [SapInstance!]!
+    """
+    The count of SAP instances.
+    """
+    sapInstanceCount: Int!
+    """
+    The list of SAP systems this server is involved in monitoring. It is the set of SAP systems
+    discoverable by the sapInstances field.
+    """
+    sapSystems: [SapSystem!]!
+    """
+    The number of SAP systems this server is involved in monitoring. It is the set of SAP systems
+    discoverable by the sapInstances field.
+    """
+    sapSystemCount: Int!
+    """
+    The list of service objects this server is monitoring.
+    """
+    cloudServices: [CloudService!]!
+    """
+    The count of cloud services monitored by this server.
+    """
+    cloudServiceCount: Int!
+    """
+    The business objects monitored by this server.
+    """
+    businessObjects: [SapBusinessObject!]!
+    """
+    The count of SAP business objects monitored by this server.
+    """
+    businessObjectCount: Int!
+    """
+    The databases monitored by this server.
+    """
+    databases: [Database!]!
+    """
+    The count of databases monitored by this server.
+    """
+    databaseCount: Int!
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Information about the underlying agent version if there is one.
+    """
+    agentVersion: String
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    If a cloud is configured this field is set (VMware is treated as a cloud provider).
+    """
+    cloudServiceAuthentication: CloudServiceAuthentication
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+type ServerPage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [Server!]!
+}
+
+type ServerJavaInfo {
+    extern: [Property!]
+    externJavaHome: String
+    externVersion: String
+    intern: [Property!]
+    internVersion: String
+    scanTime: DateTime
+}
+
+type ServerCpuInfo {
+    name: String
+    model: String
+    vendor: String
+    mhz: Float
+    totalCores: Int!
+}
+
+enum CloudType {
+    Unknown
+    AWS
+    Azure
+    Google
+    Sap
+    Fake
+    ServiceNow
+    VMware
+}
+
+interface ServerCloudInfo {
+    name: String
+    type: CloudType!
+}
+
+type AwsCloudInfo implements ServerCloudInfo {
+    name: String
+    type: CloudType!
+    placement: String
+    instanceId: String
+    instanceType: String
+    amiId: String
+}
+
+type AzureCloudInfo implements ServerCloudInfo {
+    name: String
+    type: CloudType!
+    osType: String
+    offer: String
+    location: String
+    publisher: String
+    resourceGroupName: String
+    version: String
+    vmId: String
+    vmSize: String
+}
+
+type FakeCloudInfo implements ServerCloudInfo {
+    name: String
+    type: CloudType!
+}
+
+type GoogleCloudInfo implements ServerCloudInfo {
+    name: String
+    type: CloudType!
+    id: String
+    zone: String
+    projectId: String
+}
+
+enum VmPowerState {
+    POWERED_OFF
+    POWERED_ON
+    SUSPENDED
+}
+
+type VMwareCloudInfo implements ServerCloudInfo {
+    name: String
+    type: CloudType!
+    cluster: String
+    dataCenter: String
+    host: String
+    powerState: VmPowerState
+    ipAddress: String
+    macAddresses: String
+    toolInstallationType: String
+    toolRunningStatus: String
+    toolVersion: String
+    toolVersionStatus: String
+}
+
+
+type CloudServiceAuthentication {
+    """
+    This authentication's name.
+    """
+    name: String!
+    """
+    A description for this authentication record.
+    """
+    description: String
+    """
+    A potential assigned customer.
+    """
+    customer: Customer
+    """
+    The type of cloud this record targets.
+    """
+    type: CloudType!
+}
+
+extend type Query {
+    credentials: [Credentials!]!
+    credential(id: ID!): Credentials
+}
+
+type Credentials {
+    id: ID!
+    typeId: Int!
+    typeName: String
+    customer: Customer!
+    shared: Boolean
+    name: String
+    data: String
+    createdBy: User!
+    modifiedBy: User!
+    timestamp: String
+}
+
+"""
+Simple user/password type to be used in e.g. SAP system type. The benefit is
+decryption handles only on demand.
+"""
+type UserPassword {
+    login: String!
+    password: String
+}
+
+
+type MonitoredSystemCredentialOperations {
+
+    setSshCredentials(input: [SetSshCredentialsInput]): [SetSshCredentialsPayload]
+    deleteSshCredentials(input: [DeleteCredentialsInput]): [DeleteCredentialsPayload]
+
+    setBasicCredentials(input: [SetBasicCredentialsInput]): [SetBasicCredentialsPayload]
+    deleteBasicCredentials(input: [DeleteCredentialsInput]): [DeleteCredentialsPayload]
+
+    setOAuthCodeCredentials(input: [SetOAuthCodeCredentialsInput]): [SetOAuthCodeCredentialsPayload]
+    deleteOAuthCodeCredentials(input: [DeleteCredentialsInput]): [DeleteCredentialsPayload]
+
+    setOAuthClientCredentials(input: [SetOAuthClientCredentialsInput]): [SetOAuthClientCredentialsPayload]
+    deleteOAuthClientCredentials(input: [DeleteCredentialsInput]): [DeleteCredentialsPayload]
+
+    setRfcCredentials(input: [SetRfcCredentialsInput]): [SetRfcCredentialsPayload]
+    deleteRfcCredentials(input: [DeleteCredentialsInput]): [DeleteCredentialsPayload]
+
+    setSapControlCredentials(input: [SetSapControlCredentialsInput]): [SetSapControlCredentialsPayload]
+    deleteSapControlCredentials(input: [DeleteCredentialsInput]): [DeleteCredentialsPayload]
+
+}
+
+interface CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+
+}
+
+type CredentialsPurpose {
+    """
+    """
+    id: ID!
+    """
+    """
+    name: String!
+    """
+    """
+    type: CredentialsPurposeType!
+    """
+    """
+    systemType: MonitoredSystemType!
+    """
+    """
+    namespace: String
+    """
+    """
+    key: String
+    """
+    """
+    description: String
+    """
+    """
+    multi: Boolean!
+    """
+    """
+    valid: Boolean!
+    """
+    """
+    timestamp: DateTime
+    """
+    """
+    customer: Customer
+}
+
+type CredentialsPurposeType {
+    """
+    """
+    id: ID!
+    """
+    """
+    name: String!
+    """
+    """
+    credentialType: [CredentialType]
+}
+
+enum CredentialType {
+    SSH
+    BASIC
+    OAuthCode
+    OAuthClient
+    RFC
+    SAP_CONTROL
+}
+
+type DeleteCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+}
+
+input DeleteCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential object or purpose
+    """
+    id: ID!
+}
+
+################################################################
+# SAP CONTROL
+################################################################
+
+type SapControlCredentials implements CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+    """
+    The name for this credentials object.
+    """
+    name: String
+    """
+    SAP control user.
+    """
+    username: String
+    """
+    SAP control user password.
+    """
+    password: String
+    """
+    Private key in PEM format.
+    """
+    privateKey: String
+    """
+    Private key password.
+    """
+    privateKeyPassphrase: String
+    """
+    Certificate chain in PEM format in correct order, root certificate comes last.
+    """
+    certificateChain: String
+}
+
+type SetSapControlCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+    credentials: SapControlCredentials
+}
+
+input SetSapControlCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential purpose (negative for built-in positive for custom ones)
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean = false
+    """
+    The name for this credentials object.
+    """
+    name: String = null
+    """
+    SAP control user.
+    """
+    username: String = null
+    """
+    SAP control user password.
+    """
+    password: String = null
+    """
+    Private key in PEM format.
+    """
+    privateKey: String = null
+    """
+    Private key password.
+    """
+    privateKeyPassphrase: String = null
+    """
+    Certificate chain in PEM format in correct order, root certificate comes last.
+    """
+    certificateChain: String = null
+}
+
+################################################################
+# RFC
+################################################################
+
+type RfcAuthenticationCredentials implements CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+    """
+    """
+    name: String
+    """
+    """
+    username: String
+    """
+    """
+    password: String
+    """
+    """
+    client: String
+}
+
+type SetRfcCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+    credentials: RfcAuthenticationCredentials
+}
+
+input SetRfcCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential purpose (negative for built-in positive for custom ones)
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean = false
+    """
+    """
+    name: String = null
+    """
+    """
+    username: String = null
+    """
+    """
+    password: String = null
+    """
+    """
+    client: String = null
+}
+
+################################################################
+# OAUTH2 CLIENT (OPENDID CONNECT)
+################################################################
+
+
+type OAuthClientCredentials implements CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+    """
+    """
+    name: String
+    """
+    """
+    scope: String
+    """
+    """
+    accessTokenUri: String
+    """
+    """
+    clientId: String
+    """
+    """
+    clientSecret: String
+    """
+    """
+    accessToken: String
+}
+
+type SetOAuthClientCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+    credentials: OAuthClientCredentials
+}
+
+input SetOAuthClientCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential purpose (negative for built-in positive for custom ones)
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean = false
+    """
+    """
+    name: String = null
+    """
+    """
+    scope: String = null
+    """
+    """
+    accessTokenUri: String = null
+    """
+    """
+    clientId: String = null
+    """
+    """
+    clientSecret: String = null
+    """
+    """
+    accessToken: String = null
+}
+
+
+################################################################
+# OAUTH2 CODE
+################################################################
+
+type OAuthCodeCredentials implements CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+    """
+    The name of this credentials object.
+    """
+    name: String
+    """
+    The client ID.
+    """
+    clientId: String
+    """
+    The client secret.
+    """
+    clientSecret: String
+    """
+    An authorization URI.
+    """
+    authorizationUri: String
+    """
+    An URI to generate the access tokens with the authorization token.
+    """
+    accessTokenUri: String
+    """
+    The access token.
+    """
+    accessToken: String
+    """
+    A potential refresh token.
+    """
+    refreshToken: String
+    """
+    Expiration time in milliseconds.
+    """
+    expirationDateInMillis: Int
+    """
+    A redirection URI.
+    """
+    redirectUri: String
+    """
+    String containing all the needed scopes.
+    """
+    scope: String
+    """
+    Additional parameters.
+    """
+    parameters: [Property]
+}
+
+type SetOAuthCodeCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+    credentials: OAuthCodeCredentials
+}
+
+input SetOAuthCodeCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential purpose (negative for built-in positive for custom ones)
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean = false
+    """
+    The name of this credentials object.
+    """
+    name: String = null
+    """
+    The client ID.
+    """
+    clientId: String = null
+    """
+    The client secret.
+    """
+    clientSecret: String = null
+    """
+    An authorization URI.
+    """
+    authorizationUri: String = null
+    """
+    An URI to generate the access tokens with the authorization token.
+    """
+    accessTokenUri: String = null
+    """
+    The access token.
+    """
+    accessToken: String = null
+    """
+    A potential refresh token.
+    """
+    refreshToken: String = null
+    """
+    Expiration time in milliseconds.
+    """
+    expirationDateInMillis: Int = null
+    """
+    A redirection URI.
+    """
+    redirectUri: String = null
+    """
+    String containing all the needed scopes.
+    """
+    scope: String = null
+    """
+    Additional parameters.
+    """
+    parameters: [PropertyInput] = null
+}
+
+################################################################
+# BASIC
+################################################################
+
+type BasicAuthenticationCredentials implements CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+    """
+    A name for this basic credentials.
+    """
+    name: String
+    """
+    The username.
+    """
+    username: String
+    """
+    Password to use together with the username.
+    """
+    password: String
+}
+
+type SetBasicCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+    credentials: BasicAuthenticationCredentials
+}
+
+input SetBasicCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential purpose (negative for built-in positive for custom ones)
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean = false
+    """
+    A name for this basic credentials.
+    """
+    name: String = null
+    """
+    The username.
+    """
+    username: String = null
+    """
+    Password to use together with the username.
+    """
+    password: String = null
+}
+
+################################################################
+# SSH
+################################################################
+
+type SshCredentials implements CredentialsBase {
+    """
+    This credentials ID
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean!
+    """
+    If there is a monitored system associated this field can return it.
+    """
+    system: MonitoredSystem
+    """
+    The purpose of this credentials.
+    """
+    purpose: CredentialsPurpose
+    """
+    The hostname to connect to. If it is empty the hostname of the monitoring server is used.
+    """
+    hostname: String
+    """
+    The port to connect to. If it is empty the default SSH port 22 will be used.
+    """
+    port: Int
+    """
+    The SSH username
+    """
+    username: String!
+    """
+    The password.
+    """
+    password: String
+    """
+    Identity (private key) for public key authentication.
+    """
+    identity: String
+    """
+    Identity (private key) passphrase for public key authentication.
+    """
+    identityPassphrase: String
+    """
+    SSH configuration options in the shape "key" -> "value" pairs.
+    """
+    config: [Property]
+}
+
+type SetSshCredentialsPayload implements OperationResultContainer {
+    result: OperationResult!
+    credentials: SshCredentials
+}
+
+input SetSshCredentialsInput {
+    """
+    The ID identifying the credentials to be updated. From the context the monitored system and its type is known.
+    The id can either be:
+    - a combination of <namespace>.<key> to point to the credential purpose
+    - a number pointing to the credential purpose (negative for built-in positive for custom ones)
+    """
+    id: ID!
+    """
+    The shared flag (true for global credentials)
+    """
+    shared: Boolean = false
+    """
+    The hostname to connect to. If you leave it empty the hostname of the monitoring server is used.
+    """
+    hostname: String = null
+    """
+    The port to connect to. If it is empty the default SSH port 22 will be used.
+    """
+    port: Int = null
+    """
+    The SSH username
+    """
+    username: String
+    """
+    The password.
+    """
+    password: String = null
+    """
+    Identity (private key) for public key authentication.
+    """
+    identity: String = null
+    """
+    Identity (private key) passphrase for public key authentication.
+    """
+    identityPassphrase: String = null
+    """
+    SSH configuration options in the shape "key" -> "value" pairs.
+    """
+    config: [PropertyInput]
+}
+
+extend type Query {
+
+    # Get one monitored system for the given ID.
+    system(
+        # The system ID.
+        id: ID!
+    ): MonitoredSystem
+
+    # Get all the available monitored systems for the given status selection.
+    systems(
+        # Filter for monitored systems
+        where: FilterInput
+        # The order of the result
+        order: OrderInput
+    ): [MonitoredSystem!]!
+
+    """
+    This is the paged variant of the systems query. If the requested page does not exist an error will be raised.
+    """
+    pagedSystems(
+        pageRequest: PageRequest!
+        # Filter for monitored systems
+        where: FilterInput
+        # The order of the result
+        order: OrderInput
+    ): MonitoredSystemPage!
+
+    # Count the systems affected by the filter.
+    systemsCount(
+        # Filter for monitored systems
+        where: FilterInput
+    ): Int!
+
+    #
+    systemsRelay(
+        first: Int
+        after: String
+        # Filter for monitored systems
+        where: FilterInput
+        # The order of the result
+        order: OrderInput
+        # Filter for monitored systems
+    ): SystemsConnection
+}
+
+"""
+A single page for the pagedSystems query.
+"""
+type MonitoredSystemPage {
+    totalElements: Int
+    totalPages: Int
+    items: [MonitoredSystem!]!
+    """
+    If while fetching the data for this page one or more selectors were used (see FilterInput) then the selector can
+    be accessed as fields in the resulting page.
+    """
+    selectorsUsed: [SystemSelector!]
+}
+
+extend type Mutation {
+    """ Turns the monitoring on for the given system ID. """
+    turnMonitoringOn(id: ID!, cascade: Boolean, note: String): MonitoredSystem
+    """ Turns the monitoring off for the given system ID. """
+    turnMonitoringOff(id: ID!, cascade: Boolean, note: String, until: DateTime): MonitoredSystem
+}
+
+"""
+Monitored system type enumeration
+"""
+enum MonitoredSystemType {
+    BUSINESS_SERVICE
+    CLOUD_SERVICE
+    DATABASE
+    SERVER
+    SAP_BUSINESS_OBJECT
+    SAP_INSTANCE
+    SAP_SYSTEM
+}
+
+type CustomAttribute {
+    id: ID!
+    name: String!
+    value: String
+}
+
+"""
+Data needed to set a custom attribute. Set the ID and/or the name to define which
+custom attribute should be set.s
+"""
+input CustomAttributeInput {
+    """
+    The ID of the custom attribute.
+    """
+    id: ID
+    """
+    The name of the custom attribute.
+    """
+    name: String
+    """
+    The value of the custom attribute
+    """
+    value: String = null
+}
+
+"""
+Interface for a monitored system
+"""
+interface MonitoredSystem implements InfoProvider {
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        where: FilterInput
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    #
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    """
+    The associated customer for this system.
+    """
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    """
+    The role of this system.
+    """
+    systemRole: String
+    timestamp: DateTime
+    type: MonitoredSystemType!
+    uuid: String
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+type SystemsConnection {
+    #
+    edges: [SystemsConnectionEdge]
+
+    #
+    pageInfo: PageInfo
+}
+
+#
+type SystemsConnectionEdge {
+    #
+    cursor: String
+
+    #
+    node: MonitoredSystem
+}
+
+"""
+Returns the check count summary for the different checks status: CRITICAL, WARNING, OK, UNKNOWN, DISABLED
+"""
+type CheckCountSummary {
+    critical: Int!
+    warning: Int!
+    ok: Int!
+    unknown: Int!
+    disabled: Int!
+}
+
+"""
+This type holds the performance data information for a single monitored system. A single performance resource can
+either be fetched using the resource field. To fetch many resources use the resources field (it can be filtered by resource
+IDs or type)
+"""
+type MonitoredSystemPerformanceData {
+
+    """
+    ID for this performance data object. It will the same as the containing monitored system ID.
+    """
+    id: ID!
+
+    """
+    Single charts for this monitored system
+    """
+    chart(templateId: String!, resourceName: String = null): Chart
+
+    """
+    Charts for this monitored system
+    """
+    charts: [Chart!]!
+
+    """
+    Fetch a single performance resource.
+    """
+    resource(id: ID!): PerformanceResource
+
+    """
+    Fetch multiple performance resources.
+    """
+    resources(resourceIds: [Int!]): [PerformanceResource]
+
+}
+
+enum MonitorLevel {
+    CONNECTED
+    AUTHENTICATED
+    DEPLOYED
+}
+
+extend type Query {
+    mobileNotification(id: ID!): MobileNotification
+    mobileNotifications(
+        # Filter for monitored systems
+        where: FilterInput
+        # The order of the result
+        order: OrderInput): [MobileNotification!]!
+
+    mobileNotificationRelay( first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput): MobileNotificationConnection
+}
+
+extend type Mutation {
+    """
+    Mark a Mobile Notification as read
+    """
+    markAsRead(id: ID!): MobileNotification
+
+    """
+    Mark a List of Mobile Notification as read
+    """
+    markNotificationsAsRead(ids: [ID!]): [ID!]!
+
+    """
+    Delete a Mobile Notification
+    """
+    deleteMobileNotification(id: ID!): ID!
+
+    """
+    Delete a List of Mobile Notification
+    """
+    deleteMobileNotifications(ids: [ID!]): [ID!]
+}
+
+type MobileNotification {
+    id: ID!
+    user: User
+    message: String
+    isRead: Boolean
+    timestamp: DateTime
+}
+
+type MobileNotificationConnection {
+    totalCount: Int
+
+    #
+    edges: [MobileNotificationConnectionEdge]
+
+    #
+    pageInfo: PageInfo
+}
+
+#
+type MobileNotificationConnectionEdge {
+    #
+    cursor: String
+
+    #
+    node: MobileNotification
+}
+
+extend type Query {
+    sapSystems: [SapSystem!]!
+    sapSystem(id: ID!): SapSystem
+    pagedSapSystems(pageRequest: PageRequest!,
+        # Filter for sap systems
+        where: FilterInput
+        # The order of the result
+        order: OrderInput):SapSystemPage
+}
+
+extend type Mutation {
+    turnMonitoringOnForSapSystem(id: ID!, cascade: Boolean, note: String): SapSystem!
+    turnMonitoringOffForSapSystem(id: ID!, cascade: Boolean, note: String, until: DateTime): SapSystem!
+
+    """
+    Create a SAP system.
+    """
+    createSapSystem(input: CreateSapSystemInput!): CreateSapSystemPayload!
+    """
+    Update a SAP system.
+    """
+    updateSapSystem(input: UpdateSapSystemInput!): UpdateSapSystemPayload!
+    """
+    Delete a SAP system.
+    """
+    deleteSapSystem(input: DeleteSapSystemInput!): DeleteSapSystemPayload!
+
+}
+
+"""
+Result of the createSapSystem(...) operation
+"""
+type CreateSapSystemPayload implements OperationResultContainer{
+    result: OperationResult!
+    """
+    This field holds the created SAP system if the operation was successful.
+    """
+    sapSystem: SapSystem
+    """
+    Credential operations.
+    """
+    credentials: MonitoredSystemCredentialOperations
+}
+
+"""
+Result of the updateSapSystem(...) operation
+"""
+type UpdateSapSystemPayload implements OperationResultContainer{
+    result: OperationResult!
+    """
+    This field holds the update SAP system if the operation was successful.
+    """
+    sapSystem: SapSystem
+    """
+    Credential operations.
+    """
+    credentials: MonitoredSystemCredentialOperations
+}
+
+"""
+Result of the deleteSapSystem(...) operation
+"""
+type DeleteSapSystemPayload implements OperationResultContainer{
+    result: OperationResult!
+}
+
+"""
+The mandatory input field needed to create an Avantra server object.
+"""
+input CreateSapSystemInput {
+    """
+    The name of the SAP system - this is the unified SAP SID.
+    """
+    unifiedSapSid: String!
+    """
+    The real SAP SID.
+    """
+    realSapSid: String!
+    """
+    The description for this server.
+    """
+    description: String
+    """
+    Should the monitoring be turned on or off after the creation of the server.
+    """
+    monitoring: Boolean! = false
+    """
+    Customer ID - for which avantra customer this server should be added. To fetch the list of
+    available IDs use e.g. the customers(...) query.
+    """
+    customerId: ID!
+    """
+    Application Type: Has to be one of Avantra's application types defined in the customizations.
+    """
+    applicationType: String
+    """
+    This server's role.
+    """
+    systemRole: String
+    """
+    What is the server's timezone. If not set it will fall back to default.
+    """
+    timezone: String
+    """
+    If the SAP system to create should be monitored remotely this field is mandatory.
+    """
+    remoteMonitoringEntryPoint: String = null
+    """
+    If the SAP system to create should be monitored remotely this field is mandatory.
+    """
+    remoteMonitoringServerSystemId: ID = null
+    """
+    Custom attributes (see documentation) to set.
+    """
+    customAttributes: [CustomAttributeInput!]
+    """
+    SAP system database input.
+    """
+    database: SapSystemDatabaseInput = null
+    """
+    Notes for this system
+    """
+    notes: String = null
+
+}
+
+input SapSystemDatabaseInput {
+    """
+    The system ID of the server responsible for monitoring the SAP system database (optional).
+    """
+    monitoringServerSystemId: ID = null
+    """
+    The hostname to connect to the database (optional).
+    """
+    host: String = null
+    """
+    The database name (optional).
+    """
+    name: String = null
+}
+
+input UpdateSapSystemInput {
+    """
+    The id of the server to update.
+    """
+    id: ID!
+    """
+    The name of the SAP system - this is the unified SAP SID.
+    """
+    unifiedSapSid: String = null
+    """
+    The real SAP SID.
+    """
+    realSapSid: String = null
+    """
+    The description for this server.
+    """
+    description: String = null
+    """
+    Should the monitoring be turned on or off after the creation of the server.
+    """
+    monitoring: Boolean = null
+    """
+    Customer ID - for which avantra customer this server should be added. To fetch the list of
+    available IDs use e.g. the customers(...) query.
+    """
+    customerId: ID = null
+    """
+    Application Type: Has to be one of Avantra's application types defined in the customizations.
+    """
+    applicationType: String = null
+    """
+    This server's role.
+    """
+    systemRole: String = null
+    """
+    What is the server's timezone. If not set it will fall back to default.
+    """
+    timezone: String = null
+    """
+    If the SAP system to create should be monitored remotely this field is mandatory.
+    """
+    remoteMonitoringEntryPoint: String = null
+    """
+    If the SAP system to create should be monitored remotely this field is mandatory.
+    """
+    remoteMonitoringServerSystemId: ID = null
+    """
+    Custom attributes (see documentation) to set.
+    """
+    customAttributes: [CustomAttributeInput!] = null
+    """
+    SAP system database input.
+    """
+    database: SapSystemDatabaseInput = null
+    """
+    Notes for this system
+    """
+    notes: String = null
+}
+
+input DeleteSapSystemInput {
+    """
+    The id of the server to delete.
+    """
+    id: ID!
+}
+
+type SapSystem implements MonitoredSystem & InfoProvider {
+
+    id: ID!
+    """
+    The numeric monitored system type.
+    0 = Server
+    1 = SapInstance
+    2 = SapSystem
+    3 = Database (can be StandaloneDatabase or SapSystemDatabase)
+    (4 = BusinessService)
+    5 = SapBusinessObject
+    6 = CloudService
+    """
+    mst: Int!
+    """
+    Get all the available RTM checks for the given status selection. If the call should return different
+    kind of checks the filter input has to be used with the explicit value for the kind field. If there is
+    no kind filter field defined it defaults to:
+    {
+    name: "kind"
+    operator: eq
+    value: "RTM"
+    }
+    """
+    checks(
+        # The filter conditions for this query.
+        where: FilterInput
+        # The order of the results.
+        order: OrderInput
+    ): [Check!]!
+
+    # Count the affected checks.
+    checkCount(
+        # The filter conditions for this query.
+        where: FilterInput
+    ): Int!
+
+    """
+    Get a check count summary.
+    """
+    checkCountSummary: CheckCountSummary!
+
+    checksRelay (
+        first: Int
+        after: String
+        where: FilterInput
+        order: OrderInput
+    ): CheckConnection
+
+    """
+    Custom attributes defined for this monitored system.
+    """
+    customAttributes: [CustomAttribute!]!
+    """
+    Special data for this monitored system
+    """
+    customData: String
+    customer: Customer!
+    description: String
+    maintenance: Boolean
+    monitorOff: Boolean
+    monitorOffUntil: DateTime
+    monitorSwitchReason: String
+    monitorSwitchDate: DateTime
+    name: String
+    operational: Boolean
+    operationalSince: Date
+    operationalUntil: Date
+    # The status of the monitored system
+    status: Status!
+    """
+    The check status as number:
+    2 => CRITICAL
+    1 => WARNING
+    0 => OK
+    -1 => UNKNOWN
+    -2 => DISABLED
+    """
+    statusId: Int!
+    systemRole: String
+    type: MonitoredSystemType!
+    timestamp: DateTime
+    uuid: String
+
+    """
+    The unified SAP SID of this SAP system.
+    """
+    unifiedSapSid: String!
+
+    """
+    The real SAP SID of this SAP system.
+    """
+    realSapSid: String!
+
+    """
+    The application type of this monitored system.
+    """
+    applicationType: String
+
+    """
+    The time zone of this SAP system.
+    """
+    timezone: String
+
+    """
+    SAP System Info - Basis Release
+    """
+    basisRelease: String
+
+    """
+    SAP System Info - Component Version
+    """
+    componentVersion: String
+
+    """
+    SAP System Info - SPAM Patch Version
+    """
+    spamPatchLevel: String
+
+    """
+    SAP System Info - Encoding
+    """
+    encoding: String
+
+    """
+    The default client.
+    """
+    defaultClient: String
+
+    databaseName: String
+    databaseHost: String
+    databasePort: Int
+    databaseRelease: String
+    databaseType: String
+
+    """
+    The ABAP user.
+    """
+    abapUser: UserPassword
+
+    """
+    The ABAP database user.
+    """
+    abapDatabaseUser: UserPassword
+
+    """
+    The J2EE user.
+    """
+    j2eeUser: UserPassword
+
+    """
+    The J2EE database user.
+    """
+    j2eeDatabaseUser: UserPassword
+
+    """
+    The SAP control user.
+    """
+    sapControlUser: UserPassword
+
+    """
+    The SAP instances assigned to this SAP system.
+    """
+    sapInstances: [SapInstance!]!
+
+    """
+    The SAP instances count for this system visible to the current user.
+    """
+    sapInstancesCount: Int!
+
+    """
+    If this SAP system is monitored remotely('remote: Boolean') this field contains the server.
+    """
+    remoteMonitoringServer: Server
+
+    """
+    The database monitoring server.
+    """
+    databaseMonitoringServer: Server
+
+    """
+    Get all the possible system actions. They can be used with mutation executeSystemAction(...).
+    """
+    actions(actionType: [SystemActionType!] = [Start, Stop, Restart]): [SystemAction!]!
+    """
+    This field holds information about the available performance resources for this monitored system.
+    """
+    performance: MonitoredSystemPerformanceData
+    """
+    Who is responsible as administrator for this system.
+    """
+    administrator: User
+    """
+    Who is responsible as administrator deputy for this system.
+    """
+    administratorDeputy: User
+
+    """
+    The product versions for this system.
+    """
+    productVersions(
+        """
+        Return only the latest version of a product or all. The default is to return only the latest product versions.
+        """
+        onlyLatest: Boolean! = true
+    ): [ProductVersion!]!
+
+    """
+    The associated SAP system database.
+    """
+    database: Database
+    """
+    Is this a remote system
+    """
+    remote: Boolean!
+    """
+    Information about this monitored system.
+    """
+    info: [InfoNode] @uionly
+    """
+    The assigned SLA (service level agreement).
+    """
+    assignedSLA: ServiceLevelAgreement
+    """
+    The assigned solution manager SAP system.
+    """
+    solutionManager: SapSystem
+    """
+    The latest Avantra transport version.
+    """
+    avantraTransportVersion: String
+    """
+    The monitor level
+    """
+    monitorLevel: MonitorLevel!
+    """
+    Available credentials for this system.
+    """
+    credentials: [CredentialsBase]!
+}
+
+"""
+A product version information element for a SAP system.
+"""
+type ProductVersion {
+    product: String
+    release: String
+    spStack: String
+    shortDescription: String
+    status: ProductVersionStatus
+}
+
+enum ProductVersionStatus {
+    INSTALLED
+    NOT_INSTALLED
+    BEING_INSTALLED
+    UNKNOWN
+}
+
+
+type SapSystemPage implements Page {
+    totalElements: Int
+    totalPages: Int
+    items: [SapSystem!]!
+}
+
+
+
