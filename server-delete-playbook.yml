@@ -1,0 +1,27 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+  vars:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: mis2
+    avantra_api_password: 111111111111
+
+  tasks:
+
+    - name: Login to Avantra API and fetch a token
+      avantra.core.login:
+      register: auth
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: auth.token
+
+    - name: "Delete server: achnmc-mis2"
+      avantra.core.server_delete:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis2"
+        customer_name: "mis"
+      register: delete_server
+
+    - name: delete_server
+      ansible.builtin.debug:
+        var: delete_server

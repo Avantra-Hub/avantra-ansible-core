@@ -5,7 +5,9 @@ from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from datetime import datetime
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import login
+from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
+    AvantraAnsibleModule
+)
 
 __metaclass__ = type
 
@@ -73,41 +75,25 @@ message:
 
 
 def run_module():
-    try:
-        module_args = dict(
-            avantra_api_url=dict(type='str', required=True),
-            avantra_api_user=dict(type='str', required=True),
-            avantra_api_password=dict(type='str', required=True, no_log=True),
-        )
+    module_args = dict(
+        avantra_api_url=dict(type='str', required=True),
+        avantra_api_user=dict(type='str', required=True),
+        avantra_api_password=dict(type='str', required=True, no_log=True),
+    )
 
-        result = dict(
-            token=None
-        )
+    result = dict(
+        token=None
+    )
 
-        module = AnsibleModule(
-            argument_spec=module_args,
-            supports_check_mode=True
-        )
+    module = AvantraAnsibleModule(
+        argument_spec=module_args,
+        supports_check_mode=True
+    )
 
-    finally:
-        pass
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
 
-    result["token"] = login(module)
-
-    # during the execution of the module, if there is an exception or a
-    # conditional state that effectively causes a failure, run
-    # AnsibleModule.fail_json() to pass in the message and the result
-    # if module.params['name'] == 'fail me':
-    #     module.fail_json(msg='You requested this to fail', **result)
-
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
+    result["token"] = module.avantra_token
     module.exit_json(**result)
 
 
