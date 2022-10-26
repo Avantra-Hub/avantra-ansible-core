@@ -11,318 +11,320 @@ from datetime import datetime
 from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
     login, create_argument_spec,
     AVANTRA_TOKEN, AVANTRA_API_USER,
-    AVANTRA_API_PASSWORD, send_graphql_request, dict_get
+    AVANTRA_API_PASSWORD,
+    dict_get,
+    AvantraAnsibleModule
 )
 
 __metaclass__ = type
 
 ID_QUERY = """
-query SapSystemGet($id: ID!) {
-    sapSystem(id: $id) {
-        id
-        mst
-        #         checks
-        checkCount
-        #         checkCountSummary
-        #         checksRelay
-        customAttributes {
+    query SapSystemGet($id: ID!) {
+        sapSystem(id: $id) {
             id
+            mst
+            #         checks
+            checkCount
+            #         checkCountSummary
+            #         checksRelay
+            customAttributes {
+                id
+                name
+                value
+            }
+            customData
+            customer {
+                id
+                name
+            }
+            description
+            maintenance
+            monitorOff
+            monitorOffUntil
+            monitorSwitchReason
+            monitorSwitchDate
             name
-            value
-        }
-        customData
-        customer {
-            id
-            name
-        }
-        description
-        maintenance
-        monitorOff
-        monitorOffUntil
-        monitorSwitchReason
-        monitorSwitchDate
-        name
-        operational
-        operationalSince
-        operationalUntil
-        status
-        statusId
-        systemRole
-        type
-        timestamp
-        uuid
-        unifiedSapSid
-        realSapSid
-        applicationType
-        timezone
-        basisRelease
-        componentVersion
-        spamPatchLevel
-        encoding
-        defaultClient
-        databaseName
-        databaseHost
-        databasePort
-        databaseRelease
-        databaseType
-        #         abapUser
-        #         abapDatabaseUser
-        #         j2eeUser
-        #         j2eeDatabaseUser
-        #         sapControlUser
-        #         sapInstances
-        sapInstancesCount
-        remoteMonitoringServer {
-            id
-            name
-        }
-        databaseMonitoringServer {
-            id
-            name
-        }
-        #         actions
-        #         performance
-        administrator {
-            id
-            principal
-            firstname
-            lastname
-            email
-            emailAlternative
-        }
-        administratorDeputy {
-            id
-            principal
-            firstname
-            lastname
-            email
-            emailAlternative
-        }
-        productVersions {
-            shortDescription
-            product
-            release
-            spStack
+            operational
+            operationalSince
+            operationalUntil
             status
-        }
-        database {
-            id
-            name
+            statusId
+            systemRole
+            type
+            timestamp
+            uuid
+            unifiedSapSid
+            realSapSid
+            applicationType
+            timezone
+            basisRelease
+            componentVersion
+            spamPatchLevel
+            encoding
+            defaultClient
+            databaseName
+            databaseHost
+            databasePort
+            databaseRelease
             databaseType
-            # 					databaseHost
-            # 					databasePort
-            version
-            dbmsProduct
-            server {
+            #         abapUser
+            #         abapDatabaseUser
+            #         j2eeUser
+            #         j2eeDatabaseUser
+            #         sapControlUser
+            #         sapInstances
+            sapInstancesCount
+            remoteMonitoringServer {
                 id
                 name
             }
-        }
-        remote
-        #         info
-        assignedSLA {
-            id
-            name
-        }
-        solutionManager {
-            id
-            name
-        }
-        avantraTransportVersion
-        monitorLevel
-        credentials {
-            id
-            purpose {
-                key
+            databaseMonitoringServer {
                 id
                 name
             }
-            ... on BasicAuthenticationCredentials {
-                basicUser: username
-                password
+            #         actions
+            #         performance
+            administrator {
+                id
+                principal
+                firstname
+                lastname
+                email
+                emailAlternative
             }
-            ... on RfcAuthenticationCredentials {
-                rfcUser: username
-                password
+            administratorDeputy {
+                id
+                principal
+                firstname
+                lastname
+                email
+                emailAlternative
             }
-            ... on SapControlCredentials {
-                sapControlUser: username
-                password
-                privateKey
-                privateKeyPassphrase
+            productVersions {
+                shortDescription
+                product
+                release
+                spStack
+                status
             }
-            ... on SshCredentials {
-                hostname
-                port
-                username
-                password
-                identity
-                identityPassphrase
+            database {
+                id
+                name
+                databaseType
+                # 					databaseHost
+                # 					databasePort
+                version
+                dbmsProduct
+                server {
+                    id
+                    name
+                }
+            }
+            remote
+            #         info
+            assignedSLA {
+                id
+                name
+            }
+            solutionManager {
+                id
+                name
+            }
+            avantraTransportVersion
+            monitorLevel
+            credentials {
+                id
+                purpose {
+                    key
+                    id
+                    name
+                }
+                ... on BasicAuthenticationCredentials {
+                    basicUser: username
+                    password
+                }
+                ... on RfcAuthenticationCredentials {
+                    rfcUser: username
+                    password
+                }
+                ... on SapControlCredentials {
+                    sapControlUser: username
+                    password
+                    privateKey
+                    privateKeyPassphrase
+                }
+                ... on SshCredentials {
+                    hostname
+                    port
+                    username
+                    password
+                    identity
+                    identityPassphrase
+                }
             }
         }
     }
-}
 """
 
 SID_QUERY = """
-query SapSystemGetByUnifiedSapSid(
-	$unified_sap_sid: String!
-	$customer_name: String!
-) {
-	systems(
-		where: {
-			filterBy: [
-				{ name: "type", operator: eq, value: "SAP_SYSTEM" }
-				{ name: "name", operator: eq, value: $unified_sap_sid }
-				{ name: "customer.name", operator: eq, value: $customer_name }
-			]
-		}
-	) {
-		... on SapSystem {
-			id
-			mst
-			#         checks
-			checkCount
-			#         checkCountSummary
-			#         checksRelay
-			customAttributes {
-				id
-				name
-				value
-			}
-			customData
-			customer {
-				id
-				name
-			}
-			description
-			maintenance
-			monitorOff
-			monitorOffUntil
-			monitorSwitchReason
-			monitorSwitchDate
-			name
-			operational
-			operationalSince
-			operationalUntil
-			status
-			statusId
-			systemRole
-			type
-			timestamp
-			uuid
-			unifiedSapSid
-			realSapSid
-			applicationType
-			timezone
-			basisRelease
-			componentVersion
-			spamPatchLevel
-			encoding
-			defaultClient
-			databaseName
-			databaseHost
-			databasePort
-			databaseRelease
-			databaseType
-			#         abapUser
-			#         abapDatabaseUser
-			#         j2eeUser
-			#         j2eeDatabaseUser
-			#         sapControlUser
-			#         sapInstances
-			sapInstancesCount
-			remoteMonitoringServer {
-				id
-				name
-			}
-			databaseMonitoringServer {
-				id
-				name
-			}
-			#         actions
-			#         performance
-			administrator {
-				id
-				principal
-				firstname
-				lastname
-				email
-				emailAlternative
-			}
-			administratorDeputy {
-				id
-				principal
-				firstname
-				lastname
-				email
-				emailAlternative
-			}
-			productVersions {
-				shortDescription
-				product
-				release
-				spStack
-				status
-			}
-			database {
-				id
-				name
-				databaseType
-				# 					databaseHost
-				# 					databasePort
-				version
-				dbmsProduct
-				server {
-					id
-					name
-				}
-			}
-			remote
-			#         info
-			assignedSLA {
-				id
-				name
-			}
-			solutionManager {
-				id
-				name
-			}
-			avantraTransportVersion
-			monitorLevel
-			credentials {
-				id
-				purpose {
-					key
-					id
-					name
-				}
-				... on BasicAuthenticationCredentials {
-					basicUser: username
-					password
-				}
-				... on RfcAuthenticationCredentials {
-					rfcUser: username
-					password
-				}
-				... on SapControlCredentials {
-					sapControlUser: username
-					password
-					privateKey
-					privateKeyPassphrase
-				}
-				... on SshCredentials {
-					hostname
-					port
-					username
-					password
-					identity
-					identityPassphrase
-				}
-			}
-		}
-	}
-}
+    query SapSystemGetByUnifiedSapSid(
+        $unified_sap_sid: String!
+        $customer_name: String!
+    ) {
+        systems(
+            where: {
+                filterBy: [
+                    { name: "type", operator: eq, value: "SAP_SYSTEM" }
+                    { name: "name", operator: eq, value: $unified_sap_sid }
+                    { name: "customer.name", operator: eq, value: $customer_name }
+                ]
+            }
+        ) {
+            ... on SapSystem {
+                id
+                mst
+                #         checks
+                checkCount
+                #         checkCountSummary
+                #         checksRelay
+                customAttributes {
+                    id
+                    name
+                    value
+                }
+                customData
+                customer {
+                    id
+                    name
+                }
+                description
+                maintenance
+                monitorOff
+                monitorOffUntil
+                monitorSwitchReason
+                monitorSwitchDate
+                name
+                operational
+                operationalSince
+                operationalUntil
+                status
+                statusId
+                systemRole
+                type
+                timestamp
+                uuid
+                unifiedSapSid
+                realSapSid
+                applicationType
+                timezone
+                basisRelease
+                componentVersion
+                spamPatchLevel
+                encoding
+                defaultClient
+                databaseName
+                databaseHost
+                databasePort
+                databaseRelease
+                databaseType
+                #         abapUser
+                #         abapDatabaseUser
+                #         j2eeUser
+                #         j2eeDatabaseUser
+                #         sapControlUser
+                #         sapInstances
+                sapInstancesCount
+                remoteMonitoringServer {
+                    id
+                    name
+                }
+                databaseMonitoringServer {
+                    id
+                    name
+                }
+                #         actions
+                #         performance
+                administrator {
+                    id
+                    principal
+                    firstname
+                    lastname
+                    email
+                    emailAlternative
+                }
+                administratorDeputy {
+                    id
+                    principal
+                    firstname
+                    lastname
+                    email
+                    emailAlternative
+                }
+                productVersions {
+                    shortDescription
+                    product
+                    release
+                    spStack
+                    status
+                }
+                database {
+                    id
+                    name
+                    databaseType
+                    # 					databaseHost
+                    # 					databasePort
+                    version
+                    dbmsProduct
+                    server {
+                        id
+                        name
+                    }
+                }
+                remote
+                #         info
+                assignedSLA {
+                    id
+                    name
+                }
+                solutionManager {
+                    id
+                    name
+                }
+                avantraTransportVersion
+                monitorLevel
+                credentials {
+                    id
+                    purpose {
+                        key
+                        id
+                        name
+                    }
+                    ... on BasicAuthenticationCredentials {
+                        basicUser: username
+                        password
+                    }
+                    ... on RfcAuthenticationCredentials {
+                        rfcUser: username
+                        password
+                    }
+                    ... on SapControlCredentials {
+                        sapControlUser: username
+                        password
+                        privateKey
+                        privateKeyPassphrase
+                    }
+                    ... on SshCredentials {
+                        hostname
+                        port
+                        username
+                        password
+                        identity
+                        identityPassphrase
+                    }
+                }
+            }
+        }
+    }
 """
 
 DOCUMENTATION = r'''
@@ -400,7 +402,7 @@ def run_module():
         "args": dict(required=False, default={}),
     })
 
-    module = AnsibleModule(
+    module = AvantraAnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_together=[
@@ -413,14 +415,8 @@ def run_module():
         ]
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
-
-    if AVANTRA_TOKEN not in module.params:
-        module.params[AVANTRA_TOKEN] = login(module)
 
     if "system_id" in module.params and module.params["system_id"] is not None:
         result = _load_by_system_id(module)
@@ -432,9 +428,9 @@ def run_module():
     module.exit_json(**result)
 
 
-def _load_by_system_id(module: AnsibleModule) -> Dict:
+def _load_by_system_id(module: AvantraAnsibleModule) -> Dict:
     system_id = module.params["system_id"]
-    result: dict = send_graphql_request(module, query=ID_QUERY, variables={"id": system_id})
+    result: dict = module.send_graphql_request(query=ID_QUERY, variables={"id": system_id})
     sap_system = dict_get(result, "data", "sapSystem")
     if module.params["fail_if_not_found"] and sap_system is None:
         module.fail_json(rc=1003, msg=f"SAP system for ID {system_id} could not be found: {result}")
@@ -442,11 +438,10 @@ def _load_by_system_id(module: AnsibleModule) -> Dict:
     return {"sapSystem": sap_system}
 
 
-def _load_by_unified_sap_sid(module: AnsibleModule) -> Dict:
+def _load_by_unified_sap_sid(module: AvantraAnsibleModule) -> Dict:
     unified_sap_sid = module.params["unified_sap_sid"]
     customer_name = module.params["customer_name"]
-    result: dict = send_graphql_request(
-        module,
+    result: dict = module.send_graphql_request(
         query=SID_QUERY,
         variables={"unified_sap_sid": unified_sap_sid,
                    "customer_name": customer_name}
