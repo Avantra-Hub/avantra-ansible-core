@@ -1,3 +1,5 @@
+from __future__ import (absolute_import, division, print_function)
+
 from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
     _compute_avantra_auth_url,
     _compute_avantra_graphql_url,

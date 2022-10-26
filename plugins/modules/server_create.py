@@ -11,7 +11,8 @@ from datetime import datetime
 from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
     login, create_argument_spec,
     AVANTRA_TOKEN, AVANTRA_API_USER,
-    AVANTRA_API_PASSWORD, send_graphql_request, dict_get, find_customer_id_by_name, CredentialType
+    AVANTRA_API_PASSWORD, dict_get, find_customer_id_by_name, CredentialType,
+    handle_credentials, handle_custom_attributes, AvantraAnsibleModule
 )
 
 __metaclass__ = type
@@ -20,7 +21,7 @@ CREATE_MUTATION = """
     mutation CreateServer(
         $input: CreateServerInput!
         $basicCredentials: [SetBasicCredentialsInput!] = []
-	    $sshCredentials: [SetSshCredentialsInput!] = []
+        $sshCredentials: [SetSshCredentialsInput!] = []
     ) {
         
         createServer(input: $input) {
@@ -292,7 +293,7 @@ def run_module():
         "custom_attributes": dict(type='dict', required=False, default={})
     })
 
-    module = AnsibleModule(
+    module = AvantraAnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_together=[
@@ -305,9 +306,6 @@ def run_module():
 
     if module.check_mode:
         module.exit_json(**result)
-
-    if AVANTRA_TOKEN not in module.params:
-        module.params[AVANTRA_TOKEN] = login(module)
 
     # Fetch the customer by name. This could be improved by allowing customer
     # name segments to allow to fetch directly sub-customer ... something like "A/B/C"
@@ -339,40 +337,16 @@ def run_module():
     _assign("application_type", "applicationType", only_if_not_none=True)
     _assign("dns_aliases", "dnsAliases", only_if_not_none=True)
 
-    custom_attributes = module.params["custom_attributes"]
-    if len(custom_attributes) > 0:
-        server_input["customAttributes"] = []
-        for k, v in custom_attributes.items():
-            server_input["customAttributes"].append({
-                "id": k,
-                "name": k,
-                "value": v
-            })
+    handle_custom_attributes(module, server_input, module.params["custom_attributes"])
 
-    basic_creds = []
-    ssh_creds = []
+    credentials = handle_credentials(module, module.params["credentials"])
 
-    credentials = module.params["credentials"]
-    if credentials is not None and len(credentials) > 0:
-        for key, cred in credentials.items():
-            if "cred_type" in cred:
-                cred_type = cred["cred_type"]
-                if str(cred_type).upper() == CredentialType.BASIC.name:
-                    _handle_basic_credentials(module, basic_creds, key, cred)
-                elif str(cred_type).upper() == CredentialType.SSH.name:
-                    _handle_ssh_credentials(module, ssh_creds, key, cred)
-                else:
-                    module.fail_json(rc=1007, msg=f"Unhandled credential type for server '{cred_type}'", result=cred)
-            else:
-                module.fail_json(rc=1008, msg=f"No cred_type defined for server credentials", result=cred)
-
-    create_server = send_graphql_request(
-        module,
+    create_server = module.send_graphql_request(
         query=CREATE_MUTATION,
         variables={
             "input": server_input,
-            "basicCredentials": basic_creds,
-            "sshCredentials": ssh_creds,
+            "basicCredentials": credentials.get(CredentialType.BASIC),
+            "sshCredentials": credentials.get(CredentialType.SSH),
         }
     )
 
@@ -384,37 +358,6 @@ def run_module():
     result = {"server": server}
 
     module.exit_json(**result)
-
-
-def _handle_basic_credentials(module, basic_creds, key: str, cred):
-    basic_creds.append({
-        "id": key,
-        "username": cred.get("username"),
-        "password": cred.get("password"),
-        "name": cred.get("name"),
-        # "shared": cred.get("shared")
-    })
-
-
-def _handle_ssh_credentials(module, ssh_creds, key: str, cred):
-    config = []
-    for k, v in cred.get("config", {}).items():
-        config.append({
-            "key": k,
-            "value": v
-        })
-
-    ssh_creds.append({
-        "id": key,
-        "username": cred.get("username"),
-        "password": cred.get("password"),
-        "hostname": cred.get("hostname"),
-        "port": cred.get("port"),
-        # TODO: maybe this is a path read the file???
-        "identity": cred.get("identity"),
-        "identityPassphrase": cred.get("identityPassphrase"),
-        "config": config
-    })
 
 
 def main():
