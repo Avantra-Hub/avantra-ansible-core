@@ -417,6 +417,7 @@ def run_module():
         "server_name": dict(type='str', required=False),
         "customer_name": dict(type='str', required=False),
         "fail_if_not_found": dict(type='bool', required=False, default=True),
+        "args": dict(required=False, default={}),
     })
 
     module = AvantraAnsibleModule(
@@ -438,6 +439,9 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
+    if AVANTRA_TOKEN not in module.params:
+        module.params[AVANTRA_TOKEN] = login(module)
+
     if "system_id" in module.params and module.params["system_id"] is not None:
         result = _load_by_system_id(module)
     elif "server_name" in module.params and "customer_name" in module.params:
@@ -450,7 +454,7 @@ def run_module():
 
 def _load_by_system_id(module: AvantraAnsibleModule) -> Dict:
     system_id = module.params["system_id"]
-    result: dict = module.send_graphql_request(query=ID_QUERY, variables={"id": system_id})
+    result: dict = send_graphql_request(module, query=ID_QUERY, variables={"id": system_id})
     server = dict_get(result, "data", "server")
     if module.params["fail_if_not_found"] and server is None:
         module.fail_json(rc=1003, msg=f"Server for ID {system_id} could not be found: {result}")

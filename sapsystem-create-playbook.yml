@@ -1,0 +1,79 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+  vars:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: mis2
+    avantra_api_password: REDACTED
+
+  tasks:
+
+    - name: Login to Avantra API and fetch a token
+      avantra.core.login:
+      register: auth
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: auth.token
+
+    - name: Try to find server achnmc-mis2
+      avantra.core.sapsystem_get:
+        avantra_token: "{{auth.token}}"
+        unified_sap_sid: "SMA_REMOTE2"
+        customer_name: "mis"
+        fail_if_not_found: false
+      register: find_sapsystem
+
+    - name: find_sapsystem
+      ansible.builtin.debug:
+        var: find_sapsystem
+
+    - name: Create SAP system
+      avantra.core.sapsystem_create:
+        avantra_token: "{{auth.token}}"
+        unified_sap_sid: "SMA_REMOTE2"
+        real_sap_sid: "SM2"
+        customer_name: "mis"
+        system_role: "Sandpit"
+        timezone: "UTC"
+        monitoring: true
+        notes: "This is a simple note."
+        description: "This is a simple description."
+        remote_monitoring_entry_point: "http://10.103.15.117:50013"
+        remote_monitoring_server_system_id: 1
+        database:
+          monitoring_server_system_id: 1
+          host: "golf"
+          name: "SMA"
+          port: 2222
+        credentials:
+          avantra.defaultRfcUser:
+            cred_type: rfc
+            username: default_adm
+            password: REDACTED
+          avantra.sapControl:
+            cred_type: sap_control
+            username: smaadm
+            password: REDACTED
+          avantra.sap:
+            cred_type: rfc
+            username: REDACTED
+            password: REDACTED
+          avantra.j2eeUser:
+            cred_type: basic
+            username: hello
+            password: basic
+          avantra.abapDbSchema:
+            cred_type: basic
+            username: hello2
+            password: REDACTED
+          avantra.javaDbSchema:
+            cred_type: basic
+            username: hello3
+            password: REDACTED
+
+      register: create_sapsystem
+      when: find_sapsystem.sapSystem == None
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: create_sapsystem

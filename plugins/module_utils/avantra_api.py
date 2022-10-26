@@ -1,5 +1,7 @@
+from __future__ import (absolute_import, division, print_function)
+
 import contextlib
-from typing import Dict, Any
+from typing import Dict, Any, List
 from enum import Enum
 
 from ansible.module_utils.basic import AnsibleModule
@@ -10,6 +12,12 @@ AVANTRA_API_USER = "avantra_api_user"
 AVANTRA_API_PASSWORD = "avantra_api_password"
 
 AVANTRA_TOKEN = "avantra_token"
+
+ERROR_NOT_IMPLEMENTED = 1010
+ERROR_ELEMENT_NOT_FOUND = 1011
+
+ERROR_DELETE_ELEMENT_SERVER = 1100
+ERROR_DELETE_ELEMENT_SAP_SYSTEM = 1102
 
 
 class SystemType(Enum):
@@ -29,6 +37,139 @@ class CredentialType(Enum):
     RFC = 3
     SAP_CONTROL = 4
     SSH = 5
+
+
+class AvantraAnsibleModule(AnsibleModule):
+    """
+    Specialized version of the AnsibleModule.
+    """
+
+    def __init__(self, argument_spec, bypass_checks=False, no_log=False, mutually_exclusive=None,
+                 required_together=None, required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+                 required_if=None, required_by=None):
+        super().__init__(argument_spec, bypass_checks, no_log, mutually_exclusive, required_together, required_one_of,
+                         add_file_common_args, supports_check_mode, required_if, required_by)
+
+        self._avantra_api_token = None
+        self._avantra_api_url = None
+
+    @property
+    def avantra_token(self):
+        """ Returns the Avantra API token. """
+        if self._avantra_api_token is None:
+            if AVANTRA_TOKEN not in self.params:
+                self._avantra_api_token = login(self)
+            else:
+                self._avantra_api_token = self.params[AVANTRA_TOKEN]
+
+        return self._avantra_api_token
+
+    @property
+    def avantra_url(self):
+        """ Returns the Avantra API endpoint as URL strings. """
+        if self._avantra_api_url is None:
+            self._avantra_api_url = _compute_avantra_graphql_url(self.params.get("avantra_api_url", ""))
+        return self._avantra_api_url
+
+    def send_graphql_request(
+            self,
+            query: str,
+            variables: dict = None,
+            operation_name: str = None) -> Dict:
+        """
+        Send and GraphQL request to the Avantra API
+        """
+        token = self.avantra_token
+
+        graphql_payload = {"query": query}
+
+        if variables is not None:
+            graphql_payload["variables"] = variables
+
+        if operation_name is not None:
+            graphql_payload["operationName"] = operation_name
+
+        resp, info = fetch_url(module=self,
+                               url=self.avantra_url,
+                               data=self.jsonify(graphql_payload),
+                               headers={
+                                   "Content-type": "application/json",
+                                   "Authorization": f"Bearer {token}",
+                               },
+                               method="POST")
+
+        status_code = info["status"]
+        if status_code != 200:
+            return self.fail_json(rc=1002, **info)
+        else:
+            result = self.from_json(resp.read())
+            if "errors" in result:
+                return self.fail_json(rc=1008, msg="There were API errors", info=info, result=result)
+            return result
+
+    def find_server_system_id(self, server_name: str, customer_name: str, dns_domain: str = None) -> str | None:
+
+        variables = {"server_name": server_name, "customer_name": customer_name}
+
+        result = self.send_graphql_request(
+            query="""
+            query ServerGetByServerName($server_name: String!, $customer_name: String!) {
+                systems(
+                    where: {
+                        filterBy: [
+                            { name: "type", operator: eq, value: "SERVER" }
+                            { name: "name", operator: eq, value: $server_name }                            
+                            { name: "customer.name", operator: eq, value: $customer_name }
+                        ]
+                    }
+                ) { 
+                    id
+                    ... on Server {
+                        dnsDomain
+                    }
+                }
+            }
+            """,
+            variables=variables
+        )
+        servers = dict_get(result, "data", "systems")
+        if dns_domain is not None:
+            servers = list(filter(lambda s: s.get("dnsDomain") == dns_domain))
+
+        if servers is None or len(servers) == 0:
+            return None
+
+        return servers[0].get("id")
+
+    def find_sap_system_id(self, unified_sap_sid: str, customer_name: str) -> str | None:
+
+        variables = {"unified_sap_sid": unified_sap_sid, "customer_name": customer_name}
+
+        result = self.send_graphql_request(
+            query="""
+            query SapSystemGetByUnifiedSapSid($unified_sap_sid: String!, $customer_name: String!) {
+                systems(
+                    where: {
+                        filterBy: [
+                            { name: "type", operator: eq, value: "SAP_SYSTEM" }
+                            { name: "name", operator: eq, value: $unified_sap_sid }                            
+                            { name: "customer.name", operator: eq, value: $customer_name }
+                        ]
+                    }
+                ) { 
+                    id
+                }
+            }
+            """,
+            variables=variables
+        )
+        sap_systems = dict_get(result, "data", "systems")
+
+        if sap_systems is None or len(sap_systems) == 0:
+            return None
+
+        return sap_systems[0].get("id")
+
 
 
 def _compute_avantra_auth_url(url: str) -> str:
@@ -137,39 +278,6 @@ def create_argument_spec(allow_token: bool = True) -> Dict:
     return result
 
 
-def send_graphql_request(
-        module: AnsibleModule,
-        query: str,
-        variables: dict = None,
-        operation_name: str = None) -> Dict:
-    url = _compute_avantra_graphql_url(module.params.get("avantra_api_url", ""))
-    token = module.params.get("avantra_token", "")
-
-    graphql_payload = {"query": query}
-
-    if variables is not None:
-        graphql_payload["variables"] = variables
-
-    if operation_name is not None:
-        graphql_payload["operationName"] = operation_name
-
-    resp, info = fetch_url(module=module,
-                           url=url,
-                           data=module.jsonify(graphql_payload),
-                           headers={
-                               'Content-type': 'application/json',
-                               'Authorization': f"Bearer {token}",
-                           },
-                           method="POST")
-
-    status_code = info["status"]
-    if status_code != 200:
-        return module.fail_json(rc=1002, **info)
-    else:
-        # TODO: Check for "errors" parallel to "data"
-        return module.from_json(resp.read())
-
-
 def dict_get(value: dict, *keys) -> Any:
     """
 
@@ -201,7 +309,7 @@ def dict_get(value: dict, *keys) -> Any:
 #     pass
 
 
-def find_customer_id_by_name(module: AnsibleModule, customer_name: str) -> int | None:
+def find_customer_id_by_name(module: AvantraAnsibleModule, customer_name: str) -> int | None:
     """
     Returns the customer ID or None if it can not be found.
 
@@ -247,9 +355,128 @@ def find_customer_id_by_name(module: AnsibleModule, customer_name: str) -> int |
     }
     """
 
-    result: dict = send_graphql_request(module, query=query, variables={"customer_name": customer_name})
+    result = module.send_graphql_request(query=query, variables={"customer_name": customer_name})
     customers = dict_get(result, "data", "customers")
     if customers is None or not isinstance(customers, list) or len(customers) == 0:
         return None
     else:
         return int(customers[0]["id"])
+
+
+def handle_basic_credentials(module: AvantraAnsibleModule, basic_creds, key: str, cred):
+    basic_creds.append({
+        "id": key,
+        "username": cred.get("username"),
+        "password": cred.get("password"),
+        "name": cred.get("name"),
+        # "shared": cred.get("shared")
+    })
+
+
+def handle_ssh_credentials(module: AvantraAnsibleModule, ssh_creds, key: str, cred):
+    config = []
+    for k, v in cred.get("config", {}).items():
+        config.append({
+            "key": k,
+            "value": v
+        })
+
+    ssh_creds.append({
+        "id": key,
+        "username": cred.get("username"),
+        "password": cred.get("password"),
+        "hostname": cred.get("hostname"),
+        "port": cred.get("port"),
+        # TODO: maybe this is a path read the file???
+        "identity": cred.get("identity"),
+        "identityPassphrase": cred.get("identityPassphrase"),
+        "config": config
+    })
+
+
+def handle_sap_control_credentials(module: AvantraAnsibleModule, sap_control_creds, key, cred):
+    sap_control_creds.append({
+        "id": key,
+        "username": cred.get("username"),
+        "password": cred.get("password"),
+        "privateKey": cred.get("private_key"),
+        "privateKeyPassphrase": cred.get("private_key_passphrase"),
+        "certificateChain": cred.get("certificate_chain"),
+        "name": cred.get("name"),
+        # "shared": cred.get("shared")
+    })
+
+
+def handle_rfc_credentials(module: AvantraAnsibleModule, rfc_creds, key, cred):
+    rfc_creds.append({
+        "id": key,
+        "username": cred.get("username"),
+        "password": cred.get("password"),
+        "client": cred.get("client"),
+        "name": cred.get("name"),
+        # "shared": cred.get("shared")
+    })
+
+
+def handle_oauth_client_credentials(module: AvantraAnsibleModule, oauth_client_creds, key, cred):
+    module.fail_json(rc=ERROR_NOT_IMPLEMENTED, msg="Handling of OAuth Client credentials is not yet implemented")
+
+
+def handle_oauth_code_credentials(module: AvantraAnsibleModule, oauth_code_creds, key, cred):
+    module.fail_json(rc=ERROR_NOT_IMPLEMENTED, msg="Handling of OAuth Code credentials is not yet implemented")
+
+
+def handle_credentials(module: AvantraAnsibleModule, credentials: dict) -> dict[CredentialType, list[Any]]:
+    """
+    Given a credentials dictionary this function converts the found credential information in dicts that the
+    GraphQL API can understand.
+    :param module:
+    :param credentials:
+    :return:
+    """
+    basic_creds = []
+    ssh_creds = []
+    sap_control_creds = []
+    rfc_creds = []
+    oauth_client_creds = []
+    oauth_code_creds = []
+    if credentials is not None and len(credentials) > 0:
+        for key, cred in credentials.items():
+            if "cred_type" in cred:
+                cred_type = str(cred["cred_type"]).upper()
+                if cred_type == CredentialType.BASIC.name:
+                    handle_basic_credentials(module, basic_creds, key, cred)
+                elif cred_type == CredentialType.SSH.name:
+                    handle_ssh_credentials(module, ssh_creds, key, cred)
+                elif cred_type == CredentialType.SAP_CONTROL.name:
+                    handle_sap_control_credentials(module, sap_control_creds, key, cred)
+                elif cred_type == CredentialType.RFC.name:
+                    handle_rfc_credentials(module, rfc_creds, key, cred)
+                elif cred_type == CredentialType.OAUTH2_CLIENT.name:
+                    handle_oauth_client_credentials(module, oauth_client_creds, key, cred)
+                elif cred_type == CredentialType.OAUTH2_CODE.name:
+                    handle_oauth_code_credentials(module, oauth_code_creds, key, cred)
+                else:
+                    module.fail_json(rc=1007, msg=f"Unhandled credential type '{cred_type}'", result=cred)
+            else:
+                module.fail_json(rc=1008, msg=f"No cred_type defined for credentials with key '{key}'", result=cred)
+
+    return {
+        CredentialType.BASIC: basic_creds,
+        CredentialType.SSH: ssh_creds,
+        CredentialType.SAP_CONTROL: sap_control_creds,
+        CredentialType.RFC: rfc_creds,
+        CredentialType.OAUTH2_CLIENT: oauth_client_creds,
+        CredentialType.OAUTH2_CODE: oauth_code_creds
+    }
+
+
+def handle_custom_attributes(module: AnsibleModule, target: dict, custom_attributes: dict):
+    if custom_attributes is not None and len(custom_attributes) > 0:
+        target["customAttributes"] = []
+        for k, v in custom_attributes.items():
+            target["customAttributes"].append({
+                "id": k,
+                "name": k,
+                "value": v
+            })
