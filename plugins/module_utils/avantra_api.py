@@ -1,11 +1,19 @@
 from __future__ import (absolute_import, division, print_function)
 
-import contextlib
-from typing import Dict, Any, List
+from typing import Dict, Any
 from enum import Enum
+from string import Template
+from datetime import datetime, timedelta, timezone
+
+from uuid import uuid1
+from base64 import b64encode
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+
+from ansible_collections.avantra.core.plugins.module_utils.xml import (
+    xmldict
+)
 
 AVANTRA_API_URL = "avantra_api_url"
 AVANTRA_API_USER = "avantra_api_user"
@@ -39,6 +47,24 @@ class CredentialType(Enum):
     SSH = 5
 
 
+class SystemActions(Enum):
+    SERVER_START = 20
+    SERVER_STOP = 21
+    # SERVER_RESTART = 20
+    SAP_SYSTEM_START = 1
+    SAP_SYSTEM_STOP = 2
+    SAP_SYSTEM_RESTART = 201
+    SAP_SYSTEM_WITH_DB_START = 32
+    SAP_SYSTEM_WITH_DB_STOP = 33
+    SAP_SYSTEM_WITH_DB_RESTART = 202
+    SAP_SYSTEM_WITH_DB_AND_HANA_START = 34
+    SAP_SYSTEM_WITH_DB_AND_HANA_STOP = 35
+    SAP_SYSTEM_WITH_DB_AND_HANA_RESTART = 203
+    SAP_SYSTEM_WITH_DB_AND_SERVER_START = 36
+    SAP_SYSTEM_WITH_DB_AND_SERVER_STOP = 37
+    SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART = 204
+
+
 class AvantraAnsibleModule(AnsibleModule):
     """
     Specialized version of the AnsibleModule.
@@ -65,11 +91,39 @@ class AvantraAnsibleModule(AnsibleModule):
         return self._avantra_api_token
 
     @property
-    def avantra_url(self):
+    def avantra_graphql_url(self):
         """ Returns the Avantra API endpoint as URL strings. """
         if self._avantra_api_url is None:
             self._avantra_api_url = _compute_avantra_graphql_url(self.params.get("avantra_api_url", ""))
         return self._avantra_api_url
+
+    @property
+    def avantra_soap_url(self):
+        """ Returns the Avantra API endpoint as URL strings. """
+        if self._avantra_api_url is None:
+            self._avantra_api_url = _compute_avantra_soap_url(self.params.get("avantra_api_url", ""))
+        return self._avantra_api_url
+
+    def send_soap_request(self, soap: str) -> Dict:
+        """
+        Send a SOAP request to the Avantra API
+        :param soap:
+        :return:
+        """
+        resp, info = fetch_url(module=self,
+                               url=self.avantra_soap_url,
+                               data=soap,
+                               headers={
+                                   "Content-type": "text/xml;charset=UTF-8",
+                                   "SOAPAction": ""
+                               },
+                               method="POST")
+
+        status_code = info["status"]
+        if status_code != 200:
+            return self.fail_json(rc=1002, **info)
+        else:
+            return xmldict(resp.read())
 
     def send_graphql_request(
             self,
@@ -77,7 +131,7 @@ class AvantraAnsibleModule(AnsibleModule):
             variables: dict = None,
             operation_name: str = None) -> Dict:
         """
-        Send and GraphQL request to the Avantra API
+        Send a GraphQL request to the Avantra API
         """
         token = self.avantra_token
 
@@ -90,7 +144,7 @@ class AvantraAnsibleModule(AnsibleModule):
             graphql_payload["operationName"] = operation_name
 
         resp, info = fetch_url(module=self,
-                               url=self.avantra_url,
+                               url=self.avantra_graphql_url,
                                data=self.jsonify(graphql_payload),
                                headers={
                                    "Content-type": "application/json",
@@ -141,6 +195,27 @@ class AvantraAnsibleModule(AnsibleModule):
 
         return servers[0].get("id")
 
+    def find_server_by_system_id(self, system_id: str) -> str | None:
+
+        variables = {"id": system_id}
+
+        result = self.send_graphql_request(
+            query="""
+            query ServerGetByID($id: ID!) {
+                server(id: $id) { 
+                    id                    
+                }
+            }
+            """,
+            variables=variables
+        )
+        servers = dict_get(result, "data", "server")
+
+        if servers is None or len(servers) == 0:
+            return None
+
+        return servers[0].get("id")
+
     def find_sap_system_id(self, unified_sap_sid: str, customer_name: str) -> str | None:
 
         variables = {"unified_sap_sid": unified_sap_sid, "customer_name": customer_name}
@@ -170,6 +245,78 @@ class AvantraAnsibleModule(AnsibleModule):
 
         return sap_systems[0].get("id")
 
+    def find_sap_system_by_system_id(self, system_id: str) -> str | None:
+
+        variables = {"id": system_id}
+
+        result = self.send_graphql_request(
+            query="""
+            query SapSystemGetByID($id: ID!) {
+                sapSystem(id: $id) { 
+                    id                 
+                }
+            }
+            """,
+            variables=variables
+        )
+        sap_systems = dict_get(result, "data", "sapSystem")
+
+        if sap_systems is None or len(sap_systems) == 0:
+            return None
+
+        return sap_systems[0].get("id")
+
+    def execute_system_action(self, action: SystemActions, system_id: str, args: dict = None,
+                              execution_name: str = None) -> dict:
+
+        mutation = """
+            mutation ExecuteSystemAction (
+                $actionId: ID!,
+                $executionName: String,
+                $systemIds: [ID!]!,
+                $parameters: [SystemActionParameterInput!]!
+            ) {
+                executeSystemAction(actionId: $actionId,
+                    executionName: $executionName,
+                    parameter: $parameters,
+                    systemIds: $systemIds) {
+                        id
+                        name
+                        description
+                        detail
+                        status
+                        start
+                        system {
+                            id 
+                            name
+                        }
+                        log
+                        timestamp
+                        user {
+                            id
+                            principal                            
+                        }
+                        customer {
+                            id
+                            name
+                        }
+                }
+            
+            }
+        """
+        variables = {
+            "actionId": action.value,
+            "systemIds": [system_id],
+            "parameters": [{"key": k, "value": v} for k, v in args.items()]
+        }
+
+        if execution_name is not None:
+            variables["executionName"] = execution_name
+
+        result = self.send_graphql_request(mutation, variables=variables)
+        action_result = dict_get(result, "data", "executeSystemAction")
+
+        return action_result
 
 
 def _compute_avantra_auth_url(url: str) -> str:
@@ -222,6 +369,33 @@ def _compute_avantra_graphql_url(url: str) -> str:
         return url + "/api/graphql"
 
 
+def _compute_avantra_soap_url(url: str) -> str:
+    """
+    Computes the SOAP URL to depending on the given URL.
+    So for example http://localhost/xn will return http://localhost/xn/ws
+    :param url: the given url
+    :return: the Avantra SOAP URL derived from the original url.
+    """
+
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    # Normalize the URL (if it ends with a / remove it)
+    if url.endswith("/"):
+        url = url[:-1]
+
+    if url.endswith("/api/auth"):
+        return url[:-9] + "/ws"
+    if url.endswith("/api/graphql"):
+        return url[:-12] + "/ws"
+    elif url.endswith("/api"):
+        return url[:-4] + "/ws"
+    elif url.endswith("/ws"):
+        return url
+    else:
+        return url + "/ws"
+
+
 def login(module: AnsibleModule) -> str:
     """
     Executes a login to the Avantra API return the API token used to execute the request.
@@ -266,16 +440,19 @@ def create_argument_spec(allow_token: bool = True) -> Dict:
     :return: the argument_spec as dict
     """
 
-    result = dict(
-        avantra_api_url=dict(type='str', required=True),
-        avantra_api_user=dict(type='str', required=False),
-        avantra_api_password=dict(type='str', required=False, no_log=True)
-    )
-
     if allow_token:
-        result[AVANTRA_TOKEN] = dict(type='str', required=False, no_log=True)
-
-    return result
+        return dict(
+            avantra_api_url=dict(type='str', required=True),
+            avantra_api_user=dict(type='str', required=False),
+            avantra_api_password=dict(type='str', required=False, no_log=True),
+            avantra_token=dict(type='str', required=False, no_log=True)
+        )
+    else:
+        return dict(
+            avantra_api_url=dict(type='str', required=True),
+            avantra_api_user=dict(type='str', required=True),
+            avantra_api_password=dict(type='str', required=False, no_log=True),
+        )
 
 
 def dict_get(value: dict, *keys) -> Any:
@@ -298,15 +475,6 @@ def dict_get(value: dict, *keys) -> Any:
             return None
 
     return result
-
-
-# def find_system_by_name_and_customer(
-#         module: AnsibleModule,
-#         system_type: SystemType,
-#         name: str,
-#         customer_name: str = None
-# ) -> Dict:
-#     pass
 
 
 def find_customer_id_by_name(module: AvantraAnsibleModule, customer_name: str) -> int | None:
@@ -480,3 +648,41 @@ def handle_custom_attributes(module: AnsibleModule, target: dict, custom_attribu
                 "name": k,
                 "value": v
             })
+
+
+SOAP_SECURITY_HEADER = Template("""
+    <soapenv:Header>
+        <wsse:Security soapenv:mustUnderstand="1"
+                       xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                       xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+            <wsse:UsernameToken wsu:Id="UsernameToken-${message_id}">
+                <wsse:Username>${username}</wsse:Username>
+                <wsse:Password
+                        Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${password}</wsse:Password>
+                <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">
+                    ${nonce}
+                </wsse:Nonce>
+                <wsu:Created>${timestamp_created}</wsu:Created>
+            </wsse:UsernameToken>
+            <wsu:Timestamp wsu:Id="TS-${message_id}">
+                <wsu:Created>${timestamp_created}</wsu:Created>
+                <wsu:Expires>${timestamp_expires}</wsu:Expires>
+            </wsu:Timestamp>
+        </wsse:Security>
+    </soapenv:Header>
+""")
+
+
+def soap_security_header(username: str, password: str) -> str:
+    message_id = str(uuid1())
+    timestamp_created = datetime.now(timezone.utc)
+    timestamp_expires = timestamp_created + timedelta(seconds=60)
+    nonce = b64encode(message_id.encode("ascii")).decode("ascii")
+    return SOAP_SECURITY_HEADER.substitute(
+        username=username,
+        password=password,
+        message_id=message_id,
+        nonce=nonce,
+        timestamp_created=timestamp_created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        timestamp_expires=timestamp_expires.strftime("%Y-%m-%dT%H:%M:%SZ")
+    )

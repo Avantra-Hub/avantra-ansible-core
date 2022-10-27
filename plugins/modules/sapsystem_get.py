@@ -395,7 +395,7 @@ def run_module():
 
     argument_spec = create_argument_spec()
     argument_spec.update({
-        "system_id": dict(type='int', required=False),
+        "system_id": dict(type='str', required=False),
         "unified_sap_sid": dict(type='str', required=False),
         "customer_name": dict(type='str', required=False),
         "fail_if_not_found": dict(type='bool', required=False, default=True),
