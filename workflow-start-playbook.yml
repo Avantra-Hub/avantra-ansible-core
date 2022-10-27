@@ -1,0 +1,21 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+  vars:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: mis2
+    avantra_api_password: 111111111111
+
+  tasks:
+    - name: "Workflow Start"
+      avantra.core.workflow_start:
+        name: "Test_1"
+        namespace: "mis1"
+        args:
+          parameter1: string
+          parameter2: 42
+          parameter3: false
+      register: workflow_start
+
+    - name: workflow_start
+      ansible.builtin.debug:
+        var: workflow_start
