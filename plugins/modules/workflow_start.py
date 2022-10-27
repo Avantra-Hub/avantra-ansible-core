@@ -5,6 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 
 from typing import Dict
 
+from string import Template
+
 from ansible.module_utils.basic import AnsibleModule
 from datetime import datetime
 
@@ -12,338 +14,30 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
     login, create_argument_spec,
     AVANTRA_TOKEN, AVANTRA_API_USER,
     AVANTRA_API_PASSWORD, dict_get,
-    AvantraAnsibleModule
+    AvantraAnsibleModule, soap_security_header
 )
 
 __metaclass__ = type
 
-ID_QUERY = """
-    query ServerGet($id: ID!) {
-        server(id: $id) {
-            id
-            mst
-            #         checks
-            #         checkCount
-            #         checkCountSummary
-            #         checksRelay
-            customAttributes {
-                id
-                name
-                value
-            }
-            #         customData
-            customer {
-                id
-                name
-            }
-            description
-            maintenance
-            monitorOff
-            monitorOffUntil
-            monitorSwitchReason
-            monitorSwitchDate
-            name
-            operational
-            operationalSince
-            operationalUntil
-            status
-            statusId
-            systemRole
-            type
-            timestamp
-            uuid
-            ipAddress
-            dnsAliases
-            dnsDomain
-            physicalMemory
-            filesystemTotalSize
-            filesystemTotalUsed
-            sapHardwareKey
-            osType
-            osPlatform
-            osName
-            osLongName
-            osVersion
-            osArchitecture
-            notes
-            virtualClusterServer
-            aliveStatus
-            aliveLastUpdate
-            aliveSince
-            javaDetails {
-                extern {
-                    key
-                    value
-                }
-                externVersion
-                externJavaHome
-                intern {
-                    key
-                    value
-                }
-                internVersion
-    # 			scanTime
-            }
-            cpuDetails {
-                name
-                model
-                vendor
-                mhz
-                totalCores
-            }
-            cloudDetails {
-                name
-                type
-            }
-            gateway
-            natTraversal
-            publicKey
-            applicationType
-            rtmStatus
-            rtmDate
-            timezone
-            # 		nodeOf
-            # 		nodes
-            # 		activeNode
-            # 		sapInstances
-            sapInstanceCount
-            # 		sapSystems
-            sapSystemCount
-            # 		cloudServices
-            cloudServiceCount
-            # 		businessObjects
-            businessObjectCount
-            # 		databases
-            databaseCount
-            # 		actions
-            # 		performance
-            agentVersion
-            administrator {
-                id
-                principal
-                firstname
-                lastname
-                email
-                emailAlternative
-            }
-            administratorDeputy {
-                id
-                principal
-                firstname
-                lastname
-                email
-                emailAlternative
-            }
-            remote
-            #         info
-            assignedSLA {
-                id
-                name
-            }
-            # 		cloudServiceAuthentication
-            monitorLevel
-            credentials {
-                id
-                purpose {
-                    key
-                    id
-                    name
-                }
-                ... on BasicAuthenticationCredentials {
-                    basicUser: username
-                    password
-                }
-                ... on RfcAuthenticationCredentials {
-                    rfcUser: username
-                    password
-                }
-                ... on SapControlCredentials {
-                    sapControlUser: username
-                    password
-                    privateKey
-                    privateKeyPassphrase
-                }
-                ... on SshCredentials {
-                    hostname
-                    port
-                    username
-                    password
-                    identity
-                    identityPassphrase
-                }
-            }
-        }
-    }
-"""
-
-SID_QUERY = """
-    query ServerGetByServerName($server_name: String!, $customer_name: String!) {
-        systems(
-            where: {
-                filterBy: [
-                    { name: "type", operator: eq, value: "SERVER" }
-                    { name: "name", operator: eq, value: $server_name }
-                    { name: "customer.name", operator: eq, value: $customer_name }
-                ]
-            }
-        ) {
-            ... on Server {
-                id
-                mst
-                #         checks
-                #         checkCount
-                #         checkCountSummary
-                #         checksRelay
-                customAttributes {
-                    id
-                    name
-                    value
-                }
-                #         customData
-                customer {
-                    id
-                    name
-                }
-                description
-                maintenance
-                monitorOff
-                monitorOffUntil
-                monitorSwitchReason
-                monitorSwitchDate
-                name
-                operational
-                operationalSince
-                operationalUntil
-                status
-                statusId
-                systemRole
-                type
-                timestamp
-                uuid
-                ipAddress
-                dnsAliases
-                dnsDomain
-                physicalMemory
-                filesystemTotalSize
-                filesystemTotalUsed
-                sapHardwareKey
-                osType
-                osPlatform
-                osName
-                osLongName
-                osVersion
-                osArchitecture
-                notes
-                virtualClusterServer
-                aliveStatus
-                aliveLastUpdate
-                aliveSince
-                javaDetails {
-                    extern {
-                        key
-                        value
-                    }
-                    externVersion
-                    externJavaHome
-                    intern {
-                        key
-                        value
-                    }
-                    internVersion
-                    # 			scanTime
-                }
-                cpuDetails {
-                    name
-                    model
-                    vendor
-                    mhz
-                    totalCores
-                }
-                cloudDetails {
-                    name
-                    type
-                }
-                gateway
-                natTraversal
-                publicKey
-                applicationType
-                rtmStatus
-                rtmDate
-                timezone
-                # 		nodeOf
-                # 		nodes
-                # 		activeNode
-                # 		sapInstances
-                sapInstanceCount
-                # 		sapSystems
-                sapSystemCount
-                # 		cloudServices
-                cloudServiceCount
-                # 		businessObjects
-                businessObjectCount
-                # 		databases
-                databaseCount
-                # 		actions
-                # 		performance
-                agentVersion
-                administrator {
-                    id
-                    principal
-                    firstname
-                    lastname
-                    email
-                    emailAlternative
-                }
-                administratorDeputy {
-                    id
-                    principal
-                    firstname
-                    lastname
-                    email
-                    emailAlternative
-                }
-                remote
-                #         info
-                assignedSLA {
-                    id
-                    name
-                }
-                # 		cloudServiceAuthentication
-                monitorLevel
-                credentials {
-                    id
-                    purpose {
-                        key
-                        id
-                        name
-                    }
-                    ... on BasicAuthenticationCredentials {
-                        basicUser: username
-                        password
-                    }
-                    ... on RfcAuthenticationCredentials {
-                        rfcUser: username
-                        password
-                    }
-                    ... on SapControlCredentials {
-                        sapControlUser: username
-                        password
-                        privateKey
-                        privateKeyPassphrase
-                    }
-                    ... on SshCredentials {
-                        hostname
-                        port
-                        username
-                        password
-                        identity
-                        identityPassphrase
-                    }
-                }
-            }
-        }
-    }
-"""
+SOAP_WORKFLOW_ARG = Template("<web:args><web:key>${key}</web:key><web:value>${value}</web:value></web:args>")
+SOAP_WORKFLOW_ARG_NO_VALUE = Template("<web:args><web:key>${key}</web:key></web:args>")
+SOAP_WORKFLOW_VARIANT = Template("<web:variant>${variant}</web:variant>")
+SOAP_WORKFLOW_START = Template("""
+<soapenv:Envelope 
+    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+    xmlns:web="http://www.syslink.ch/2013/xandria/webservice">
+    ${header} 
+   <soapenv:Body>
+      <web:StartAutomationWorkflowRequest>
+         <web:name>${name}</web:name>
+         <web:namespace>${namespace}</web:namespace>
+         ${arguments}               
+         ${variant}   
+         <web:ignoreDefaultVariant>${ignore_default_variant}</web:ignoreDefaultVariant>
+      </web:StartAutomationWorkflowRequest>
+   </soapenv:Body>
+</soapenv:Envelope>
+""")
 
 DOCUMENTATION = r'''
 ---
@@ -411,13 +105,13 @@ message:
 def run_module():
     result = {}
 
-    argument_spec = create_argument_spec()
+    argument_spec = create_argument_spec(allow_token=False)
     argument_spec.update({
-        "system_id": dict(type='int', required=False),
-        "server_name": dict(type='str', required=False),
-        "customer_name": dict(type='str', required=False),
-        "fail_if_not_found": dict(type='bool', required=False, default=True),
-        "args": dict(required=False, default={}),
+        "name": dict(type='str', required=True),
+        "namespace": dict(type='str', required=True),
+        "variant": dict(type='str', required=False),
+        "ignore_default_variant": dict(type='str', required=False, default=False),
+        "args": dict(type="dict", required=False, default={})
     })
 
     module = AvantraAnsibleModule(
@@ -425,11 +119,9 @@ def run_module():
         supports_check_mode=True,
         required_together=[
             (AVANTRA_API_USER, AVANTRA_API_PASSWORD),
-            ("server_name", "customer_name")
         ],
         required_one_of=[
-            (AVANTRA_API_USER, AVANTRA_TOKEN),
-            ("system_id", "server_name"),
+            AVANTRA_API_USER,
         ]
     )
 
@@ -439,48 +131,46 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
-    if AVANTRA_TOKEN not in module.params:
-        module.params[AVANTRA_TOKEN] = login(module)
+    variables = {
+        "name": module.params.get("name"),
+        "namespace": module.params.get("namespace")
+    }
 
-    if "system_id" in module.params and module.params["system_id"] is not None:
-        result = _load_by_system_id(module)
-    elif "server_name" in module.params and "customer_name" in module.params:
-        result = _load_by_server_name(module)
+    if module.params.get("ignore_default_variant"):
+        variables["ignore_default_variant"] = "true"
     else:
-        module.fail_json(rc=1004, msg=f"Unknown argument setup")
+        variables["ignore_default_variant"] = "false"
+
+    if module.params.get("variant") is not None:
+        variables["variant"] = SOAP_WORKFLOW_VARIANT.substitute(variant=module.params.get("variant"))
+    else:
+        variables["variant"] = ""
+
+    args = module.params.get("args")
+    if args is not None and isinstance(args, dict) and len(args) > 0:
+        arguments = []
+        for k, v in args.items():
+
+            if v is None:
+                arguments.append(SOAP_WORKFLOW_ARG.substitute(key=k, value=""))
+            if isinstance(v, bool):
+                arguments.append(SOAP_WORKFLOW_ARG.substitute(key=k, value=str(v).lower()))
+            else:
+                arguments.append(SOAP_WORKFLOW_ARG.substitute(key=k, value=v))
+        variables["arguments"] = "\n".join(arguments)
+    else:
+        variables["arguments"] = ""
+
+    variables["header"] = soap_security_header(
+        username=module.params.get("avantra_api_user", ""),
+        password=module.params.get("avantra_api_password", "")
+    )
+
+    soap = SOAP_WORKFLOW_START.substitute(**variables)
+
+    result["response"] = module.send_soap_request(soap)
 
     module.exit_json(**result)
-
-
-def _load_by_system_id(module: AvantraAnsibleModule) -> Dict:
-    system_id = module.params["system_id"]
-    result: dict = send_graphql_request(module, query=ID_QUERY, variables={"id": system_id})
-    server = dict_get(result, "data", "server")
-    if module.params["fail_if_not_found"] and server is None:
-        module.fail_json(rc=1003, msg=f"Server for ID {system_id} could not be found: {result}")
-
-    return {"server": server}
-
-
-def _load_by_server_name(module: AvantraAnsibleModule) -> Dict:
-    server_name = module.params["server_name"]
-    customer_name = module.params["customer_name"]
-    result: dict = module.send_graphql_request(
-        query=SID_QUERY,
-        variables={"server_name": server_name,
-                   "customer_name": customer_name}
-    )
-    servers = dict_get(result, "data", "systems")
-    if servers is None or len(servers) == 0:
-        servers = [None]
-
-    if module.params["fail_if_not_found"]:
-        if servers[0] is None:
-            module.fail_json(rc=1003,
-                             msg=f"Server for server name '{server_name}' and customer name '{customer_name}' could "
-                                 f"not be found: {result}")
-
-    return {"server": servers[0]}
 
 
 def main():
