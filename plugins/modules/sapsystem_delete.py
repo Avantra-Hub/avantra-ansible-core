@@ -20,32 +20,15 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: customer
+module: sapsystem_delete
 
-short_description: This module handles Avantra customers
+short_description: remove SAP systems from Avantra
 
-version_added: "1.0.0"
+version_added: "23.0.0"
 
-description: This is my longer description explaining my test module.
+description: This module can delete SAP systems from the Avantra system.
 
-options:
-    name:
-        description: This is the message to send to the test module.
-        required: true
-        type: str
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
-        required: false
-        type: bool
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
-extends_documentation_fragment:
-    - avantra.core.my_doc_fragment_name
-
-author:
-    - Your Name (@yourGitHubHandle)
+options:    
 '''
 
 EXAMPLES = r'''

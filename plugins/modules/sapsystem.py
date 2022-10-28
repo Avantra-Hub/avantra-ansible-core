@@ -9,11 +9,25 @@ from ansible.module_utils.basic import AnsibleModule
 from datetime import datetime
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
-    login, create_argument_spec,
-    AVANTRA_TOKEN, AVANTRA_API_USER,
+    create_argument_spec,
+    login,
+    AVANTRA_TOKEN,
+    AVANTRA_API_USER,
     AVANTRA_API_PASSWORD,
-    dict_get, find_customer_id_by_name, CredentialType,
-    handle_credentials, handle_custom_attributes, AvantraAnsibleModule
+    dict_get,
+    find_customer_id_by_name,
+    CredentialType,
+    handle_credentials,
+    handle_custom_attributes,
+    AvantraAnsibleModule
+)
+
+
+from ansible_collections.avantra.core.plugins.module_utils.sapsystem import (
+    create_sapsystem,
+    update_sapsystem,
+    delete_sapsystem,
+    fetch_sapsystem,
 )
 
 __metaclass__ = type
@@ -425,6 +439,8 @@ def run_module():
 
     argument_spec = create_argument_spec()
     argument_spec.update({
+        "exist": dict(type='str', required=False, choices=["present", "absent"], default="present"),
+        "run": dict(type='str', required=False, choices=["started", "stopped", "restarted"]),
         "unified_sap_sid": dict(type='str', required=True),
         "real_sap_sid": dict(type='str', required=True),
         "customer_name": dict(type='str', required=True),
@@ -463,68 +479,15 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
-    # Fetch the customer by name. This could be improved by allowing customer
-    # name segments to allow to fetch directly sub-customer ... something like "A/B/C"
-    customer_name = module.params["customer_name"]
-    customer_id = find_customer_id_by_name(module, customer_name)
-    if customer_id is None:
-        module.fail_json(rc=1005, msg=f"Customer with name '{customer_name}' could not be found")
+    exist_state = module.params.get("exist").lower()
+    if exist_state == "present":
+        pass
+    elif exist_state == "absent":
 
-    # Prepare the input
-    sap_system_input = {"customerId": customer_id}
 
-    def _assign(key: str, query_key: str = None, only_if_not_none: bool = False):
-        if query_key is None:
-            query_key = key
-        if only_if_not_none:
-            if module.params[key] is not None:
-                sap_system_input[query_key] = module.params[key]
-        else:
-            sap_system_input[query_key] = module.params[key]
-
-    _assign("unified_sap_sid", "unifiedSapSid")
-    _assign("real_sap_sid", "realSapSid")
-    _assign("description", only_if_not_none=True)
-    _assign("notes", only_if_not_none=True)
-    _assign("remote_monitoring_entry_point", "remoteMonitoringEntryPoint")
-    _assign("remote_monitoring_server_system_id", "remoteMonitoringServerSystemId")
-    _assign("monitoring")
-    _assign("system_role", "systemRole")
-    _assign("timezone", only_if_not_none=True)
-    _assign("application_type", "applicationType", only_if_not_none=True)
-
-    database = module.params["database"]
-    if database is not None and len(database) > 0:
-        sap_system_input["database"] = {
-            "monitoringServerSystemId": database.get("monitoring_server_system_id"),
-            "host": database.get("host"),
-            "port": database.get("port"),
-            "name": database.get("name")
-        }
-
-    handle_custom_attributes(module, sap_system_input, module.params["custom_attributes"])
-
-    credentials = handle_credentials(module, module.params["credentials"])
-
-    create_sap_system = module.send_graphql_request(
-        query=CREATE_MUTATION,
-        variables={
-            "input": sap_system_input,
-            "basicCredentials": credentials.get(CredentialType.BASIC),
-            "sshCredentials": credentials.get(CredentialType.SSH),
-            "sapControlCredentials": credentials.get(CredentialType.SAP_CONTROL),
-            "rfcCredentials": credentials.get(CredentialType.RFC),
-            "oauthCodeCredentials": credentials.get(CredentialType.OAUTH2_CODE),
-            "oauthClientCredentials": credentials.get(CredentialType.OAUTH2_CLIENT),
-        }
-    )
-
-    op_result = dict_get(create_sap_system, "data", "createSapSystem", "result")
-    sap_system = dict_get(create_sap_system, "data", "createSapSystem", "sapSystem")
-    if op_result is None or not op_result["success"] or sap_system is None:
-        module.fail_json(rc=1006, msg="Could not create the SAP system", result=create_sap_system)
-
-    result = {"sapSystem": sap_system}
+        pass
+    else:
+        module.fail_json(msg="Wrong exist state: {0}".format(exist_state))
 
     module.exit_json(**result)
 

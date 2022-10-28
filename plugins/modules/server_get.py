@@ -351,7 +351,7 @@ module: customer
 
 short_description: This module handles Avantra customers
 
-version_added: "1.0.0"
+version_added: "23.0.0"
 
 description: This is my longer description explaining my test module.
 

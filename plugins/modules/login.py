@@ -13,64 +13,58 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: customer
+module: login
 
-short_description: This module handles Avantra customers
+short_description: authentication operations 
 
-version_added: "1.0.0"
+version_added: "23.0.0"
 
-description: This is my longer description explaining my test module.
+description: >
+    With this module a authentication token can be fetched from an defined 
+    Avantra API endpoint url for username and password. A registered authentication 
+    token can be used in the following Avantra module usages.        
 
-options:
-    name:
-        description: This is the message to send to the test module.
-        required: true
-        type: str
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
-        required: false
-        type: bool
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
 extends_documentation_fragment:
-    - avantra.core.my_doc_fragment_name
-
-author:
-    - Your Name (@yourGitHubHandle)
+    - avantra.core.auth_options
+    - avantra.core.seealso
+    - avantra.core.author_mis
+    - avantra.core.check_mode_unsupported
 '''
 
 EXAMPLES = r'''
-# Pass in a message
-- name: Test with a message
-  avantra.core.customer:
-    name: hello world
+# Authenticate against endpoint and print registered token
+- name: Authenticate against Avantra API
+  avantra.core.login:
+    avantra_api_url: https://avantra-ui/xn
+    avantra_api_user: <username>
+    avantra_api_password: <password>
+  register: auth
+- name: Print the authentication token
+  ansible.builtin.debug:
+    var: auth.token
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  avantra.core.customer:
-    name: hello world
-    new: true
-
-# fail the module
-- name: Test failure of the module
-  avantra.core.customer:
-    name: fail me
+# Do not define the authentication options directly in the task 
+# but use variables
+vars:
+  avantra_api_url: https://avantra-ui/xn
+  avantra_api_user: <username>
+  avantra_api_password: <password>
+  
+tasks:
+  - name: Authenticate against Avantra API
+    avantra.core.login:    
+    register: auth
+  - name: Print the authentication token
+    ansible.builtin.debug:
+      var: auth.token
 '''
 
 RETURN = r'''
-# These are examples of possible return values, and in general should use other names for return values.
-original_message:
-    description: The original name param that was passed in.
+token:
+    description: The token to be used during a playbook.
     type: str
-    returned: always
-    sample: 'hello world'
-message:
-    description: The output message that the test module generates.
-    type: str
-    returned: always
-    sample: 'goodbye'
+    returned: success
+    sample: eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJtaXMyIiwicm9sZXMiOltdLCJpYXQiOjE2NjY4OTg3NzEsImV4cCI6MTY2NjkyMDM3MX0...
 '''
 
 

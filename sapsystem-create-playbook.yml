@@ -28,6 +28,15 @@
         var: find_sapsystem
 
     - name: Create SAP system
+      avantra.core.sapsystem:
+        exist: present|absent
+        run: started|stopped|restarted
+
+
+
+
+
+    - name: Create SAP system
       avantra.core.sapsystem_create:
         avantra_token: "{{auth.token}}"
         unified_sap_sid: "SMA_REMOTE2"
@@ -72,7 +81,7 @@
             password: basic3
 
       register: create_sapsystem
-      when: find_sapsystem.sapSystem == None
+      when: find_sapsystem.sap_system is undefined or find_sapsystem.sap_system == None
 
     - name: Print return information from the previous task
       ansible.builtin.debug:
