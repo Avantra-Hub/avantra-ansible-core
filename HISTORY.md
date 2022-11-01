@@ -31,3 +31,11 @@ https://docs.ansible.com/ansible/latest/dev_guide/developing_collections_structu
 ```shell
 $ ansible-test sanity --docker default -v
 ```
+
+
+## TODO ##
+
+- changed
+- check mode
+- tests
+- README.md
