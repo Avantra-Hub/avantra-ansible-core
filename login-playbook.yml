@@ -1,0 +1,15 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+
+  tasks:
+
+    # Authenticate against endpoint and print registered token
+    - name: Authenticate against Avantra API
+      avantra.core.login:
+        avantra_api_url: http://localhost:8090/xn
+        avantra_api_user: mis2
+        avantra_api_password: REDACTED
+      register: auth
+    - name: Print the authentication token
+      ansible.builtin.debug:
+        var: auth
