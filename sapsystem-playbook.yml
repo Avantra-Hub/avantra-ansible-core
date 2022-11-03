@@ -1,0 +1,132 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+  vars:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: mis2
+    avantra_api_password: 111111111111
+
+  tasks:
+
+    - name: Login to Avantra API and fetch a token
+      avantra.core.login:
+      register: auth
+
+    - name: Check login token
+      ansible.builtin.debug:
+        var: auth
+
+
+    - name: Check presence of SAP system
+      avantra.core.sapsystem:
+        exists_state: present
+        unified_sap_sid: "SMA_REMOTE"
+        real_sap_sid: "SMA"
+        customer_name: "mis"
+        system_role: "Development"
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Check absence of SAP system
+      avantra.core.sapsystem:
+        exists_state: absent
+        unified_sap_sid: "SMA_REMOTE2"
+        customer_name: "mis"
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Create a new SAP system SMA_REMOTE3
+      avantra.core.sapsystem:
+        exists_state: present
+        run_state: started
+        unified_sap_sid: "SMA_REMOTE3"
+        customer_name: "mis"
+        real_sap_sid: "SM3"
+        system_role: "Sandpit"
+        timezone: "UTC"
+        monitoring: true
+        notes: "This is a simple note."
+        description: "This is a simple description."
+        remote_monitoring_entry_point: "http://10.103.15.117:50013"
+        remote_monitoring_server_system_id: 1
+        database:
+          monitoring_server_system_id: 1
+          host: "golf"
+          name: "SMA"
+          port: 2222
+        credentials:
+          avantra.defaultRfcUser:
+            cred_type: rfc
+            username: default_adm
+            password: bladibla
+          avantra.sapControl:
+            cred_type: sap_control
+            username: smaadm
+            password: ropGO01
+          avantra.sap:
+            cred_type: rfc
+            username: aaaa2
+            password: aaaa2
+          avantra.j2eeUser:
+            cred_type: basic
+            username: hello
+            password: basic
+          avantra.abapDbSchema:
+            cred_type: basic
+            username: hello2
+            password: basic2
+          avantra.javaDbSchema:
+            cred_type: basic
+            username: hello3
+            password: basic3
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Restart
+      avantra.core.sapsystem:
+        exists_state: present
+        run_state: restarted
+        run_options:
+          execution_name: "Hello World!"
+          with_database: true
+          with_servers: true
+        unified_sap_sid: "SMA_REMOTE3"
+        customer_name: "mis"
+
+    - name: Stop
+      avantra.core.sapsystem:
+        exists_state: present
+        run_state: stopped
+        unified_sap_sid: "SMA_REMOTE3"
+        customer_name: "mis"
+
+    - name: Change monitoring OFF
+      avantra.core.sapsystem:
+        avantra_token: "{{auth.token}}"
+        unified_sap_sid: "SMA_REMOTE3"
+        customer_name: "mis"
+        monitoring: false
+      register: result
+
+    - name: Change monitoring ON
+      avantra.core.sapsystem:
+        avantra_token: "{{auth.token}}"
+        unified_sap_sid: "SMA_REMOTE3"
+        customer_name: "mis"
+        monitoring: true
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+
+
