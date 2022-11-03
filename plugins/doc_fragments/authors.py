@@ -8,7 +8,7 @@ __metaclass__ = type
 class ModuleDocFragment(object):
 
     DOCUMENTATION = r"""
-options: {}
-notes:
-- This module does NOT support C(check_mode).
+options: {}    
+author: 
+    - Michael Szediwy <michael.szediwy@avantra.com>
 """

@@ -1,43 +1,20 @@
+# -*- coding: utf-8 -*-
 from __future__ import (absolute_import, division, print_function)
 
-from ansible_collections.avantra.core.plugins.module_utils.snake_case import (
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
     camel_to_snake_case,
-    cameldict_to_snake_case
+    cameldict_to_snake_case,
+    dict_get
 )
 
-import pytest
 import json
+import pytest
 
 
-class AnsibleModuleExit(Exception):
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
-
-class ExitJson(AnsibleModuleExit):
-    pass
-
-
-class FailJson(AnsibleModuleExit):
-    pass
-
-
-class FakeAnsibleModule:
-    def __init__(self):
-        self.params = {}
-        self.tmpdir = None
-
-    def exit_json(self, *args, **kwargs):
-        raise ExitJson(*args, **kwargs)
-
-    def fail_json(self, *args, **kwargs):
-        raise FailJson(*args, **kwargs)
-
-
-@pytest.fixture
-def fake_ansible_module():
-    return FakeAnsibleModule()
+def test_dict_get():
+    result = json.loads('{"data": {"sapSystem": {"id": "5", "name": "SMA_REMOTE"}}}')
+    assert dict_get(result, "data", "sapSystem") is not None
 
 
 def test_cameldict_to_snake_case():

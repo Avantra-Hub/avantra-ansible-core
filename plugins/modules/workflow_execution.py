@@ -3,18 +3,20 @@
 # Copyright: (c) 2022 Avantra
 from __future__ import (absolute_import, division, print_function)
 
-from typing import Dict
-
 from string import Template
 
-from ansible.module_utils.basic import AnsibleModule
-from datetime import datetime
+from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
+    cameldict_to_snake_case,
+    dict_get
+)
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
-    login, create_argument_spec,
-    AVANTRA_TOKEN, AVANTRA_API_USER,
-    AVANTRA_API_PASSWORD, dict_get,
-    AvantraAnsibleModule, soap_security_header
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
+    create_argument_spec,
+    AVANTRA_API_USER,
+    AVANTRA_API_PASSWORD,
+    AvantraAnsibleModule,
+    soap_security_header
 )
 
 __metaclass__ = type
@@ -39,66 +41,72 @@ SOAP_WORKFLOW_START = Template("""
 </soapenv:Envelope>
 """)
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
-module: customer
+module: workflow_execution
 
-short_description: This module handles Avantra customers
+short_description: execute Avantra workflows
 
-version_added: "23.0.0"
+version_added: "23.0.1"
 
-description: This is my longer description explaining my test module.
+description: 
+- Allow you to trigger Avantra workflows and setting the input variables. 
+- It is not possible to stop or cancel the execution using this module.
 
 options:
     name:
-        description: This is the message to send to the test module.
-        required: true
-        type: str
-    new:
         description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
+        - Select workflow name to execute
+        type: str
+        required: true
+    namespace:
+        description:
+        - Select the namespace of the workflow namespace to execute. 
+        - I(name) and I(namespace) identify the workflow that is executed.
+        type: str
+        required: true
+    variant:
+        description:
+        - You can select a specific workflow variant to execute.
+        type: str
         required: false
+    ignore_default_variant:
+        description:
+        - If there is a default I(variant) configured for the selected workflow it can be ignored 
+          with C(ignore_default_variant=false).
         type: bool
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
+        required: true
+        default: false
+    args:
+        description:
+        - "Allows you to define the input parameters for the workflow to start in the form C(key: value)."
+        type: dict
+        required: false
+    
 extends_documentation_fragment:
-    - avantra.core.my_doc_fragment_name
+    - avantra.core.auth_options
+    - avantra.core.seealso
+    - avantra.core.authors
+    - avantra.core.check_mode_unsupported    
+"""
 
-author:
-    - Your Name (@yourGitHubHandle)
-'''
-
-EXAMPLES = r'''
-# Pass in a message
-- name: Test with a message
-  avantra.core.customer:
-    name: hello world
-
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  avantra.core.customer:
-    name: hello world
-    new: true
-
-# fail the module
-- name: Test failure of the module
-  avantra.core.customer:
-    name: fail me
-'''
+EXAMPLES = r"""
+- name: "Workflow Start"
+  avantra.core.workflow_execution:
+    name: call_api
+    namespace: demo
+    args:
+      user: <user>
+      pw: <password>
+      data1: <data1>        
+"""
 
 RETURN = r'''
-# These are examples of possible return values, and in general should use other names for return values.
-original_message:
-    description: The original name param that was passed in.
+execution_id:
+    description: The ID of the triggered execution.
     type: str
-    returned: always
-    sample: 'hello world'
-message:
-    description: The output message that the test module generates.
-    type: str
-    returned: always
-    sample: 'goodbye'
+    returned: success
+    sample: '457'
 '''
 
 
@@ -109,9 +117,9 @@ def run_module():
     argument_spec.update({
         "name": dict(type='str', required=True),
         "namespace": dict(type='str', required=True),
-        "variant": dict(type='str', required=False),
-        "ignore_default_variant": dict(type='str', required=False, default=False),
-        "args": dict(type="dict", required=False, default={})
+        "variant": dict(type='str'),
+        "ignore_default_variant": dict(type='str', default=False),
+        "args": dict(type="dict", default={})
     })
 
     module = AvantraAnsibleModule(
@@ -168,7 +176,7 @@ def run_module():
 
     soap = SOAP_WORKFLOW_START.substitute(**variables)
 
-    result["response"] = module.send_soap_request(soap)
+    result["execution_id"] = dict_get(module.send_soap_request(soap), "Envelope", "Body", "StartAutomationWorkflowResponse", "executionId")
 
     module.exit_json(**result)
 
