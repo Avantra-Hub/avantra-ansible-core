@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,34 +17,28 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
-    AvantraAnsibleModule
-)
-
 __metaclass__ = type
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: login
 
-short_description: authentication operations 
-
-version_added: "23.0.1"
+short_description: authentication operations
 
 description: >
-    With this module a authentication token can be fetched from an defined 
-    Avantra API endpoint url for username and password. A registered authentication 
-    token can be used in the following Avantra module usages.        
+    With this module a authentication token can be fetched from an defined
+    Avantra API endpoint url for username and password. A registered authentication
+    token can be used in the following Avantra module usages.
 
 extends_documentation_fragment:
     - avantra.core.auth_options
     - avantra.core.seealso
     - avantra.core.authors
     - avantra.core.check_mode_unsupported
-'''
+    - avantra.core.version_added_23_0
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Authenticate against endpoint and print registered token
 - name: Authenticate against Avantra API
   avantra.core.login:
@@ -54,31 +48,20 @@ EXAMPLES = r'''
   register: auth
 - name: Print the authentication token
   ansible.builtin.debug:
-    var: auth.token
+    var: auth
+"""
 
-# Do not define the authentication options directly in the task 
-# but use variables
-vars:
-  avantra_api_url: https://avantra-ui/xn
-  avantra_api_user: <username>
-  avantra_api_password: <password>
-  
-tasks:
-  - name: Authenticate against Avantra API
-    avantra.core.login:    
-    register: auth
-  - name: Print the authentication token
-    ansible.builtin.debug:
-      var: auth.token
-'''
-
-RETURN = r'''
+RETURN = r"""
 token:
     description: The token to be used during a playbook.
     type: str
     returned: success
     sample: eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJtaXMyIiwicm9sZXMiOltdLCJpYXQiOjE2NjY4OTg3NzEsImV4cCI6MTY2NjkyMDM3MX0...
-'''
+"""
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
+    AvantraAnsibleModule
+)
 
 
 def run_module():

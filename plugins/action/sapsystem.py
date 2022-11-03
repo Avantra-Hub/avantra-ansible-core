@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +15,42 @@
 # limitations under the License.
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
-from ansible_collections.avantra.core.plugins.action._avantra_base import AvantraActionModule
+from typing import Dict
+from ansible.plugins.action import ActionBase
+from ansible.errors import AnsibleActionFail
+from ansible.utils.display import Display
 
-class ActionModule(AvantraActionModule):
+display = Display()
+
+
+def _load_key(module_args, task_vars, key):
+    if key not in module_args and key in task_vars:
+        module_args[key] = task_vars[key]
+
+
+class AvantraActionModule(ActionBase):
+
     def run(self, tmp=None, task_vars=None):
-        return super(ActionModule, self).run(tmp, task_vars)
+
+        super(AvantraActionModule, self).run(tmp, task_vars)
+        module_args = self._task.args.copy()
+        # We have to check for those variables if the task does not define it.
+        if "avantra_token" not in module_args:
+            for p in ["avantra_api_user", "avantra_api_password", "avantra_api_url"]:
+                _load_key(module_args, task_vars, p)
+                if p not in module_args:
+                    raise AnsibleActionFail("Couldn't find value for parameter: '{0}'".format(p))
+        else:
+            for p in ["avantra_api_url"]:
+                _load_key(module_args, task_vars, p)
+                if p not in module_args:
+                    raise AnsibleActionFail("Couldn't find value for parameter: '{0}'".format(p))
+
+        module_return = self._execute_module(module_args=module_args, task_vars=task_vars)
+        if module_return.get("warnings") is not None:
+            for w in module_return["warnings"]:
+                display.warning(w)
+
+        return dict(module_return)

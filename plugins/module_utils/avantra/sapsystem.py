@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +16,8 @@
 
 from __future__ import (absolute_import, division, print_function)
 
+__metaclass__ = type
+
 from datetime import datetime, timedelta
 from string import Template
 
@@ -31,7 +32,8 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.customer impo
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
     cameldict_to_snake_case,
     dict_get,
-    parse_api_date_time
+    parse_api_date_time,
+    format_api_date_time
 )
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.credentials import (
@@ -40,7 +42,7 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.credentials i
 )
 
 
-def create_sapsystem(module: AvantraAnsibleModule, unified_sap_sid: str, customer_name: str) -> (bool, str, dict):
+def create_sapsystem(module, unified_sap_sid, customer_name):
     # Fetch the customer by name. This could be improved by allowing customer
     # name segments to allow to fetch directly sub-customer ... something like "A/B/C"
     success, msg, customer = fetch_customer(module, customer_name)
@@ -50,7 +52,7 @@ def create_sapsystem(module: AvantraAnsibleModule, unified_sap_sid: str, custome
     # Prepare the input
     sap_system_input = {"customerId": customer["id"]}
 
-    def _assign(key: str, query_key: str = None, only_if_not_none: bool = False):
+    def _assign(key, query_key=None, only_if_not_none=False):
         if query_key is None:
             query_key = key
         if only_if_not_none:
@@ -114,11 +116,11 @@ def create_sapsystem(module: AvantraAnsibleModule, unified_sap_sid: str, custome
         return True, "Successfully created the SAP system", cameldict_to_snake_case(sap_system)
 
 
-def update_sapsystem(module: AvantraAnsibleModule, data: dict) -> dict:
+def update_sapsystem(module, data):
     pass
 
 
-def delete_sapsystem(module: AvantraAnsibleModule, sap_system_id: str) -> (bool, str):
+def delete_sapsystem(module, sap_system_id):
     delete_sap_system = module.send_graphql_request(
         query="""mutation DeleteSapSystem($id: ID!) {
                 deleteSapSystem(input: { id: $id }) {
@@ -143,11 +145,11 @@ def delete_sapsystem(module: AvantraAnsibleModule, sap_system_id: str) -> (bool,
 
 
 def fetch_sapsystem(
-        module: AvantraAnsibleModule,
-        unified_sap_sid: str,
-        customer_name: str,
-        remove_checks: bool = False
-) -> (bool, str, dict):
+        module,
+        unified_sap_sid,
+        customer_name,
+        remove_checks=False
+):
     variables = {
         "unified_sap_sid": unified_sap_sid,
         "customer_name": customer_name
@@ -160,8 +162,8 @@ def fetch_sapsystem(
     sap_systems = dict_get(result, "data", "systems")
 
     if sap_systems is None or len(sap_systems) == 0:
-        return False, "SAP system can not be found unified_sap_si={} customer_name={}" \
-            .format(unified_sap_sid, customer_name), None
+        return False, "SAP system can not be found unified_sap_si={0} " \
+                      "customer_name={1}".format(unified_sap_sid, customer_name), None
 
     sap_system = cameldict_to_snake_case(sap_systems[0])
 
@@ -172,11 +174,11 @@ def fetch_sapsystem(
 
 
 def turn_monitoring_off(module,
-                        sap_system_id: str,
-                        note: str = None,
-                        cascade: bool = False,
-                        until: datetime = None
-                        ) -> (bool, str, dict):
+                        sap_system_id,
+                        note=None,
+                        cascade=False,
+                        until=None
+                        ):
     until_str = None
     if until is not None:
         until_str = format_api_date_time(until)
@@ -199,10 +201,10 @@ def turn_monitoring_off(module,
 
 
 def turn_monitoring_on(module,
-                       sap_system_id: str,
-                       note: str = None,
-                       cascade: bool = False
-                       ) -> (bool, str, dict):
+                       sap_system_id,
+                       note=None,
+                       cascade=False
+                       ):
     turn_on_result = module.send_graphql_request(
         query=MONI_ON_MUTATION,
         variables={
@@ -230,8 +232,8 @@ FRAGMENT = """
         id
         name
         status
-        lastRefresh				
-    }                    
+        lastRefresh
+    }
     customAttributes {
         id
         name
@@ -376,13 +378,13 @@ FETCH_QUERY = Template("""
                     where: {
                         filterBy: [
                             { name: "type", operator: eq, value: "SAP_SYSTEM" }
-                            { name: "name", operator: eq, value: $$unified_sap_sid }                            
+                            { name: "name", operator: eq, value: $$unified_sap_sid }
                             { name: "customer.name", operator: eq, value: $$customer_name }
                         ]
                     }
-                ) { 
+                ) {
                 ... on SapSystem {
-                    ${fragment}        
+                    ${fragment}
                 }
             }
         }""").substitute(fragment=FRAGMENT)
@@ -403,7 +405,7 @@ CREATE_MUTATION = Template("""
                 message
                 code
             }
-    
+
             credentials {
                 setBasicCredentials(input: $$basicCredentials) {
                     result {
@@ -412,7 +414,7 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-    
+
                 setSshCredentials(input: $$sshCredentials) {
                     result {
                         code
@@ -420,7 +422,7 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-                
+
                 setSapControlCredentials(input: $$sapControlCredentials) {
                     result {
                         code
@@ -428,7 +430,7 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-                
+
                 setRfcCredentials(input: $$rfcCredentials) {
                     result {
                         code
@@ -436,7 +438,7 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-                
+
                 setOAuthCodeCredentials(input: $$oauthCodeCredentials) {
                     result {
                         code
@@ -444,7 +446,7 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-                
+
                 setOAuthClientCredentials(input: $$oauthClientCredentials) {
                     result {
                         code
@@ -452,9 +454,9 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-                
+
             }
-    
+
             sapSystem {
                 ${fragment}
             }
@@ -481,7 +483,7 @@ MONI_ON_MUTATION = Template("""
         turnMonitoringOnForSapSystem(
             id: $$id
             cascade: $$cascade
-            note: $$note        
+            note: $$note
         ) {
             ${fragment}
         }

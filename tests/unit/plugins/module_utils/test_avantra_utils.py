@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright Avantra
@@ -16,7 +15,7 @@
 # limitations under the License.
 
 from __future__ import (absolute_import, division, print_function)
-
+__metaclass__ = type
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
     camel_to_snake_case,

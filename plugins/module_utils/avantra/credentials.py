@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
 # limitations under the License.
 
 from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 from enum import Enum
 
@@ -33,7 +34,7 @@ class CredentialType(Enum):
     SSH = 5
 
 
-def handle_basic_credentials(basic_creds, key: str, cred):
+def handle_basic_credentials(basic_creds, key, cred):
     basic_creds.append({
         "id": key,
         "username": cred.get("username"),
@@ -43,7 +44,7 @@ def handle_basic_credentials(basic_creds, key: str, cred):
     })
 
 
-def handle_ssh_credentials(ssh_creds, key: str, cred):
+def handle_ssh_credentials(ssh_creds, key, cred):
     config = []
     for k, v in cred.get("config", {}).items():
         config.append({
@@ -96,7 +97,7 @@ def handle_oauth_code_credentials(oauth_code_creds, key, cred):
     pass
 
 
-def handle_credentials(module: AvantraAnsibleModule, credentials: dict) -> dict:
+def handle_credentials(module, credentials):
     """
     Given a credentials dictionary this function converts the found credential information in dicts that the
     GraphQL API can understand.
@@ -127,9 +128,9 @@ def handle_credentials(module: AvantraAnsibleModule, credentials: dict) -> dict:
                 # elif cred_type == CredentialType.OAUTH2_CODE.name:
                 #     handle_oauth_code_credentials(oauth_code_creds, key, cred)
                 else:
-                    module.fail_json(msg="Unhandled credential type '{}'".format(cred_type))
+                    module.fail_json(msg="Unhandled credential type '{0}'".format(cred_type))
             else:
-                module.fail_json(msg="No cred_type defined for credentials with key '{}'".format(key))
+                module.fail_json(msg="No cred_type defined for credentials with key '{0}'".format(key))
 
     return {
         CredentialType.BASIC: basic_creds,

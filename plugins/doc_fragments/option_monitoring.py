@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +24,8 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r"""
 options:
     monitoring:
-        description: 
-        - Should the monitoring be turned on or off. 
+        description:
+        - Should the monitoring be turned on or off.
         - This applies only to C(exists_state=present).
         - For C(exists_state=absent) this parameter will be ignored.
         required: false

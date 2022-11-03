@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,51 @@
 
 from __future__ import (absolute_import, division, print_function)
 
+__metaclass__ = type
+
+DOCUMENTATION = r"""
+---
+module: server_info
+
+short_description: load information about a server
+
+description:
+- This module allows to load information about a server from Avantra.
+- The server information can be obtained using the C(server_name) together with a C(customer_name).
+
+options:
+    server_name:
+        description:
+        - The name of the server. Together with C(customer_name) it identifies the server.
+        required: true
+        type: str
+    customer_name:
+        description:
+        - A customer name known by Avantra. Together with C(server_name) it identifies the server.
+        required: true
+        type: str
+    fail_if_not_found:
+        description:
+        - Whether the task should fail in case the SAP system can not be found.
+        required: false
+        type: bool
+        default: false
+
+extends_documentation_fragment:
+    - avantra.core.auth_options.token
+    - avantra.core.seealso
+    - avantra.core.authors
+    - avantra.core.version_added_23_0
+"""
+
+EXAMPLES = r"""
+
+"""
+
+RETURN = r"""
+
+"""
+
 from ansible_collections.avantra.core.plugins.module_utils.avantra.server import (
     fetch_server
 )
@@ -29,80 +74,15 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     AvantraAnsibleModule
 )
 
-__metaclass__ = type
-
-DOCUMENTATION = r'''
----
-module: customer
-
-short_description: This module handles Avantra customers
-
-version_added: "23.0.1"
-
-description: This is my longer description explaining my test module.
-
-options:
-    name:
-        description: This is the message to send to the test module.
-        required: true
-        type: str
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
-        required: false
-        type: bool
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
-extends_documentation_fragment:
-    - avantra.core.my_doc_fragment_name
-
-author:
-    - Your Name (@yourGitHubHandle)
-'''
-
-EXAMPLES = r'''
-# Pass in a message
-- name: Test with a message
-  avantra.core.customer:
-    name: hello world
-
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  avantra.core.customer:
-    name: hello world
-    new: true
-
-# fail the module
-- name: Test failure of the module
-  avantra.core.customer:
-    name: fail me
-'''
-
-RETURN = r'''
-# These are examples of possible return values, and in general should use other names for return values.
-original_message:
-    description: The original name param that was passed in.
-    type: str
-    returned: always
-    sample: 'hello world'
-message:
-    description: The output message that the test module generates.
-    type: str
-    returned: always
-    sample: 'goodbye'
-'''
-
 
 def run_module():
     result = {}
 
     argument_spec = create_argument_spec()
     argument_spec.update({
-        "system_id": dict(type='str', required=False),
-        "server_name": dict(type='str', required=False),
-        "customer_name": dict(type='str', required=False),
-        "fail_if_not_found": dict(type='bool', required=False, default=True),
+        "server_name": dict(type='str', required=True),
+        "customer_name": dict(type='str', required=True),
+        "fail_if_not_found": dict(type='bool', default=False),
     })
 
     module = AvantraAnsibleModule(
@@ -114,7 +94,6 @@ def run_module():
         ],
         required_one_of=[
             (AVANTRA_API_USER, AVANTRA_TOKEN),
-            ("system_id", "server_name"),
         ]
     )
 
@@ -135,6 +114,7 @@ def run_module():
         result["server"] = server
 
     module.exit_json(**result)
+
 
 def main():
     run_module()

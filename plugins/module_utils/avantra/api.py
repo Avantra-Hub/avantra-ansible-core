@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import (absolute_import, division, print_function)
 
-from __future__ import (absolute_import, division, print_function, annotations)
+__metaclass__ = type
 
 from base64 import b64encode
 from datetime import datetime, timedelta, timezone
@@ -77,6 +77,10 @@ class AvantraAnsibleModule(AnsibleModule):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False, mutually_exclusive=None,
                  required_together=None, required_one_of=None, add_file_common_args=False, supports_check_mode=False,
                  required_if=None, required_by=None):
+
+        if required_by is None:
+            required_by = {}
+
         super().__init__(argument_spec, bypass_checks, no_log, mutually_exclusive, required_together, required_one_of,
                          add_file_common_args, supports_check_mode, required_if, required_by)
         self._avantra_api_token = None
@@ -107,7 +111,7 @@ class AvantraAnsibleModule(AnsibleModule):
             self._avantra_api_url = _compute_avantra_soap_url(self.params.get("avantra_api_url", ""))
         return self._avantra_api_url
 
-    def send_soap_request(self, soap: str) -> Dict:
+    def send_soap_request(self, soap):
         """
         Send a SOAP request to the Avantra API
         :param soap:
@@ -130,9 +134,9 @@ class AvantraAnsibleModule(AnsibleModule):
 
     def send_graphql_request(
             self,
-            query: str,
-            variables: dict = None,
-            operation_name: str = None) -> Dict:
+            query,
+            variables=None,
+            operation_name=None):
         """
         Send a GraphQL request to the Avantra API
         """
@@ -166,7 +170,7 @@ class AvantraAnsibleModule(AnsibleModule):
                 return self.fail_json(rc=1008, msg="There were API errors", info=info, result=result)
             return result
 
-    def login(self: AnsibleModule) -> str:
+    def login(self):
         url = self.params.get("avantra_api_url", "")
         user = self.params.get("avantra_api_user", "")
         password = self.params.get("avantra_api_password", "")
@@ -191,13 +195,12 @@ class AvantraAnsibleModule(AnsibleModule):
         else:
             return self.from_json(resp.read())["token"]
 
-    def execute_system_action(self, action: SystemActions, system_id: str, args: dict = None,
-                              execution_name: str = None) -> dict:
+    def execute_system_action(self, action, system_id, args=None, execution_name=None):
 
         mutation = """
             mutation ExecuteSystemAction (
                 $actionId: ID!,
-                $executionName: String,
+                $executionNameing,
                 $systemIds: [ID!]!,
                 $parameters: [SystemActionParameterInput!]!
             ) {
@@ -212,21 +215,21 @@ class AvantraAnsibleModule(AnsibleModule):
                         status
                         start
                         system {
-                            id 
+                            id
                             name
                         }
                         log
                         timestamp
                         user {
                             id
-                            principal                            
+                            principal
                         }
                         customer {
                             id
                             name
                         }
                 }
-            
+
             }
         """
         variables = {
@@ -244,7 +247,7 @@ class AvantraAnsibleModule(AnsibleModule):
         return action_result
 
 
-def _compute_avantra_auth_url(url: str) -> str:
+def _compute_avantra_auth_url(url):
     """
     Computes the authentication URL to depending on the given URL.
     So for example http://localhost/xn will return http://localhost/xn/api/auth.
@@ -269,7 +272,7 @@ def _compute_avantra_auth_url(url: str) -> str:
         return url + "/api/auth"
 
 
-def _compute_avantra_graphql_url(url: str) -> str:
+def _compute_avantra_graphql_url(url):
     """
     Computes the GraphQL URL to depending on the given URL.
     So for example http://localhost/xn will return http://localhost/xn/api/graphql.
@@ -294,7 +297,7 @@ def _compute_avantra_graphql_url(url: str) -> str:
         return url + "/api/graphql"
 
 
-def _compute_avantra_soap_url(url: str) -> str:
+def _compute_avantra_soap_url(url):
     """
     Computes the SOAP URL to depending on the given URL.
     So for example http://localhost/xn will return http://localhost/xn/ws
@@ -321,11 +324,7 @@ def _compute_avantra_soap_url(url: str) -> str:
         return url + "/ws"
 
 
-# allow the user to get a context object with login already executed. the context
-# offers the available API functions like create SAP system, create Server and so on!
-
-
-def create_argument_spec(allow_token: bool = True) -> Dict:
+def create_argument_spec(allow_token=True):
     """
     Returns the default argument_spec as dict to be used with an AnsibleModule.
     :param allow_token: if true an ansible_token is allowed as alternative to the
@@ -345,7 +344,7 @@ def create_argument_spec(allow_token: bool = True) -> Dict:
         return dict(
             avantra_api_url=dict(type='str', required=True),
             avantra_api_user=dict(type='str', required=True),
-            avantra_api_password=dict(type='str', required=False, no_log=True),
+            avantra_api_password=dict(type='str', required=True, no_log=True),
         )
 
 
@@ -372,7 +371,7 @@ SOAP_SECURITY_HEADER = Template("""
 """)
 
 
-def soap_security_header(username: str, password: str) -> str:
+def soap_security_header(username, password):
     message_id = str(uuid1())
     timestamp_created = datetime.now(timezone.utc)
     timestamp_expires = timestamp_created + timedelta(seconds=60)
