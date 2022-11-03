@@ -8,7 +8,9 @@ __metaclass__ = type
 class ModuleDocFragment(object):
 
     DOCUMENTATION = r"""
-options: {}    
-author:
-    - Michael Szediwy (@avantra-mis)
+options:
+     timezone:
+        description: Configures the timezone for the system.
+        required: false
+        type: str
 """

@@ -1,6 +1,6 @@
 from __future__ import (absolute_import, division, print_function)
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     _compute_avantra_auth_url,
     _compute_avantra_graphql_url,
     create_argument_spec, AVANTRA_API_URL,
@@ -113,6 +113,4 @@ def test_no_token_create_argument_spec():
     )
 
 
-def test_dict_get():
-    result = json.loads('{"data": {"sapSystem": {"id": "5", "name": "SMA_REMOTE"}}}')
-    assert dict_get(result, "data", "sapSystem") is not None
+

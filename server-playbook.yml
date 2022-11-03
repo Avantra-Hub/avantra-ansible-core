@@ -1,0 +1,111 @@
+# ansible-playbook simple-playbook.yml
+- hosts: localhost
+  vars:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: mis2
+    avantra_api_password: REDACTED
+
+  tasks:
+
+    - name: Login to Avantra API and fetch a token
+      avantra.core.login:
+      register: auth
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: auth
+
+    - name: Create Server
+      avantra.core.server:
+        exists_state: present
+        server_name: "agent_5432"
+        customer_name: "mis"
+        fqdn_or_ip_address: "host5432"
+        system_role: "Test"
+        host_aliases:
+          - host-5432
+        credentials:
+          avantra.basic:
+            cred_type: basic
+            username: <username>
+            password: <password>
+          avantra.abc:
+            cred_type: ssh
+            username: <username>
+            password: <password>
+            hostname: home
+            port: 4321
+            config:
+              ssh_option1: x
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Start Server
+      avantra.core.server:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis3"
+        customer_name: "mis"
+        run_state: started
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Restart Server
+      avantra.core.server:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis3"
+        customer_name: "mis"
+        run_state: restarted
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Stop Server
+      avantra.core.server:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis3"
+        customer_name: "mis"
+        run_state: stopped
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Check Server
+      avantra.core.server_info:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis3"
+        customer_name: "mis"
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
+
+    - name: Change monitoring OFF
+      avantra.core.server:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis3"
+        customer_name: "mis"
+        monitoring: false
+      register: result
+
+    - name: Change monitoring ON
+      avantra.core.server:
+        avantra_token: "{{auth.token}}"
+        server_name: "achnmn-mis3"
+        customer_name: "mis"
+        monitoring: true
+      register: result
+
+    - name: Show result
+      ansible.builtin.debug:
+        var: result
