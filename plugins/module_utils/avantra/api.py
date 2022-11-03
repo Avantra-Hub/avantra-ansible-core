@@ -1,16 +1,31 @@
-from __future__ import (absolute_import, division, print_function)
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-from typing import Dict, Any
+# Copyright Avantra
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import (absolute_import, division, print_function, annotations)
+
+from base64 import b64encode
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from string import Template
-from datetime import datetime, timedelta, timezone
-
+from typing import Dict
 from uuid import uuid1
-from base64 import b64encode
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (dict_get, xmldict)
 
 AVANTRA_API_URL = "avantra_api_url"
@@ -138,7 +153,7 @@ class AvantraAnsibleModule(AnsibleModule):
                                data=self.jsonify(graphql_payload),
                                headers={
                                    "Content-type": "application/json",
-                                   "Authorization": f"Bearer {self.avantra_token}",
+                                   "Authorization": "Bearer {0}".format(self.avantra_token),
                                },
                                method="POST")
 
@@ -175,111 +190,6 @@ class AvantraAnsibleModule(AnsibleModule):
             return self.fail_json(rc=1001, **info)
         else:
             return self.from_json(resp.read())["token"]
-
-    def find_server_system_id(self, server_name: str, customer_name: str, dns_domain: str = None) -> str | None:
-
-        variables = {"server_name": server_name, "customer_name": customer_name}
-
-        result = self.send_graphql_request(
-            query="""
-            query ServerGetByServerName($server_name: String!, $customer_name: String!) {
-                systems(
-                    where: {
-                        filterBy: [
-                            { name: "type", operator: eq, value: "SERVER" }
-                            { name: "name", operator: eq, value: $server_name }                            
-                            { name: "customer.name", operator: eq, value: $customer_name }
-                        ]
-                    }
-                ) { 
-                    id
-                    ... on Server {
-                        dnsDomain
-                    }
-                }
-            }
-            """,
-            variables=variables
-        )
-        servers = dict_get(result, "data", "systems")
-        if dns_domain is not None:
-            servers = list(filter(lambda s: s.get("dnsDomain") == dns_domain))
-
-        if servers is None or len(servers) == 0:
-            return None
-
-        return servers[0].get("id")
-
-    def find_server_by_system_id(self, system_id: str) -> str | None:
-
-        variables = {"id": system_id}
-
-        result = self.send_graphql_request(
-            query="""
-            query ServerGetByID($id: ID!) {
-                server(id: $id) { 
-                    id                    
-                }
-            }
-            """,
-            variables=variables
-        )
-        servers = dict_get(result, "data", "server")
-
-        if servers is None or len(servers) == 0:
-            return None
-
-        return servers[0].get("id")
-
-    def find_sap_system_id(self, unified_sap_sid: str, customer_name: str) -> str | None:
-
-        variables = {"unified_sap_sid": unified_sap_sid, "customer_name": customer_name}
-
-        result = self.send_graphql_request(
-            query="""
-            query SapSystemGetByUnifiedSapSid($unified_sap_sid: String!, $customer_name: String!) {
-                systems(
-                    where: {
-                        filterBy: [
-                            { name: "type", operator: eq, value: "SAP_SYSTEM" }
-                            { name: "name", operator: eq, value: $unified_sap_sid }                            
-                            { name: "customer.name", operator: eq, value: $customer_name }
-                        ]
-                    }
-                ) { 
-                    id
-                }
-            }
-            """,
-            variables=variables
-        )
-        sap_systems = dict_get(result, "data", "systems")
-
-        if sap_systems is None or len(sap_systems) == 0:
-            return None
-
-        return sap_systems[0].get("id")
-
-    def find_sap_system_by_system_id(self, system_id: str) -> str | None:
-
-        variables = {"id": system_id}
-
-        result = self.send_graphql_request(
-            query="""
-            query SapSystemGetByID($id: ID!) {
-                sapSystem(id: $id) { 
-                    id                 
-                }
-            }
-            """,
-            variables=variables
-        )
-        sap_systems = _get(result, "data", "sapSystem")
-
-        if sap_systems is None or len(sap_systems) == 0:
-            return None
-
-        return sap_systems[0].get("id")
 
     def execute_system_action(self, action: SystemActions, system_id: str, args: dict = None,
                               execution_name: str = None) -> dict:
@@ -437,60 +347,6 @@ def create_argument_spec(allow_token: bool = True) -> Dict:
             avantra_api_user=dict(type='str', required=True),
             avantra_api_password=dict(type='str', required=False, no_log=True),
         )
-
-
-def find_customer_id_by_name(module: AvantraAnsibleModule, customer_name: str) -> int | None:
-    """
-    Returns the customer ID or None if it can not be found.
-
-    :param module: the current ansible module
-    :param customer_name: the customer name to look for.
-    :return:
-    """
-
-    query = """
-    query GetCustomerByName($customer_name: String!) {
-        customers(
-            where: { filterBy: [{ name: "name", operator: eq, value: $customer_name }] }
-        ) {
-            id
-            name
-            sapCustomerNumber
-            description
-            remarks
-            phone
-            mobile
-            fax
-            email
-            timezone
-            address
-            postbox
-            postalCode
-            city
-            country
-            timestamp
-            customerUrl
-            customData
-            guid
-            parent {
-                id
-                name
-            }
-            children {
-                id
-                name
-            }
-            childrenCount
-        }
-    }
-    """
-
-    result = module.send_graphql_request(query=query, variables={"customer_name": customer_name})
-    customers = dict_get(result, "data", "customers")
-    if customers is None or not isinstance(customers, list) or len(customers) == 0:
-        return None
-    else:
-        return int(customers[0]["id"])
 
 
 SOAP_SECURITY_HEADER = Template("""
