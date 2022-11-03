@@ -7,7 +7,7 @@
 
   tasks:
     - name: "Workflow Start"
-      avantra.core.workflow_start:
+      avantra.core.workflow_execution:
         name: "Test_1"
         namespace: "mis1"
         args:

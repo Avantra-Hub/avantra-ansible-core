@@ -2,10 +2,9 @@
 
 # Copyright: (c) 2022 Avantra
 from __future__ import (absolute_import, division, print_function)
-from ansible.module_utils.basic import AnsibleModule
-from datetime import datetime
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     AvantraAnsibleModule
 )
 
@@ -17,7 +16,7 @@ module: login
 
 short_description: authentication operations 
 
-version_added: "23.0.0"
+version_added: "23.0.1"
 
 description: >
     With this module a authentication token can be fetched from an defined 
@@ -27,7 +26,7 @@ description: >
 extends_documentation_fragment:
     - avantra.core.auth_options
     - avantra.core.seealso
-    - avantra.core.author_mis
+    - avantra.core.authors
     - avantra.core.check_mode_unsupported
 '''
 
@@ -87,7 +86,7 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
-    result["token"] = module.avantra_token
+    result["token"] = module.login()
     module.exit_json(**result)
 
 

@@ -6,7 +6,6 @@ __metaclass__ = type
 
 from ansible_collections.avantra.core.plugins.action._avantra_base import AvantraActionModule
 
-
 class ActionModule(AvantraActionModule):
     def run(self, tmp=None, task_vars=None):
         return super(ActionModule, self).run(tmp, task_vars)
