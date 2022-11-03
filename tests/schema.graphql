@@ -2456,6 +2456,14 @@ type Database implements MonitoredSystem & InfoProvider {
     Available credentials for this system.
     """
     credentials: [CredentialsBase]!
+    """
+    The host used to connect to the database.
+    """
+    host: String
+    """
+    The port used to connect to the database.
+    """
+    port: Int
 }
 
 """
@@ -4385,6 +4393,10 @@ input SapSystemDatabaseInput {
     The hostname to connect to the database (optional).
     """
     host: String = null
+    """
+    The database port.
+    """
+    port: Int = null
     """
     The database name (optional).
     """
