@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright Avantra
@@ -16,6 +15,8 @@
 # limitations under the License.
 
 from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     _compute_avantra_auth_url,
@@ -59,7 +60,7 @@ def fake_ansible_module():
     return FakeAnsibleModule()
 
 
-def _assert_equals_str(expected: str, actual: str):
+def _assert_equals_str(expected, actual):
     assert expected == actual, "{0} != {1}".format(expected, actual)
 
 
@@ -128,6 +129,3 @@ def test_no_token_create_argument_spec():
         avantra_api_user=dict(type='str', required=True),
         avantra_api_password=dict(type='str', required=False, no_log=True)
     )
-
-
-

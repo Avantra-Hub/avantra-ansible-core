@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +21,11 @@ __metaclass__ = type
 
 
 class ModuleDocFragment(object):
-
     DOCUMENTATION = r"""
 options:
-     timezone:
-        description: Configures the timezone for the system.
+    timezone:
+        description:
+        - Configures the timezone for the system.
         required: false
         type: str
 """

@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +16,8 @@
 
 from __future__ import (absolute_import, division, print_function)
 
+__metaclass__ = type
+
 from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     AvantraAnsibleModule
 )
@@ -27,9 +28,9 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import 
 )
 
 
-def fetch_customer(module: AvantraAnsibleModule, customer_name: str) -> (bool, str, dict):
+def fetch_customer(module, customer_name):
     query = """
-    query GetCustomerByName($customer_name: String!) {
+    query GetCustomerByName($customer_nameing!) {
         customers(
             where: { filterBy: [{ name: "name", operator: eq, value: $customer_name }] }
         ) {
@@ -68,6 +69,6 @@ def fetch_customer(module: AvantraAnsibleModule, customer_name: str) -> (bool, s
     result = module.send_graphql_request(query=query, variables={"customer_name": customer_name})
     customers = dict_get(result, "data", "customers")
     if customers is None or not isinstance(customers, list) or len(customers) == 0:
-        return False, "Can not fetch customer: {}".format(customer_name), None
+        return False, "Can not fetch customer: {0}".format(customer_name), None
     else:
         return True, "Successfully fetched customer", cameldict_to_snake_case(customers[0])

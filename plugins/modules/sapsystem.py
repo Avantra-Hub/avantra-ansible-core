@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,48 +17,22 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-from datetime import datetime, timedelta
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
-    parse_api_date_time
-)
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
-    create_argument_spec,
-    AVANTRA_TOKEN,
-    AVANTRA_API_USER,
-    AVANTRA_API_PASSWORD,
-    AvantraAnsibleModule,
-    SystemActions
-)
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.sapsystem import (
-    create_sapsystem,
-    update_sapsystem,
-    delete_sapsystem,
-    fetch_sapsystem,
-    turn_monitoring_on,
-    turn_monitoring_off
-)
-
 __metaclass__ = type
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: sapsystem
 
 short_description: manage SAP systems in Avantra
 
-version_added: "23.0.1"
-
 description:
     - You can create, delete or update SAP systems in Avantra.
     - Start, stop, restart SAP systems using Avantra functionality.
-    - A SAP system is always identified with its B(Unified SAP SID) and customer name.  
+    - A SAP system is always identified with its B(Unified SAP SID) and customer name.
 
 options:
     unified_sap_sid:
-        description: > 
+        description: >
             The B(Unified SAP SID) of a SAP system. Together with the I(customer_name) parameter a SAP system is identified.
         required: true
         type: str
@@ -68,14 +42,14 @@ options:
         type: str
     exists_state:
         description:
-        - If C(present) the SAP system with the given parameter is created in case is does 
+        - If C(present) the SAP system with the given parameter is created in case is does
           not exist or modified in case it exists.
-        - If C(absent) the SAP system identified by the I(unified_sap_sid) and I(customer_name) 
-          is deleted if it exists.   
+        - If C(absent) the SAP system identified by the I(unified_sap_sid) and I(customer_name)
+          is deleted if it exists.
         required: false
         default: present
         type: str
-        choices:        
+        choices:
             - present
             - absent
     real_sap_sid:
@@ -83,7 +57,7 @@ options:
         - The B(Real SAP SID) of the SAP system. Maximum allowed length is 3 characters.
         - If C(exists_state=present) and the SAP system has to be created this parameter is mandatory.
         required: false
-        type: str    
+        type: str
     description:
         description: The description for the SAP system.
         required: false
@@ -94,8 +68,8 @@ options:
         type: str
     application_type:
         description: The application type (on of the defined in the customizations).
-        required: false        
-        type: str       
+        required: false
+        type: str
     database:
         description: configures the database
         required: false
@@ -112,39 +86,39 @@ options:
             port:
                 description: defines the database port.
                 type: str
-                required: false            
+                required: false
             name:
                 description: configures the database name.
                 type: str
-                required: false            
-    
+                required: false
+
     credentials:
-        description: > 
-            Add credentials to this SAP system. See the examples for more information on how 
+        description: >
+            Add credentials to this SAP system. See the examples for more information on how
             to set the different credential types. The key for the child objects are the credential
             keys found in Avantra.
         type: dict
-        required: false    
-    
+        required: false
+
     remote_monitoring_entry_point:
         description: Configures the remote entrypoint for agentless SAP system.
-        type: str  
+        type: str
         required: false
-        
+
     remote_monitoring_server_system_id:
         description: Configures the server monitoring the remote SAP system.
-        type: str  
+        type: str
         required: false
-    
+
     run_state:
         description:
-        - If C(started) and the current state is C(run_state=stopped) or C(run_state=unknown) the SAP system will 
+        - If C(started) and the current state is C(run_state=stopped) or C(run_state=unknown) the SAP system will
           be started.
-        - If C(stopped) and the current state is C(run_state=started) or C(run_state=unknown) the SAP system will 
+        - If C(stopped) and the current state is C(run_state=started) or C(run_state=unknown) the SAP system will
           be started.
         - If C(restarted) the SAP system will be restarted.
-        - B(Note:) if C(exists_state=absent) and the SAP system exists the run state change will be applied before 
-          the SAP system is deleted. If C(exists_state=present) the run state change will be executed after the SAP 
+        - B(Note:) if C(exists_state=absent) and the SAP system exists the run state change will be applied before
+          the SAP system is deleted. If C(exists_state=present) the run state change will be executed after the SAP
           system has been created.
         type: str
         choices:
@@ -158,23 +132,24 @@ options:
         required: false
         suboptions:
             always_execute:
-                 description:
-                 - Ignore the current state and just execute the start/stop/restart.
-                 required: false
-                 type: bool
-                 default: false
+                description:
+                - Ignore the current state and just execute the start/stop/restart.
+                required: false
+                type: bool
+                default: false
             monitoring:
-                 description:
-                 - If C(run_state=started) this parameter defaults to true.
-                 - If C(run_state=stopped) this parameter defaults to false.
-                 - If C(run_state=restarted) this parameter is ignored.
+                description:
+                - If C(run_state=started) this parameter defaults to true.
+                - If C(run_state=stopped) this parameter defaults to false.
+                - If C(run_state=restarted) this parameter is ignored.
+                type: bool
             with_database:
                 description: Starts/Stops/Restarts the SAP System including the database.
                 required: false
                 type: bool
                 default: false
             with_servers:
-                description: 
+                description:
                 - Starts/Stops/Restarts all cloud servers, the SAP database (full) and the SAP System.
                 - If C(with_servers=true) then C(with_database=true) is needed as well
                   and C(with_system_db_if_hana) must not be true.
@@ -182,17 +157,17 @@ options:
                 type: bool
                 default: false
             with_system_db_if_hana:
-                description: 
+                description:
                 - Starts/Stops/Restarts the SAP HANA System DB, all HANA tenants and the SAP System.
-                - If C(with_system_db_if_hana=true) then C(with_database=true) is needed as well 
-                  and C(with_server) must not be true.                 
+                - If C(with_system_db_if_hana=true) then C(with_database=true) is needed as well
+                  and C(with_server) must not be true.
                 required: false
                 type: bool
                 default: false
             check_db_state:
                 description:
                 - If C(with_database=true) then the task checks the database state before starting SAP system
-                  (only for Linux, uses R3Trans).                
+                  (only for Linux, uses R3Trans).
                 type: bool
                 required: false
                 default: true
@@ -210,7 +185,7 @@ options:
                 type: int
             soft_timeout:
                 description:
-                - Defines the soft timeout a timeout in seconds for a soft shutdown via SIGQUIT, if the timeout expires 
+                - Defines the soft timeout a timeout in seconds for a soft shutdown via SIGQUIT, if the timeout expires
                   a hard shutdown is used. After the soft timeout, logged in users are automatically logged out.
                 required: false
                 default: 0
@@ -224,7 +199,7 @@ options:
                 type: bool
             send_user_info:
                 description:
-                - Send a message to all users logged in with SAPGUI. Use this option together with C(soft_timeout) 
+                - Send a message to all users logged in with SAPGUI. Use this option together with C(soft_timeout)
                   setting.
                 required: false
                 default: false
@@ -232,10 +207,9 @@ options:
             execution_name:
                 description:
                 - Defines a name for the action to be executed.
-                required: false                
+                required: false
                 type: str
-          
-        
+
 extends_documentation_fragment:
     - avantra.core.auth_options.token
     - avantra.core.seealso
@@ -245,14 +219,16 @@ extends_documentation_fragment:
     - avantra.core.option_monitoring
     - avantra.core.option_timezone
     - avantra.core.option_system_role
-'''
+    - avantra.core.version_added_23_0
 
-EXAMPLES = r''' 
+"""
+
+EXAMPLES = r"""
 - name: Delete SAP system from Avantra if it exists
   avantra.core.sapsystem:
     exists_state: absent
     unified_sap_sid: "UNF_SAP_SYS"
-    customer_name: "mis"  
+    customer_name: "mis"
 
 - name: Create SAP system if it doesn't exist
   avantra.core.sapsystem:
@@ -275,13 +251,13 @@ EXAMPLES = r'''
       avantra.sapControl:
         cred_type: sap_control
         username: <user>
-        password: <password>     
+        password: <password>
       # ABAP user
       avantra.defaultRfcUser:
         cred_type: rfc
         username: <user>
         password: <password>
-        client: 000       
+        client: 000
       # ABAP database user
       avantra.abapDbSchema:
         cred_type: basic
@@ -317,15 +293,39 @@ EXAMPLES = r'''
       with_servers: true
     unified_sap_sid: "AVA_EXA"
     customer_name: Avantra
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 sap_system:
-    description: 
+    description:
     - If C(exists_state=present) and the SAP system can be identified the system information is returned.
     type: dict
     returned: present
-'''
+"""
+
+from datetime import datetime, timedelta
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
+    parse_api_date_time
+)
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
+    create_argument_spec,
+    AVANTRA_TOKEN,
+    AVANTRA_API_USER,
+    AVANTRA_API_PASSWORD,
+    AvantraAnsibleModule,
+    SystemActions
+)
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.sapsystem import (
+    create_sapsystem,
+    update_sapsystem,
+    delete_sapsystem,
+    fetch_sapsystem,
+    turn_monitoring_on,
+    turn_monitoring_off
+)
 
 
 def _check_run_state_arguments(module, with_database, with_servers, with_system_db_if_hana):
@@ -340,7 +340,7 @@ def _check_run_state_arguments(module, with_database, with_servers, with_system_
                              "'with_system_db_if_hana' is set to true")
 
 
-def _get_run_state(sap_system: dict) -> str:
+def _get_run_state(sap_system):
     if sap_system is not None:
         # At the moment there is no way to tell what is the correct run_state of a SAP system. Here
         # we check whether there is a SystemAlive check not older than 10 minutes.
@@ -353,7 +353,7 @@ def _get_run_state(sap_system: dict) -> str:
     return "unknown"
 
 
-def ensure_sapsystem_monitoring(module: AvantraAnsibleModule, sap_system: dict, result: dict) -> dict:
+def ensure_sapsystem_monitoring(module, sap_system, result):
     prev_monitoring = not sap_system["monitor_off"]
     monitoring = module.params.get("monitoring")
 
@@ -368,7 +368,8 @@ def ensure_sapsystem_monitoring(module: AvantraAnsibleModule, sap_system: dict, 
 
     return sap_system
 
-def ensure_started(module: AvantraAnsibleModule, sap_system: dict, result: dict):
+
+def ensure_started(module, sap_system, result):
     prev_run_state = _get_run_state(sap_system)
     result["diff"]["before"]["run_state"] = prev_run_state
 
@@ -403,7 +404,7 @@ def ensure_started(module: AvantraAnsibleModule, sap_system: dict, result: dict)
         result["changed"] = True
 
 
-def ensure_stopped(module: AvantraAnsibleModule, sap_system: dict, result: dict):
+def ensure_stopped(module, sap_system, result):
     prev_run_state = _get_run_state(sap_system)
     result["diff"]["before"]["run_state"] = prev_run_state
 
@@ -440,7 +441,7 @@ def ensure_stopped(module: AvantraAnsibleModule, sap_system: dict, result: dict)
         result["changed"] = True
 
 
-def ensure_restarted(module: AvantraAnsibleModule, sap_system: dict, result: dict):
+def ensure_restarted(module, sap_system, result):
     prev_run_state = _get_run_state(sap_system)
     result["diff"]["before"]["run_state"] = prev_run_state
 
@@ -477,7 +478,7 @@ def ensure_restarted(module: AvantraAnsibleModule, sap_system: dict, result: dic
     result["changed"] = True
 
 
-def ensure_sapsystem_present(module: AvantraAnsibleModule, customer_name: str, unified_sap_sid: str):
+def ensure_sapsystem_present(module, customer_name, unified_sap_sid):
     result = {
         "changed": False
     }
@@ -540,7 +541,7 @@ def ensure_sapsystem_present(module: AvantraAnsibleModule, customer_name: str, u
     return result
 
 
-def ensure_sapsystem_absent(module: AvantraAnsibleModule, customer_name: str, unified_sap_sid: str):
+def ensure_sapsystem_absent(module, customer_name, unified_sap_sid):
     result = {
         "changed": False
     }
@@ -609,15 +610,13 @@ def run_module():
                                 restart_wait_seconds=dict(type='int', default=5),
                                 force_stop=dict(type='bool', default=True),
                                 send_user_info=dict(type='bool', default=False),
-                                execution_name=dict(type='str'),
-                            )),
-
+                                execution_name=dict(type='str'))),
         "unified_sap_sid": dict(type='str', required=True),
         "customer_name": dict(type='str', required=True),
         "real_sap_sid": dict(type='str'),
         "credentials": dict(type='dict'),
         "description": dict(type='str'),
-        "monitoring": dict(type='bool', default=False),
+        "monitoring": dict(type='bool'),
         "application_type": dict(type='str'),
         "system_role": dict(type='str'),
         "timezone": dict(type='str'),

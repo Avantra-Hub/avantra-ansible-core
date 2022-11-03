@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,20 +24,12 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r"""
 options:
      system_role:
-        description: 
+        description:
         - Configures the system role.
         - If C(exists_state=present) and the system has to be created this parameter is mandatory.
-        choices:        
-            - Consolidation
-            - Development
-            - Education
-            - Integration
-            - Production
-            - Quality assurance
-            - Sandpit
-            - Test
-            - ... customized roles
-                    
+        - "By default the following roles are available: C(Consolidation), C(Development), C(Education),
+          C(Integration), C(Production), C(Quality assurance), C(Sandpit), C(Test). The can be customized
+          in Avantra."
         required: false
-        type: str  
+        type: str
 """

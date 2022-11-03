@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,68 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
+__metaclass__ = type
+
+DOCUMENTATION = r"""
+---
+module: sapsystem_info
+
+short_description: load information about SAP system
+
+description: >
+    This module allows to load information about a SAP system from Avantra.
+    The SAP system information can be obtained using the B(Unified SAP SID) together with
+    a customer name.
+
+options:
+    unified_sap_sid:
+        description:
+        - The Unified SAP SID of the SAP system. Together with C(customer_name) it identifies the SAP system.
+        required: true
+        type: str
+    customer_name:
+        description:
+        - A customer name known by Avantra. Together with C(unified_sap_sid) it identifies the SAP system.
+        required: true
+        type: str
+    fail_if_not_found:
+        description:
+        - Whether the task should fail in case the SAP system can not be found.
+        required: false
+        type: bool
+        default: false
+
+extends_documentation_fragment:
+    - avantra.core.auth_options.token
+    - avantra.core.seealso
+    - avantra.core.authors
+    - avantra.core.version_added_23_0
+"""
+
+EXAMPLES = r"""
+# Find a SAP system given its unified SAP SID and a customer name
+- name: Get SAP system AVA_DBG
+  avantra.core.sapsystem_info:
+    unified_sap_sid: AVA_DBG
+    customer_name: "My Customer"
+
+# Fail if the SAP system can not be found
+- name: Get SAP system AVA_DBG
+  avantra.core.sapsystem_info:
+    unified_sap_sid: AVA_DBG
+    customer_name: "My Customer"
+    fail_if_not_found: true
+"""
+
+RETURN = r"""
+sap_system:
+    description:
+    - If the SAP system can be identified the system information is returned.
+    type: dict
+    returned: present
+"""
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     create_argument_spec,
     AVANTRA_TOKEN,
     AVANTRA_API_USER,
@@ -28,67 +89,6 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra_api import (
 from ansible_collections.avantra.core.plugins.module_utils.avantra.sapsystem import (
     fetch_sapsystem
 )
-
-__metaclass__ = type
-
-DOCUMENTATION = r'''
----
-module: sapsystem_info
-
-short_description: load SAP system information
-
-version_added: "23.0.1"
-
-description: >
-    This module allows to load information about a SAP system from Avantra. 
-    The SAP system information can be obtained using the B(Unified SAP SID) together with
-    a customer name.
-
-options:    
-    unified_sap_sid:
-        description: > 
-            The unified SAP SID of the SAP system. If the I(system_id) is set 
-            this option will be ignored.
-        required: false
-        type: str
-    customer_name:
-        description: The name of the customer the SAP system belongs to.
-        required: false
-        type: str
-    fail_if_not_found:
-        description: Whether the task should fail in case the SAP system can not be found.
-        required: false
-        type: bool
-        default: True
-        
-extends_documentation_fragment:
-    - avantra.core.auth_options.token
-    - avantra.core.seealso
-    - avantra.core.authors
-'''
-
-EXAMPLES = r'''
-# Find a SAP system given its unified SAP SID and a customer name
-- name: Get SAP system AVA_DBG
-  avantra.core.sapsystem_info:          
-    unified_sap_sid: AVA_DBG
-    customer_name: "My Customer"
-    
-# Fail if the SAP system can not be found
-- name: Get SAP system AVA_DBG
-  avantra.core.sapsystem_info:          
-    unified_sap_sid: AVA_DBG
-    customer_name: "My Customer"
-    fail_if_not_found: true
-'''
-
-RETURN = r'''
-sap_system:
-    description: 
-    - If the SAP system can be identified the system information is returned.
-    type: dict
-    returned: present
-'''
 
 
 def run_module():

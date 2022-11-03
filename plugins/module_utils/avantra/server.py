@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright Avantra
+# Copyright 2022 Avantra
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
 # limitations under the License.
 
 from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 from string import Template
 from datetime import datetime, timedelta
@@ -41,7 +42,7 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.credentials i
 )
 
 
-def create_server(module: AvantraAnsibleModule, server_name: str, customer_name: str) -> (bool, str, dict):
+def create_server(module, server_name, customer_name):
     # Fetch the customer by name. This could be improved by allowing customer
     # name segments to allow to fetch directly sub-customer ... something like "A/B/C"
     success, msg, customer = fetch_customer(module, customer_name)
@@ -51,7 +52,7 @@ def create_server(module: AvantraAnsibleModule, server_name: str, customer_name:
     # Prepare the input
     server_input = {"customerId": customer["id"]}
 
-    def _assign(key: str, query_key: str = None, only_if_not_none: bool = False):
+    def _assign(key, query_key=None, only_if_not_none=False):
         if query_key is None:
             query_key = key
         if only_if_not_none:
@@ -106,11 +107,11 @@ def create_server(module: AvantraAnsibleModule, server_name: str, customer_name:
         return True, "Successfully created the server", cameldict_to_snake_case(server)
 
 
-def update_server(module: AvantraAnsibleModule, data: dict) -> dict:
+def update_server(module, data):
     pass
 
 
-def delete_server(module: AvantraAnsibleModule, server_id: str) -> (bool, str):
+def delete_server(module, server_id):
     delete_sap_system = module.send_graphql_request(
         query="""mutation DeleteServer($id: ID!) {
                 deleteServer(input: { id: $id }) {
@@ -135,11 +136,11 @@ def delete_server(module: AvantraAnsibleModule, server_id: str) -> (bool, str):
 
 
 def fetch_server(
-        module: AvantraAnsibleModule,
-        server_name: str,
-        customer_name: str,
-        remove_checks: bool = False
-) -> (bool, str, dict):
+        module,
+        server_name,
+        customer_name,
+        remove_checks=False
+):
     variables = {
         "server_name": server_name,
         "customer_name": customer_name
@@ -152,7 +153,7 @@ def fetch_server(
     servers = dict_get(result, "data", "systems")
 
     if servers is None or len(servers) == 0:
-        return False, "Server can not be found server_name={} customer_name={}" \
+        return False, "Server can not be found server_name={0} customer_name={1}" \
             .format(server_name, customer_name), None
 
     server = cameldict_to_snake_case(servers[0])
@@ -163,11 +164,11 @@ def fetch_server(
     return True, "Successfully fetched server", server
 
 
-def turn_monitoring_off(module, server_id: str,
-                        note: str = None,
-                        cascade: bool = False,
-                        until: datetime = None
-                        ) -> (bool, str, dict):
+def turn_monitoring_off(module, server_id,
+                        note=None,
+                        cascade=False,
+                        until=None
+                        ):
     until_str = None
     if until is not None:
         until_str = format_api_date_time(until)
@@ -189,10 +190,10 @@ def turn_monitoring_off(module, server_id: str,
         return True, "Turned off monitoring for the server with ID {0}".format(server_id), server
 
 
-def turn_monitoring_on(module, server_id: str,
-                       note: str = None,
-                       cascade: bool = False
-                       ) -> (bool, str, dict):
+def turn_monitoring_on(module, server_id,
+                       note=None,
+                       cascade=False
+                       ):
     turn_on_result = module.send_graphql_request(
         query=MONI_ON_MUTATION,
         variables={
@@ -220,8 +221,8 @@ FRAGMENT = """
         id
         name
         status
-        lastRefresh				
-    }                    
+        lastRefresh
+    }
     customAttributes {
         id
         name
@@ -371,18 +372,18 @@ FRAGMENT = """
 """
 
 FETCH_QUERY = Template("""
-        query ServerGetByName($$server_name: String!, $$customer_name: String!) {
+        query ServerGetByName($$server_nameing!, $$customer_nameing!) {
             systems(
                 where: {
                     filterBy: [
                         { name: "type", operator: eq, value: "SERVER" }
-                        { name: "name", operator: eq, value: $$server_name }                            
+                        { name: "name", operator: eq, value: $$server_name }
                         { name: "customer.name", operator: eq, value: $$customer_name }
                     ]
                 }
-            ) { 
+            ) {
                 ... on Server {
-                    ${fragment}              
+                    ${fragment}
                 }
             }
         }""").substitute(fragment=FRAGMENT)
@@ -393,14 +394,14 @@ CREATE_MUTATION = Template("""
         $$basicCredentials: [SetBasicCredentialsInput!] = []
         $$sshCredentials: [SetSshCredentialsInput!] = []
     ) {
-        
+
         createServer(input: $$input) {
             result {
                 success
                 message
                 code
             }
-            
+
             credentials {
                 setBasicCredentials(input: $$basicCredentials) {
                     result {
@@ -409,7 +410,7 @@ CREATE_MUTATION = Template("""
                         message
                     }
                 }
-    
+
                 setSshCredentials(input: $$sshCredentials) {
                     result {
                         code
@@ -419,17 +420,17 @@ CREATE_MUTATION = Template("""
                 }
             }
 
-            
+
             server {
                 ${fragment}
             }
         }
-        
+
     }
 """).substitute(fragment=FRAGMENT)
 
 MONI_OFF_MUTATION = Template("""
-    mutation TurnMonitoringOffForServer($$id: ID!, $$cascade: Boolean, $$note: String, $$until: DateTime) {
+    mutation TurnMonitoringOffForServer($$id: ID!, $$cascadeean, $$noteing, $$until) {
         turnMonitoringOffForServer(
             id: $$id
             cascade: $$cascade
@@ -442,11 +443,11 @@ MONI_OFF_MUTATION = Template("""
 """).substitute(fragment=FRAGMENT)
 
 MONI_ON_MUTATION = Template("""
-    mutation TurnMonitoringOnForServer($$id: ID!, $$cascade: Boolean, $$note: String) {
+    mutation TurnMonitoringOnForServer($$id: ID!, $$cascadeean, $$noteing) {
         turnMonitoringOnForServer(
             id: $$id
             cascade: $$cascade
-            note: $$note        
+            note: $$note
         ) {
             ${fragment}
         }
