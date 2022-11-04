@@ -30,23 +30,18 @@ def _load_key(module_args, task_vars, key):
         module_args[key] = task_vars[key]
 
 
-class AvantraActionModule(ActionBase):
+class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
 
-        super(AvantraActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         module_args = self._task.args.copy()
+
         # We have to check for those variables if the task does not define it.
-        if "avantra_token" not in module_args:
-            for p in ["avantra_api_user", "avantra_api_password", "avantra_api_url"]:
-                _load_key(module_args, task_vars, p)
-                if p not in module_args:
-                    raise AnsibleActionFail("Couldn't find value for parameter: '{0}'".format(p))
-        else:
-            for p in ["avantra_api_url"]:
-                _load_key(module_args, task_vars, p)
-                if p not in module_args:
-                    raise AnsibleActionFail("Couldn't find value for parameter: '{0}'".format(p))
+        for p in ["avantra_api_user", "avantra_api_password", "avantra_api_url"]:
+            _load_key(module_args, task_vars, p)
+            if p not in module_args:
+                raise AnsibleActionFail("Couldn't find value for parameter: '{0}'".format(p))
 
         module_return = self._execute_module(module_args=module_args, task_vars=task_vars)
         if module_return.get("warnings") is not None:

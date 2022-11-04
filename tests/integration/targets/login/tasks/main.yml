@@ -1,0 +1,12 @@
+- name: Login to an non-existent endpoint
+  avantra.core.login:
+    avantra_api_url: http://localhost:8090/xn
+    avantra_api_user: anyone
+    avantra_api_password: dontknow
+  ignore_errors: yes
+  register: result
+
+- name: Test the output
+  assert:
+    that:
+      - result.status == -1

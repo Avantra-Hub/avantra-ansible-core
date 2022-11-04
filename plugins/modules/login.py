@@ -27,8 +27,8 @@ short_description: authentication operations
 
 description: >
     With this module a authentication token can be fetched from an defined
-    Avantra API endpoint url for username and password. A registered authentication
-    token can be used in the following Avantra module usages.
+    Avantra API endpoint url together with a valid username and password.
+    You can then use the token for other tasks.
 
 extends_documentation_fragment:
     - avantra.core.auth_options
@@ -46,9 +46,17 @@ EXAMPLES = r"""
     avantra_api_user: <username>
     avantra_api_password: <password>
   register: auth
+
 - name: Print the authentication token
   ansible.builtin.debug:
     var: auth
+
+- name: Get information about a server
+  avantra.core.server_info:
+    token: "{{auth.token}}"
+    server_name: aservername
+    customer_name: acustomername
+
 """
 
 RETURN = r"""

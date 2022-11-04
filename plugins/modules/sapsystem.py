@@ -309,13 +309,27 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import 
     parse_api_date_time
 )
 
+from ansible_collections.avantra.core.plugins.module_utils.avantra.system_actions import (
+    SAP_SYSTEM_START,
+    SAP_SYSTEM_STOP,
+    SAP_SYSTEM_RESTART,
+    SAP_SYSTEM_WITH_DB_START,
+    SAP_SYSTEM_WITH_DB_STOP,
+    SAP_SYSTEM_WITH_DB_RESTART,
+    SAP_SYSTEM_WITH_DB_AND_HANA_START,
+    SAP_SYSTEM_WITH_DB_AND_HANA_STOP,
+    SAP_SYSTEM_WITH_DB_AND_HANA_RESTART,
+    SAP_SYSTEM_WITH_DB_AND_SERVER_START,
+    SAP_SYSTEM_WITH_DB_AND_SERVER_STOP,
+    SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART
+)
+
 from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     create_argument_spec,
     AVANTRA_TOKEN,
     AVANTRA_API_USER,
     AVANTRA_API_PASSWORD,
-    AvantraAnsibleModule,
-    SystemActions
+    AvantraAnsibleModule
 )
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.sapsystem import (
@@ -381,13 +395,13 @@ def ensure_started(module, sap_system, result):
     _check_run_state_arguments(module, with_database, with_servers, with_system_db_if_hana)
 
     if not with_database:
-        action = SystemActions.SAP_SYSTEM_START
+        action = SAP_SYSTEM_START
     elif with_servers:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_AND_SERVER_START
+        action = SAP_SYSTEM_WITH_DB_AND_SERVER_START
     elif with_system_db_if_hana:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_AND_HANA_START
+        action = SAP_SYSTEM_WITH_DB_AND_HANA_START
     else:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_START
+        action = SAP_SYSTEM_WITH_DB_START
 
     if prev_run_state != "started" or run_options.get("always_execute"):
         result["action_result"] = module.execute_system_action(
@@ -417,13 +431,13 @@ def ensure_stopped(module, sap_system, result):
     _check_run_state_arguments(module, with_database, with_servers, with_system_db_if_hana)
 
     if not with_database:
-        action = SystemActions.SAP_SYSTEM_STOP
+        action = SAP_SYSTEM_STOP
     elif with_servers:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_AND_SERVER_STOP
+        action = SAP_SYSTEM_WITH_DB_AND_SERVER_STOP
     elif with_system_db_if_hana:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_AND_HANA_STOP
+        action = SAP_SYSTEM_WITH_DB_AND_HANA_STOP
     else:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_STOP
+        action = SAP_SYSTEM_WITH_DB_STOP
 
     if prev_run_state != "stopped" or run_options.get("always_execute"):
         result["action_result"] = module.execute_system_action(
@@ -453,13 +467,13 @@ def ensure_restarted(module, sap_system, result):
     _check_run_state_arguments(module, with_database, with_servers, with_system_db_if_hana)
 
     if not with_database:
-        action = SystemActions.SAP_SYSTEM_RESTART
+        action = SAP_SYSTEM_RESTART
     elif with_servers:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART
+        action = SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART
     elif with_system_db_if_hana:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_AND_HANA_RESTART
+        action = SAP_SYSTEM_WITH_DB_AND_HANA_RESTART
     else:
-        action = SystemActions.SAP_SYSTEM_WITH_DB_RESTART
+        action = SAP_SYSTEM_WITH_DB_RESTART
 
     result["action_result"] = module.execute_system_action(
         action,

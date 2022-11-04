@@ -18,55 +18,44 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from base64 import b64encode
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import datetime, timedelta, tzinfo
 from string import Template
-from typing import Dict
 from uuid import uuid1
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (dict_get, xmldict)
 
+ZERO = timedelta(0)
+HOUR = timedelta(hours=1)
+
+
+class UTC(tzinfo):
+    """UTC"""
+
+    def utcoffset(self, dt):
+        return ZERO
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return ZERO
+
+
+utc = UTC()
+
 AVANTRA_API_URL = "avantra_api_url"
 AVANTRA_API_USER = "avantra_api_user"
 AVANTRA_API_PASSWORD = "avantra_api_password"
 
-AVANTRA_TOKEN = "avantra_token"
+AVANTRA_TOKEN = "token"
 
 ERROR_NOT_IMPLEMENTED = 1010
 ERROR_ELEMENT_NOT_FOUND = 1011
 
 ERROR_DELETE_ELEMENT_SERVER = 1100
 ERROR_DELETE_ELEMENT_SAP_SYSTEM = 1102
-
-
-class SystemType(Enum):
-    SERVER = 0
-    SAP_INSTANCE = 1
-    SAP_SYSTEM = 2
-    DATABASE = 3
-    BUSINESS_SERVICE = 4
-    SAP_BUSINESS_OBJECT = 5
-    CLOUD_SERVICE = 6
-
-
-class SystemActions(Enum):
-    SERVER_START = 20
-    SERVER_STOP = 21
-    # SERVER_RESTART = 20
-    SAP_SYSTEM_START = 1
-    SAP_SYSTEM_STOP = 2
-    SAP_SYSTEM_RESTART = 201
-    SAP_SYSTEM_WITH_DB_START = 32
-    SAP_SYSTEM_WITH_DB_STOP = 33
-    SAP_SYSTEM_WITH_DB_RESTART = 202
-    SAP_SYSTEM_WITH_DB_AND_HANA_START = 34
-    SAP_SYSTEM_WITH_DB_AND_HANA_STOP = 35
-    SAP_SYSTEM_WITH_DB_AND_HANA_RESTART = 203
-    SAP_SYSTEM_WITH_DB_AND_SERVER_START = 36
-    SAP_SYSTEM_WITH_DB_AND_SERVER_STOP = 37
-    SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART = 204
 
 
 class AvantraAnsibleModule(AnsibleModule):
@@ -86,7 +75,7 @@ class AvantraAnsibleModule(AnsibleModule):
         self._avantra_api_token = None
         self._avantra_api_url = None
 
-        self.avantra_token = self.params.get("avantra_token")
+        self.avantra_token = self.params.get("token")
 
     @property
     def avantra_token(self):
@@ -233,7 +222,7 @@ class AvantraAnsibleModule(AnsibleModule):
             }
         """
         variables = {
-            "actionId": action.value,
+            "actionId": action,
             "systemIds": [system_id],
             "parameters": [{"key": k, "value": v} for k, v in args.items()]
         }
@@ -338,7 +327,7 @@ def create_argument_spec(allow_token=True):
             avantra_api_url=dict(type='str', required=True),
             avantra_api_user=dict(type='str', required=False),
             avantra_api_password=dict(type='str', required=False, no_log=True),
-            avantra_token=dict(type='str', required=False, no_log=True)
+            token=dict(type='str', required=False, no_log=True)
         )
     else:
         return dict(
@@ -373,7 +362,7 @@ SOAP_SECURITY_HEADER = Template("""
 
 def soap_security_header(username, password):
     message_id = str(uuid1())
-    timestamp_created = datetime.now(timezone.utc)
+    timestamp_created = datetime.now(utc)
     timestamp_expires = timestamp_created + timedelta(seconds=60)
     nonce = b64encode(message_id.encode("ascii")).decode("ascii")
     return SOAP_SECURITY_HEADER.substitute(

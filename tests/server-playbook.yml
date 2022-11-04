@@ -45,7 +45,7 @@
 
     - name: Start Server
       avantra.core.server:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         server_name: "achnmn-mis3"
         customer_name: "mis"
         run_state: started
@@ -57,7 +57,7 @@
 
     - name: Restart Server
       avantra.core.server:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         server_name: "achnmn-mis3"
         customer_name: "mis"
         run_state: restarted
@@ -69,7 +69,7 @@
 
     - name: Stop Server
       avantra.core.server:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         server_name: "achnmn-mis3"
         customer_name: "mis"
         run_state: stopped
@@ -81,7 +81,7 @@
 
     - name: Check Server
       avantra.core.server_info:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         server_name: "achnmn-mis3"
         customer_name: "mis"
       register: result
@@ -92,7 +92,7 @@
 
     - name: Change monitoring OFF
       avantra.core.server:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         server_name: "achnmn-mis3"
         customer_name: "mis"
         monitoring: false
@@ -100,7 +100,7 @@
 
     - name: Change monitoring ON
       avantra.core.server:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         server_name: "achnmn-mis3"
         customer_name: "mis"
         monitoring: true

@@ -52,10 +52,10 @@ options:
         description: The password or API key for the selected Avantra user.
         required: false
         type: str
-    avantra_token:
+    token:
         description: >
-            The token used to authenticate during task execution. An token can be
-            fetched with the M(avantra.core.login) module. If I(avantra_token) is
+            The token used to authenticate during the task execution. A token can be
+            fetched with the M(avantra.core.login) module. If I(token) is
             defined I(avantra_api_user) and I(avantra_api_password) are not necessary.
         required: false
         type: str
