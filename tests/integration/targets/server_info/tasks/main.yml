@@ -1,0 +1,19 @@
+- name: Login to an existent endpoint with correct credentials
+  avantra.core.login:
+    avantra_api_url:  "{{avantra_api_url}}"
+    avantra_api_user: testuser
+    avantra_api_password: testpwd
+  register: auth
+
+- name: Check Server
+  avantra.core.server_info:
+    avantra_api_url: "{{avantra_api_url}}"
+    token: "{{auth.token}}"
+    server_name: "achnmn-mis3"
+    customer_name: "mis"
+  register: result
+
+- name: Test the output
+  assert:
+    that:
+      - result.server is None
