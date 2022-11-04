@@ -1,0 +1,40 @@
+- name: Create mock directory
+  ansible.builtin.file:
+    path: /tmp/mock
+    state: directory
+
+- name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: ./api_mock.py
+    dest: /tmp/mock/api_mock.py
+    mode: '0777'
+
+- name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: ./schema.graphql
+    dest: /tmp/mock/schema.graphql
+    mode: '0777'
+
+- name: Run FastAPI GraphQL mock
+  ansible.builtin.shell: cd /tmp/mock; nohup /tmp/mock/api_mock.py </dev/null >/dev/null 2>&1 &
+#  ansible.builtin.shell: /tmp/mock/api_mock.py
+
+- name: Sleep for 300 seconds and continue with play
+  ansible.builtin.wait_for:
+    timeout: 5
+
+#- name: Check server
+#  ansible.builtin.uri:
+#    url: http://localhost:8888/xn/api/auth/login
+#    method: POST
+#    body_format: json
+#    body: >
+#      {
+#        "username": "testuser",
+#        "password": "testpwd"
+#      }
+#  register: result
+#
+#- name: Show result
+#  ansible.builtin.debug:
+#    var: result

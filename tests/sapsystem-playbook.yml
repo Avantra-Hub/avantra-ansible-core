@@ -110,7 +110,7 @@
 
     - name: Change monitoring OFF
       avantra.core.sapsystem:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         unified_sap_sid: "SMA_REMOTE3"
         customer_name: "mis"
         monitoring: false
@@ -118,7 +118,7 @@
 
     - name: Change monitoring ON
       avantra.core.sapsystem:
-        avantra_token: "{{auth.token}}"
+        token: "{{auth.token}}"
         unified_sap_sid: "SMA_REMOTE3"
         customer_name: "mis"
         monitoring: true
@@ -127,6 +127,3 @@
     - name: Show result
       ansible.builtin.debug:
         var: result
-
-
-

@@ -1,8 +1,25 @@
 # -*- coding: utf-8 -*-
+
+# Copyright 2022 Avantra
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import (absolute_import, division, print_function)
 
-import xml.etree.ElementTree as ElementTree
-from io import StringIO, BytesIO
+__metaclass__ = type
+
+from xml.etree import ElementTree
+from io import StringIO
 from collections import defaultdict
 import re
 from datetime import datetime
@@ -14,7 +31,7 @@ _pattern_second = re.compile('__([A-Z])')
 _pattern_third = re.compile('([a-z0-9])([A-Z])')
 
 
-def dict_get(value: dict, *keys):
+def dict_get(value, *keys):
     """
     Tries to access a nested key within potential nested dictionaries.
     :param value: the dict to access
@@ -60,13 +77,12 @@ def _etree_to_dict(t):
 
 def xmldict(xml):
     it = ElementTree.iterparse(StringIO(xml.decode("UTF-8")))
-    for _, el in it:
-        _, _, el.tag = el.tag.rpartition('}')  # strip ns
-    root = it.root
-    return _etree_to_dict(root)
+    for evt, el in it:
+        before, sep, el.tag = el.tag.rpartition('}')  # strip ns
+    return _etree_to_dict(it.root)
 
 
-def camel_to_snake_case(camel: str = ""):
+def camel_to_snake_case(camel=""):
     """
     Converts a camel case string to snake case.
     :param camel: the camel case string
@@ -80,7 +96,7 @@ def camel_to_snake_case(camel: str = ""):
     return name.lower()
 
 
-def cameldict_to_snake_case(camel: dict) -> dict:
+def cameldict_to_snake_case(camel):
     """
     Converts a dictionary with camel case keys to a dictionary with snake case key.
     :param camel: the camel case dictionary
@@ -106,11 +122,11 @@ def cameldict_to_snake_case(camel: dict) -> dict:
     return result
 
 
-def parse_api_date_time(date_time_str: str) -> datetime:
+def parse_api_date_time(date_time_str):
     if date_time_str is None:
         return datetime.now()
     return datetime.strptime(date_time_str, _DATETIME_FORMAT)
 
 
-def format_api_date_time(dt: datetime = datetime.now()) -> str:
+def format_api_date_time(dt=datetime.now()):
     return dt.strftime(_DATETIME_FORMAT)

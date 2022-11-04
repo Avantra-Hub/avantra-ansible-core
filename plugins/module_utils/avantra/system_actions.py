@@ -14,21 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
-
-class ModuleDocFragment(object):
-
-    DOCUMENTATION = r"""
-options:
-    custom_attributes:
-        description:
-        - Define custom attributes for the monitored system as key value pairs. See
-          U(https://docs.avantra.com/product-guide/latest/avantra/custom-attributes.html)
-          for an explanation.
-        required: false
-        type: dict
-"""
+SERVER_START = 20
+SERVER_STOP = 21
+# SERVER_RESTART = 20
+SAP_SYSTEM_START = 1
+SAP_SYSTEM_STOP = 2
+SAP_SYSTEM_RESTART = 201
+SAP_SYSTEM_WITH_DB_START = 32
+SAP_SYSTEM_WITH_DB_STOP = 33
+SAP_SYSTEM_WITH_DB_RESTART = 202
+SAP_SYSTEM_WITH_DB_AND_HANA_START = 34
+SAP_SYSTEM_WITH_DB_AND_HANA_STOP = 35
+SAP_SYSTEM_WITH_DB_AND_HANA_RESTART = 203
+SAP_SYSTEM_WITH_DB_AND_SERVER_START = 36
+SAP_SYSTEM_WITH_DB_AND_SERVER_STOP = 37
+SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART = 204
