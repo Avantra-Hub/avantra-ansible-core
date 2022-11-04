@@ -31,11 +31,11 @@ def _load_key(module_args, task_vars, key):
         module_args[key] = task_vars[key]
 
 
-class AvantraActionModule(ActionBase):
+class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
 
-        super(AvantraActionModule, self).run(tmp, task_vars)
+        super(ActionModule, self).run(tmp, task_vars)
         module_args = self._task.args.copy()
         # We have to check for those variables if the task does not define it.
         for p in ["avantra_api_user", "avantra_api_password", "avantra_api_url"]:

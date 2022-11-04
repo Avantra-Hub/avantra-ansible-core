@@ -205,13 +205,17 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.server import
     turn_monitoring_on
 )
 
+from ansible_collections.avantra.core.plugins.module_utils.avantra.system_actions import (
+    SERVER_START,
+    SERVER_STOP
+)
+
 from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     create_argument_spec,
     AVANTRA_TOKEN,
     AVANTRA_API_USER,
     AVANTRA_API_PASSWORD,
-    AvantraAnsibleModule,
-    SystemActions
+    AvantraAnsibleModule
 )
 
 
@@ -235,7 +239,7 @@ def ensure_server_started(module, server, result):
     run_options = module.params.get("run_options")
     if prev_run_state != "started" or run_options.get("always_execute"):
         result["action_result"] = module.execute_system_action(
-            SystemActions.SERVER_START,
+            SERVER_START,
             system_id=server["id"],
             execution_name=run_options["execution_name"],
             args={
@@ -254,7 +258,7 @@ def ensure_server_stopped(module, server, result):
     run_options = module.params.get("run_options")
     if prev_run_state != "stopped" or run_options.get("always_execute"):
         result["action_result"] = module.execute_system_action(
-            SystemActions.SERVER_STOP,
+            SERVER_STOP,
             system_id=server["id"],
             execution_name=run_options["execution_name"],
             args={
