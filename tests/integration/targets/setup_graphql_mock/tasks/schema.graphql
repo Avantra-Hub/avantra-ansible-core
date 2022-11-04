@@ -905,10 +905,11 @@ schema {
 }
 
 type Query {
+    dummy: ID
 }
 
 type Mutation {
-
+    dummy: ID
 }
 
 """
@@ -1316,7 +1317,7 @@ type SapInstance implements MonitoredSystem & InfoProvider {
     """
     administratorDeputy: User
     """
-    SAP Instance number is a two-digit number between 00 to 99. SAP instances are numbered because system can contain
+    SAP Instance number is a two-digit number between 00 to 99079. SAP instances are numbered because system can contain
     more than once instance at a specific point of time.
     """
     systemNumber: String
