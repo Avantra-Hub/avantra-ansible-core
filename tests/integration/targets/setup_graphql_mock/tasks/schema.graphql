@@ -905,10 +905,11 @@ schema {
 }
 
 type Query {
+    dummy: ID
 }
 
 type Mutation {
-
+    dummy: ID
 }
 
 """
@@ -1316,7 +1317,7 @@ type SapInstance implements MonitoredSystem & InfoProvider {
     """
     administratorDeputy: User
     """
-    SAP Instance number is a two-digit number between 00 to 99. SAP instances are numbered because system can contain
+    SAP Instance number is a two-digit number between 00 to 99079. SAP instances are numbered because system can contain
     more than once instance at a specific point of time.
     """
     systemNumber: String
@@ -2456,6 +2457,14 @@ type Database implements MonitoredSystem & InfoProvider {
     Available credentials for this system.
     """
     credentials: [CredentialsBase]!
+    """
+    The host used to connect to the database.
+    """
+    host: String
+    """
+    The port used to connect to the database.
+    """
+    port: Int
 }
 
 """
@@ -4385,6 +4394,10 @@ input SapSystemDatabaseInput {
     The hostname to connect to the database (optional).
     """
     host: String = null
+    """
+    The database port.
+    """
+    port: Int = null
     """
     The database name (optional).
     """

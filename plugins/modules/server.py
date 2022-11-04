@@ -1,74 +1,69 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+# Copyright 2022 Avantra
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import (absolute_import, division, print_function)
-
-from datetime import datetime, timedelta
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
-    parse_api_date_time
-)
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.server import (
-    create_server,
-    delete_server,
-    fetch_server,
-    turn_monitoring_off,
-    turn_monitoring_on
-)
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
-    create_argument_spec,
-    AVANTRA_TOKEN,
-    AVANTRA_API_USER,
-    AVANTRA_API_PASSWORD,
-    AvantraAnsibleModule,
-    SystemActions
-)
 
 __metaclass__ = type
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: server
 
 short_description: manage Avantra servers
 
-version_added: "23.0.1"
-
 description:
 - You can create, delete or update servers in Avantra.
 - Start, stop, restart servers using Avantra functionality.
-- A server is always identified with its C(server_name) and C(customer_name). 
+- A server is always identified with its C(server_name) and C(customer_name).
 
 options:
     exists_state:
         description:
-        - If C(present) the server with the given parameter is created in case is does 
+        - If C(present) the server with the given parameter is created in case is does
           not exist or modified in case it exists.
-        - If C(absent) the server identified by the I(server_name) and I(customer_name) 
+        - If C(absent) the server identified by the I(server_name) and I(customer_name)
           is deleted if it exists.
+        choices:
+        - present
+        - absent
+        default: present
+        type: str
     server_name:
-        description: The name to identify the server. 
+        description: The name to identify the server.
         required: true
         type: str
     customer_name:
-        description: The customer name to identify the server. 
+        description: The customer name to identify the server.
         required: true
         type: str
     fqdn_or_ip_address:
-        description: 
-        - Configures how the server can be reached over the network. Can be an IP address or a host name. 
-        - If C(exists_state=present) and the server has to be created this parameter is mandatory. 
+        description:
+        - Configures how the server can be reached over the network. Can be an IP address or a host name.
+        - If C(exists_state=present) and the server has to be created this parameter is mandatory.
         required: false
         type: str
     dns_domain:
-        description: 
-        - Configures the DNS domain for this server. 
+        description:
+        - Configures the DNS domain for this server.
         - This has to a domain registered in Avantra.
         type: str
         required: false
-    host_aliases:   
-        description: A list of valid host aliases. 
+    host_aliases:
+        description: A list of valid host aliases.
         type: list
         elements: str
         required: false
@@ -82,23 +77,23 @@ options:
         type: str
     application_type:
         description: The application type (on of the defined in the customizations).
-        required: false        
-        type: str    
+        required: false
+        type: str
     credentials:
-        description: > 
-            Add credentials to this server. See the examples for more information on how 
+        description: >
+            Add credentials to this server. See the examples for more information on how
             to set the different credential types. The key for the child objects are the credential
             keys found in Avantra.
         type: dict
-        required: false    
-   
+        required: false
+
     run_state:
         description:
-        - If C(started) and the current state is C(run_state=stopped) or C(run_state=unknown) the server will 
+        - If C(started) and the current state is C(run_state=stopped) or C(run_state=unknown) the server will
           be started.
-        - If C(stopped) and the current state is C(run_state=started) or C(run_state=unknown) the server will 
-          be started.        
-        - B(Note:) if C(exists_state=absent) and the server exists the run state change will be applied before 
+        - If C(stopped) and the current state is C(run_state=started) or C(run_state=unknown) the server will
+          be started.
+        - B(Note:) if C(exists_state=absent) and the server exists the run state change will be applied before
           the server is deleted. If C(exists_state=present) the run state change will be executed after the server
           has been created.
         type: str
@@ -122,47 +117,48 @@ options:
                  - If C(run_state=started) this parameter defaults to true.
                  - If C(run_state=stopped) this parameter defaults to false.
                  - If C(run_state=restarted) this parameter is ignored.
+                 type: bool
             wait_seconds:
                 description:
                 - Defines the wait time in seconds after a server start before executing next steps.
                 required: false
                 default: 60
-                type: int                       
+                type: int
             force_stop:
                 description:
                 - Avantra checks for known running applications (ie. applications with monitoring turned on) and cancels
                   a stop if some are found. With C(force_stop=true), the server will be stopped in any case.
                 required: false
                 default: true
-                type: bool         
+                type: bool
             execution_name:
                 description:
                 - Defines a name for the action to be executed.
-                required: false                
+                required: false
                 type: str
 
 extends_documentation_fragment:
     - avantra.core.auth_options.token
     - avantra.core.seealso
     - avantra.core.authors
-    - avantra.core.check_mode_unsupported                
-    - avantra.core.option_monitoring                
-    - avantra.core.option_timezone             
-    - avantra.core.option_custom_attributes   
-    - avantra.core.option_system_role   
-'''
+    - avantra.core.check_mode_unsupported
+    - avantra.core.option_monitoring
+    - avantra.core.option_timezone
+    - avantra.core.option_custom_attributes
+    - avantra.core.option_system_role
+    - avantra.core.version_added_23_0
+"""
 
-EXAMPLES = r'''
-# Check server existence:
+EXAMPLES = r"""
 - name: Create Server if it doesn't exist
   avantra.core.server:
-    exists: present    
+    exists: present
     server_name: "agent_5432"
     customer_name: "Avantra 1"
     fqdn_or_ip_address: "host5432"
     system_role: "Test"
     host_aliases:
-    - host-5432
+      - host-5432
     credentials:
       avantra.basic:
         cred_type: basic
@@ -176,29 +172,54 @@ EXAMPLES = r'''
         port: 4321
         config:
           ssh_option1: <value>
-          
-# Start an existing server          
+
+# Start an existing server
 - name: Start Server
   avantra.core.server:
     server_name: "agent_54323"
     customer_name: "Avantra 1"
     run_state: started
     run_options:
-        always_execute: true
-  register: result
-'''
+      always_execute: true
+"""
 
-RETURN = r'''
+RETURN = r"""
 server:
-    description: 
+    description:
     - If C(exists_state=present) and the server can be identified the system information is returned.
     type: dict
-    returned: present    
- 
-'''
+    returned: present
+"""
+
+from datetime import datetime, timedelta
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
+    parse_api_date_time
+)
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.server import (
+    create_server,
+    delete_server,
+    fetch_server,
+    turn_monitoring_off,
+    turn_monitoring_on
+)
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.system_actions import (
+    SERVER_START,
+    SERVER_STOP
+)
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
+    create_argument_spec,
+    AVANTRA_TOKEN,
+    AVANTRA_API_USER,
+    AVANTRA_API_PASSWORD,
+    AvantraAnsibleModule
+)
 
 
-def _get_server_run_state(server: dict) -> str:
+def _get_server_run_state(server):
     if server is not None:
         # At the moment there is no way to tell what is the correct run_state of a SAP system. Here
         # we check whether there is a SystemAlive check not older than 10 minutes.
@@ -211,14 +232,14 @@ def _get_server_run_state(server: dict) -> str:
     return "unknown"
 
 
-def ensure_server_started(module: AvantraAnsibleModule, server: dict, result: dict):
+def ensure_server_started(module, server, result):
     prev_run_state = _get_server_run_state(server)
     result["diff"]["before"]["run_state"] = prev_run_state
 
     run_options = module.params.get("run_options")
     if prev_run_state != "started" or run_options.get("always_execute"):
         result["action_result"] = module.execute_system_action(
-            SystemActions.SERVER_START,
+            SERVER_START,
             system_id=server["id"],
             execution_name=run_options["execution_name"],
             args={
@@ -230,14 +251,14 @@ def ensure_server_started(module: AvantraAnsibleModule, server: dict, result: di
         result["changed"] = True
 
 
-def ensure_server_stopped(module: AvantraAnsibleModule, server: dict, result: dict):
+def ensure_server_stopped(module, server, result):
     prev_run_state = _get_server_run_state(server)
     result["diff"]["before"]["run_state"] = prev_run_state
 
     run_options = module.params.get("run_options")
     if prev_run_state != "stopped" or run_options.get("always_execute"):
         result["action_result"] = module.execute_system_action(
-            SystemActions.SERVER_STOP,
+            SERVER_STOP,
             system_id=server["id"],
             execution_name=run_options["execution_name"],
             args={
@@ -249,7 +270,7 @@ def ensure_server_stopped(module: AvantraAnsibleModule, server: dict, result: di
         result["changed"] = True
 
 
-def ensure_server_monitoring(module: AvantraAnsibleModule, server: dict, result: dict) -> dict:
+def ensure_server_monitoring(module, server, result):
     prev_monitoring = not server["monitor_off"]
     monitoring = module.params.get("monitoring")
 
@@ -265,7 +286,7 @@ def ensure_server_monitoring(module: AvantraAnsibleModule, server: dict, result:
     return server
 
 
-def ensure_server_present(module: AvantraAnsibleModule, customer_name: str, server_name: str) -> dict:
+def ensure_server_present(module, customer_name, server_name):
     result = {
         "changed": False
     }
@@ -314,7 +335,6 @@ def ensure_server_present(module: AvantraAnsibleModule, customer_name: str, serv
 
     server = ensure_server_monitoring(module, server, result)
 
-
     run_state = module.params.get("run_state")
     if run_state == "started":
         ensure_server_started(module, server, result)
@@ -331,7 +351,7 @@ def ensure_server_present(module: AvantraAnsibleModule, customer_name: str, serv
     return result
 
 
-def ensure_server_absent(module: AvantraAnsibleModule, customer_name: str, server_name: str) -> dict:
+def ensure_server_absent(module, customer_name, server_name):
     result = {
         "changed": False
     }
@@ -382,15 +402,14 @@ def run_module():
     argument_spec = create_argument_spec()
     argument_spec.update({
         "exists_state": dict(type='str', choices=["present", "absent"], default="present"),
-        "run_state": dict(type='str', choices=["started", "stopped", "restarted"]),
+        "run_state": dict(type='str', choices=["started", "stopped"]),
         "run_options": dict(type='dict', default={},
                             options=dict(
                                 always_execute=dict(type="bool", default=False),
                                 monitoring=dict(type="bool"),
                                 wait_seconds=dict(type='int', default=60),
                                 force_stop=dict(type='bool', default=True),
-                                execution_name=dict(type='str'),
-                            )),
+                                execution_name=dict(type='str'))),
         "server_name": dict(type='str', required=True),
         "customer_name": dict(type='str', required=True),
         "credentials": dict(type='dict'),

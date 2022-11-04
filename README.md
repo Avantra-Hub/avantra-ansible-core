@@ -8,9 +8,9 @@ Documentation for the collection.
 an [Ansible Vault](https://docs.ansible.com/ansible/latest/user_guide/vault.html)
 
 ```properties
-[splunk]
-avantra-api.host.net
-[splunk:vars]
+[splunk]=
+avantra-api.host.net=
+[splunk=vars]
 ansible_network_os=splunk.es.splunk
 ansible_user=admin
 ansible_httpapi_pass=my_super_secret_admin_password
@@ -53,8 +53,8 @@ $ ansible-galaxy collection install /path/to/collection --upgrade
 ansible.cfg
 
 ```properties
-[defaults]
-inventory = ./inventory
+[defaults]=
+inventory=./inventory
 COLLECTIONS_PATHS=./collections
 ```
 
