@@ -24,12 +24,13 @@ class ModuleDocFragment(object):
 options:
     avantra_api_url:
         description:
-        - This is a valid pointing to a Avantra UI.
+        - A valid URL pointing to an Avantra UI.
+        - For example C(https://avantra-ui/xn)
         required: true
         type: str
     avantra_api_user:
         description:
-        - A valid Avantra user name.
+        - Valid Avantra user principal.
         required: true
         type: str
     avantra_api_password:
@@ -42,11 +43,14 @@ options:
     TOKEN = r"""
 options:
     avantra_api_url:
-        description: This is a valid pointing to a Avantra UI.
+        description:
+        - A valid URL pointing to an Avantra UI.
+        - For example C(https://avantra-ui/xn)
         required: true
         type: str
     avantra_api_user:
-        description: A valid Avantra user name.
+        description:
+        - Valid Avantra user principal.
         required: false
         type: str
     avantra_api_password:

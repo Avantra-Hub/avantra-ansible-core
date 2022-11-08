@@ -64,6 +64,7 @@ extends_documentation_fragment:
     - avantra.core.authors
     - avantra.core.check_mode_unsupported
     - avantra.core.version_added_23_0
+    - avantra.core.notes_ansiblevaults
 """
 
 EXAMPLES = r"""
