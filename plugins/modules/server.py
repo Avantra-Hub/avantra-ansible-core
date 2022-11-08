@@ -75,14 +75,10 @@ options:
         description: The notes for the server.
         required: false
         type: str
-    application_type:
-        description: The application type (on of the defined in the customizations).
-        required: false
-        type: str
     credentials:
         description: >
             Add credentials to this server. See the examples for more information on how
-            to set the different credential types. The key for the child objects are the credential
+            to set the different credential types. The key for the child objects is one of the credential
             keys found in Avantra.
         type: dict
         required: false
@@ -148,6 +144,7 @@ extends_documentation_fragment:
     - avantra.core.option_system_role
     - avantra.core.version_added_23_0
     - avantra.core.notes_ansiblevaults
+    - avantra.core.option_application_type
 """
 
 EXAMPLES = r"""

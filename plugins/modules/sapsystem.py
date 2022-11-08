@@ -33,12 +33,14 @@ description:
 options:
     unified_sap_sid:
         description:
-        - The B(Unified SAP SID) of a SAP system. Together with the I(customer_name) parameter a SAP system is identified.
+        - The B(Unified SAP SID) of a SAP system. Together with the I(customer_name) parameter it identifies a
+          SAP system.
         required: true
         type: str
     customer_name:
         description:
-        - A customer name known by Avantra. Together with the I(unified_sap_sid) parameter a SAP system is identified.
+        - A customer name known by Avantra. Together with the I(unified_sap_sid) parameter it identifies a
+          SAP system.
         required: true
         type: str
     exists_state:
@@ -68,35 +70,39 @@ options:
         required: false
         type: str
     application_type:
-        description: The application type (on of the defined in the customizations).
+        description: The application type (one of the defined in the customizations).
         required: false
         type: str
     database:
-        description: configures the database
+        description: Configures the database detail for the SAP system.
         required: false
         type: dict
         suboptions:
             monitoring_server_system_id:
-                description: the system ID of the server monitoring the database.
+                description:
+                - The system ID of the server monitoring the database.
                 type: str
                 required: false
             host:
-                description: defines the database host.
+                description:
+                - Defines the database host.
                 type: str
                 required: false
             port:
-                description: defines the database port.
+                description:
+                - Defines the database port.
                 type: str
                 required: false
             name:
-                description: configures the database name.
+                description:
+                - Configures the database name.
                 type: str
                 required: false
 
     credentials:
         description:
         - Add credentials to this SAP system. See the examples for more information on how
-          to set the different credential types. The key for the child objects are the credential
+          to set the different credential types. The key for the child objects is one of the credential
           keys found in Avantra.
         - We highly recommend to use Ansible Vaults to protect you sensitive content.
         type: dict
@@ -223,7 +229,7 @@ extends_documentation_fragment:
     - avantra.core.option_system_role
     - avantra.core.version_added_23_0
     - avantra.core.notes_ansiblevaults
-
+    - avantra.core.option_application_type
 """
 
 EXAMPLES = r"""
