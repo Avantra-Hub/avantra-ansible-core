@@ -36,4 +36,3 @@
   assert:
     that:
       - result.token == "###TestToken###"
-

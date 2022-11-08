@@ -23,7 +23,7 @@ DOCUMENTATION = r"""
 ---
 module: sapsystem_info
 
-short_description: load information about SAP system
+short_description: load SAP system information
 
 description: >
     This module allows to load information about a SAP system from Avantra.

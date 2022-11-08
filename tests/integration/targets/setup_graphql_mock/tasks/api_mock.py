@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright 2022 Avantra
@@ -20,12 +19,12 @@ from fastapi import FastAPI, Response, status
 from pydantic import BaseModel
 from typing import Union
 from strawberry.fastapi import GraphQLRouter
-from ariadne import gql, load_schema_from_path, QueryType
+from ariadne import gql, load_schema_from_path, QueryType, make_executable_schema
 from ariadne.asgi import GraphQL
 
-
-schema = load_schema_from_path("/tmp/mock/schema.graphql")
+schema_str = load_schema_from_path("/tmp/mock/schema.graphql")
 query = QueryType()
+
 
 class AuthRequest(BaseModel):
     username: str
@@ -37,7 +36,6 @@ app = FastAPI()
 
 @app.post("/xn/api/auth/login")
 async def login(auth: AuthRequest, response: Response):
-
     if auth.username != "testuser" or auth.password != "testpwd":
         response.status_code = 401
     else:
@@ -48,6 +46,8 @@ async def login(auth: AuthRequest, response: Response):
 async def resolve_systems():
     return {}
 
+
+schema = make_executable_schema(schema_str, query)
 graphql_app = GraphQLRouter(GraphQL(schema, debug=True))
 app.include_router(graphql_app, prefix="/xn/api/graphql")
 
