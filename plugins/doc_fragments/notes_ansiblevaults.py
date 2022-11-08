@@ -23,5 +23,5 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r"""
 options: {}
 notes:
-- We highly recommend to use Ansible Vaults to protect you sensitive content.
+- We highly recommend to use Ansible Vaults to protect your sensitive content.
 """
