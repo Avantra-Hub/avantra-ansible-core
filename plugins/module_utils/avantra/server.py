@@ -65,12 +65,16 @@ def create_server(module, server_name, customer_name):
     _assign("description", only_if_not_none=True)
     _assign("notes", only_if_not_none=True)
     _assign("fqdn_or_ip_address", "ipAddress")
-    _assign("monitoring")
     _assign("system_role", "systemRole")
     _assign("timezone", only_if_not_none=True)
     _assign("dns_domain", only_if_not_none=True)
     _assign("application_type", "applicationType", only_if_not_none=True)
     _assign("host_aliases", "dnsAliases", only_if_not_none=True)
+
+    if module.params.get("monitoring") is None:
+        server_input["monitoring"] = True
+    else:
+        server_input["monitoring"] = module.params.get("monitoring")
 
     custom_attributes = module.params["custom_attributes"]
     if custom_attributes is not None and len(custom_attributes) > 0:
@@ -107,8 +111,61 @@ def create_server(module, server_name, customer_name):
         return True, "Successfully created the server", cameldict_to_snake_case(server)
 
 
-def update_server(module, data):
-    pass
+def update_server(module, server_system_id):
+
+    # Prepare the input
+    server_input = {"id": server_system_id}
+
+    def _assign(key, query_key=None):
+        if query_key is None:
+            query_key = key
+        if module.params[key] is not None:
+            server_input[query_key] = module.params[key]
+
+    _assign("description")
+    _assign("notes")
+    _assign("fqdn_or_ip_address", "ipAddress")
+    _assign("monitoring")
+    _assign("system_role", "systemRole")
+    _assign("timezone")
+    _assign("dns_domain")
+    _assign("application_type", "applicationType")
+    # Merge lists?
+    _assign("host_aliases", "dnsAliases")
+
+    custom_attributes = module.params["custom_attributes"]
+    if custom_attributes is not None and len(custom_attributes) > 0:
+        server_input["customAttributes"] = []
+        for k, v in custom_attributes.items():
+            server_input["customAttributes"].append({
+                "id": k,
+                "name": k,
+                "value": v
+            })
+
+    credentials = handle_credentials(module, module.params["credentials"])
+
+    update_server = module.send_graphql_request(
+        query=UPDATE_MUTATION,
+        variables={
+            "input": server_input,
+            "basicCredentials": credentials.get(CredentialType.BASIC),
+            "sshCredentials": credentials.get(CredentialType.SSH),
+            # "sapControlCredentials": credentials.get(CredentialType.SAP_CONTROL),
+            # "rfcCredentials": credentials.get(CredentialType.RFC),
+            # "oauthCodeCredentials": credentials.get(CredentialType.OAUTH2_CODE),
+            # "oauthClientCredentials": credentials.get(CredentialType.OAUTH2_CLIENT),
+        }
+    )
+
+    op_result = dict_get(update_server, "data", "updateServer", "result")
+    server = dict_get(update_server, "data", "updateServer", "server")
+    if op_result is None:
+        return False, "Could not update the server", None
+    elif not op_result["success"]:
+        return False, op_result["message"], None
+    else:
+        return True, "Successfully updated the server", cameldict_to_snake_case(server)
 
 
 def delete_server(module, server_id):
@@ -372,7 +429,7 @@ FRAGMENT = """
 """
 
 FETCH_QUERY = Template("""
-        query ServerGetByName($$server_nameing!, $$customer_nameing!) {
+        query ServerGetByName($$server_name: String!, $$customer_name: String!) {
             systems(
                 where: {
                     filterBy: [
@@ -429,8 +486,50 @@ CREATE_MUTATION = Template("""
     }
 """).substitute(fragment=FRAGMENT)
 
+UPDATE_MUTATION = Template("""
+    mutation UpdateServer(
+        $$input: UpdateServerInput!
+        $$basicCredentials: [SetBasicCredentialsInput!] = []
+        $$sshCredentials: [SetSshCredentialsInput!] = []
+    ) {
+
+        updateServer(input: $$input) {
+            result {
+                success
+                message
+                code
+            }
+
+            credentials {
+                setBasicCredentials(input: $$basicCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+                setSshCredentials(input: $$sshCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+            }
+
+
+            server {
+                ${fragment}
+            }
+        }
+
+    }
+""").substitute(fragment=FRAGMENT)
+
+
 MONI_OFF_MUTATION = Template("""
-    mutation TurnMonitoringOffForServer($$id: ID!, $$cascadeean, $$noteing, $$until) {
+    mutation TurnMonitoringOffForServer($$id: ID!, $$cascade: Boolean, $$note: String, $$until) {
         turnMonitoringOffForServer(
             id: $$id
             cascade: $$cascade
@@ -443,7 +542,7 @@ MONI_OFF_MUTATION = Template("""
 """).substitute(fragment=FRAGMENT)
 
 MONI_ON_MUTATION = Template("""
-    mutation TurnMonitoringOnForServer($$id: ID!, $$cascadeean, $$noteing) {
+    mutation TurnMonitoringOnForServer($$id: ID!, $$cascade: Boolean, $$note: String) {
         turnMonitoringOnForServer(
             id: $$id
             cascade: $$cascade

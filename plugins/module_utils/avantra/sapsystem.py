@@ -67,10 +67,14 @@ def create_sapsystem(module, unified_sap_sid, customer_name):
     _assign("notes", only_if_not_none=True)
     _assign("remote_monitoring_entry_point", "remoteMonitoringEntryPoint")
     _assign("remote_monitoring_server_system_id", "remoteMonitoringServerSystemId")
-    _assign("monitoring")
     _assign("system_role", "systemRole")
     _assign("timezone", only_if_not_none=True)
     _assign("application_type", "applicationType", only_if_not_none=True)
+
+    if module.params.get("monitoring") is None:
+        sap_system_input["monitoring"] = True
+    else:
+        sap_system_input["monitoring"] = module.params.get("monitoring")
 
     database = module.params["database"]
     if database is not None and len(database) > 0:
@@ -116,8 +120,74 @@ def create_sapsystem(module, unified_sap_sid, customer_name):
         return True, "Successfully created the SAP system", cameldict_to_snake_case(sap_system)
 
 
-def update_sapsystem(module, data):
-    pass
+def update_sapsystem(module, sap_system_id):
+
+    # Prepare the input
+    sap_system_input = {"id": sap_system_id}
+
+    def _assign(key, query_key=None):
+        if query_key is None:
+            query_key = key
+
+        if module.params[key] is not None:
+            sap_system_input[query_key] = module.params[key]
+
+    # sap_system_input["unifiedSapSid"] = unified_sap_sid
+    _assign("real_sap_sid", "realSapSid")
+    _assign("description")
+    _assign("notes")
+    _assign("remote_monitoring_entry_point", "remoteMonitoringEntryPoint")
+    _assign("remote_monitoring_server_system_id", "remoteMonitoringServerSystemId")
+    _assign("monitoring")
+    _assign("system_role", "systemRole")
+    _assign("timezone")
+    _assign("application_type", "applicationType")
+
+    database = module.params["database"]
+    if database is not None and len(database) > 0:
+        sap_system_input["database"] = {}
+        if database.get("monitoring_server_system_id") is not None:
+            sap_system_input["database"]["monitoringServerSystemId"] = database.get("monitoring_server_system_id")
+        if database.get("host") is not None:
+            sap_system_input["database"]["host"] = database.get("host")
+        if database.get("port") is not None:
+            sap_system_input["database"]["port"] = database.get("port")
+        if database.get("name") is not None:
+            sap_system_input["database"]["name"] = database.get("name")
+
+    custom_attributes = module.params["custom_attributes"]
+    if custom_attributes is not None and len(custom_attributes) > 0:
+        sap_system_input["customAttributes"] = []
+        for k, v in custom_attributes.items():
+            sap_system_input["customAttributes"].append({
+                "id": k,
+                "name": k,
+                "value": v
+            })
+
+    credentials = handle_credentials(module, module.params["credentials"])
+
+    create_sap_system = module.send_graphql_request(
+        query=UPDATE_MUTATION,
+        variables={
+            "input": sap_system_input,
+            "basicCredentials": credentials.get(CredentialType.BASIC),
+            "sshCredentials": credentials.get(CredentialType.SSH),
+            "sapControlCredentials": credentials.get(CredentialType.SAP_CONTROL),
+            "rfcCredentials": credentials.get(CredentialType.RFC),
+            "oauthCodeCredentials": credentials.get(CredentialType.OAUTH2_CODE),
+            "oauthClientCredentials": credentials.get(CredentialType.OAUTH2_CLIENT),
+        }
+    )
+
+    op_result = dict_get(create_sap_system, "data", "updateSapSystem", "result")
+    sap_system = dict_get(create_sap_system, "data", "updateSapSystem", "sapSystem")
+    if op_result is None:
+        return False, "Could not update the SAP system", None
+    elif not op_result["success"]:
+        return False, op_result["message"], None
+    else:
+        return True, "Successfully updated the SAP system", cameldict_to_snake_case(sap_system)
 
 
 def delete_sapsystem(module, sap_system_id):
@@ -400,6 +470,82 @@ CREATE_MUTATION = Template("""
         $$oauthClientCredentials: [SetOAuthClientCredentialsInput!] = []
     ) {
         createSapSystem(input: $$input) {
+            result {
+                success
+                message
+                code
+            }
+
+            credentials {
+                setBasicCredentials(input: $$basicCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+                setSshCredentials(input: $$sshCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+                setSapControlCredentials(input: $$sapControlCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+                setRfcCredentials(input: $$rfcCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+                setOAuthCodeCredentials(input: $$oauthCodeCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+                setOAuthClientCredentials(input: $$oauthClientCredentials) {
+                    result {
+                        code
+                        success
+                        message
+                    }
+                }
+
+            }
+
+            sapSystem {
+                ${fragment}
+            }
+        }
+    }
+
+""").substitute(fragment=FRAGMENT)
+
+UPDATE_MUTATION = Template("""
+    mutation UpdateSapSystem(
+        $$input: UpdateSapSystemInput!
+        $$basicCredentials: [SetBasicCredentialsInput!] = []
+        $$sshCredentials: [SetSshCredentialsInput!] = []
+        $$sapControlCredentials: [SetSapControlCredentialsInput!] = []
+        $$rfcCredentials: [SetRfcCredentialsInput!] = []
+        $$oauthCodeCredentials: [SetOAuthCodeCredentialsInput!] = []
+        $$oauthClientCredentials: [SetOAuthClientCredentialsInput!] = []
+    ) {
+        updateSapSystem(input: $$input) {
             result {
                 success
                 message

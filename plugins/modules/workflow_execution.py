@@ -140,7 +140,7 @@ def run_module():
 
     module = AvantraAnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
+        supports_check_mode=False,
         required_together=[
             (AVANTRA_API_USER, AVANTRA_API_PASSWORD),
         ]

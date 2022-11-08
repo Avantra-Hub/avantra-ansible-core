@@ -189,7 +189,7 @@ class AvantraAnsibleModule(AnsibleModule):
         mutation = """
             mutation ExecuteSystemAction (
                 $actionId: ID!,
-                $executionNameing,
+                $executionName: String = null,
                 $systemIds: [ID!]!,
                 $parameters: [SystemActionParameterInput!]!
             ) {
