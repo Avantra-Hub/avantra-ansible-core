@@ -35,6 +35,7 @@ options:
     avantra_api_password:
         description:
         - The password or API key for the selected Avantra user.
+        - We highly recommend to use Ansible Vaults to protect you sensitive content.
         required: true
         type: str
 """
@@ -49,7 +50,9 @@ options:
         required: false
         type: str
     avantra_api_password:
-        description: The password or API key for the selected Avantra user.
+        description:
+        - The password or API key for the selected Avantra user.
+        - We highly recommend to use Ansible Vaults to protect you sensitive content.
         required: false
         type: str
     token:
