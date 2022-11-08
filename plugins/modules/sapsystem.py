@@ -32,12 +32,13 @@ description:
 
 options:
     unified_sap_sid:
-        description: >
-            The B(Unified SAP SID) of a SAP system. Together with the I(customer_name) parameter a SAP system is identified.
+        description:
+        - The B(Unified SAP SID) of a SAP system. Together with the I(customer_name) parameter a SAP system is identified.
         required: true
         type: str
     customer_name:
-        description: A customer name known by Avantra. Together with the I(unified_sap_sid) parameter a SAP system is identified.
+        description:
+        - A customer name known by Avantra. Together with the I(unified_sap_sid) parameter a SAP system is identified.
         required: true
         type: str
     exists_state:
@@ -93,10 +94,11 @@ options:
                 required: false
 
     credentials:
-        description: >
-            Add credentials to this SAP system. See the examples for more information on how
-            to set the different credential types. The key for the child objects are the credential
-            keys found in Avantra.
+        description:
+        - Add credentials to this SAP system. See the examples for more information on how
+          to set the different credential types. The key for the child objects are the credential
+          keys found in Avantra.
+        - We highly recommend to use Ansible Vaults to protect you sensitive content.
         type: dict
         required: false
 
@@ -220,6 +222,7 @@ extends_documentation_fragment:
     - avantra.core.option_timezone
     - avantra.core.option_system_role
     - avantra.core.version_added_23_0
+    - avantra.core.notes_ansiblevaults
 
 """
 
@@ -367,22 +370,6 @@ def _get_run_state(sap_system):
     return "unknown"
 
 
-def ensure_sapsystem_monitoring(module, sap_system, result):
-    prev_monitoring = not sap_system["monitor_off"]
-    monitoring = module.params.get("monitoring")
-
-    if monitoring is not None and prev_monitoring != monitoring:
-        if monitoring:
-            success, msg, sap_system_after = turn_monitoring_on(module, sap_system["id"])
-        else:
-            success, msg, sap_system_after = turn_monitoring_off(module, sap_system["id"])
-
-        if success:
-            sap_system = sap_system_after
-
-    return sap_system
-
-
 def ensure_started(module, sap_system, result):
     prev_run_state = _get_run_state(sap_system)
     result["diff"]["before"]["run_state"] = prev_run_state
@@ -492,6 +479,26 @@ def ensure_restarted(module, sap_system, result):
     result["changed"] = True
 
 
+def ensure_sapsystem_monitoring(module, sap_system, result):
+    if sap_system["monitor_off"] == "true":
+        prev_monitoring = True
+    else:
+        prev_monitoring = False
+
+    monitoring = module.params.get("monitoring")
+
+    if monitoring is not None and prev_monitoring != monitoring:
+        if monitoring:
+            success, msg, sap_system_after = turn_monitoring_on(module, sap_system["id"])
+        else:
+            success, msg, sap_system_after = turn_monitoring_off(module, sap_system["id"])
+
+        if success:
+            sap_system = sap_system_after
+
+    return sap_system
+
+
 def ensure_sapsystem_present(module, customer_name, unified_sap_sid):
     result = {
         "changed": False
@@ -511,9 +518,9 @@ def ensure_sapsystem_present(module, customer_name, unified_sap_sid):
         "after": {"exists_state": "present"}
     }
 
+    diff["before"]["sap_system"] = None
     if prev_exists_state == "absent":
         # Create the SAP system -> nees real sap sid and system role.
-        diff["before"]["sap_system"] = None
 
         if module.params.get("system_role") is None:
             module.fail_json(msg="system_role argument is missing", result=result)
@@ -533,8 +540,15 @@ def ensure_sapsystem_present(module, customer_name, unified_sap_sid):
             module.fail_json(msg=msg, result=result)
 
     else:
-        # TODO: Check whether we have to update the SAP system.
-        result.update(sap_system=sap_system)
+        success, msg, sap_system = update_sapsystem(module, sap_system_id=sap_system.get("id"))
+        if success:
+            diff["after"]["sap_system"] = sap_system
+            result.update(
+                changed=True,
+                sap_system=sap_system
+            )
+        else:
+            module.fail_json(msg=msg, result=result)
 
     result["diff"] = diff
 
@@ -649,7 +663,7 @@ def run_module():
 
     module = AvantraAnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
+        supports_check_mode=False,
         required_together=[
             (AVANTRA_API_USER, AVANTRA_API_PASSWORD),
             ("unified_sap_sid", "customer_name")

@@ -30,7 +30,7 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import 
 
 def fetch_customer(module, customer_name):
     query = """
-    query GetCustomerByName($customer_nameing!) {
+    query GetCustomerByName($customer_name: String!) {
         customers(
             where: { filterBy: [{ name: "name", operator: eq, value: $customer_name }] }
         ) {

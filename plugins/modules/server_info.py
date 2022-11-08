@@ -23,7 +23,7 @@ DOCUMENTATION = r"""
 ---
 module: server_info
 
-short_description: load information about a server
+short_description: load server information
 
 description:
 - This module allows to load information about a server from Avantra.

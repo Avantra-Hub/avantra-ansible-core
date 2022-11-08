@@ -147,6 +147,7 @@ extends_documentation_fragment:
     - avantra.core.option_custom_attributes
     - avantra.core.option_system_role
     - avantra.core.version_added_23_0
+    - avantra.core.notes_ansiblevaults
 """
 
 EXAMPLES = r"""
@@ -201,6 +202,7 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.server import
     create_server,
     delete_server,
     fetch_server,
+    update_server,
     turn_monitoring_off,
     turn_monitoring_on
 )
@@ -271,7 +273,11 @@ def ensure_server_stopped(module, server, result):
 
 
 def ensure_server_monitoring(module, server, result):
-    prev_monitoring = not server["monitor_off"]
+    if server["monitor_off"] == "true":
+        prev_monitoring = True
+    else:
+        prev_monitoring = False
+
     monitoring = module.params.get("monitoring")
 
     if monitoring is not None and prev_monitoring != monitoring:
@@ -328,8 +334,15 @@ def ensure_server_present(module, customer_name, server_name):
             module.fail_json(msg=msg, result=result)
 
     else:
-        # TODO: Check whether we have to update the server.
-        pass
+        success, msg, server = update_server(module, server_system_id=server.get("id"))
+        if success:
+            diff["after"]["server"] = server
+            result.update(
+                changed=True,
+                server=server
+            )
+        else:
+            module.fail_json(msg=msg, result=result)
 
     result["diff"] = diff
 
@@ -427,7 +440,7 @@ def run_module():
 
     module = AvantraAnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
+        supports_check_mode=False,
         required_together=[
             (AVANTRA_API_USER, AVANTRA_API_PASSWORD)
         ],
