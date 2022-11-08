@@ -24,11 +24,18 @@ Apache License 2.0
 
 ### Install ###
 
-The avantra.core collection can be installed using ansible galaxy CLI:
+The avantra.core collection can be either installed using ansible galaxy CLI:
 
 ```shell
 ansible-galaxy collection install avantra.core
 ```
+
+or directly from the git repository:
+
+```shell
+ansible-galaxy collection install git+https://bitbucket.org/syslink-software/avantra-ansible-core.git,release/23.0.0
+```
+
 
 ## References ##
 
