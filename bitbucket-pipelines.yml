@@ -6,7 +6,7 @@ pipelines:
     - step:
         name: 'Test'
         script:
-          - ./script/setup.sh
+          - ./scripts/setup.sh
           - ./scripts/test.sh
     - step:
         name: 'Build'
