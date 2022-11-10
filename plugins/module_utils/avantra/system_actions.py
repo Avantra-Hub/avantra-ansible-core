@@ -15,7 +15,10 @@
 # limitations under the License.
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
+
+from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (dict_get)
 
 SERVER_START = 20
 SERVER_STOP = 21
@@ -32,3 +35,60 @@ SAP_SYSTEM_WITH_DB_AND_HANA_RESTART = 203
 SAP_SYSTEM_WITH_DB_AND_SERVER_START = 36
 SAP_SYSTEM_WITH_DB_AND_SERVER_STOP = 37
 SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART = 204
+
+
+def execute_system_action(module, action, system_id, args=None, execution_name=None):
+
+    if args is None:
+        args = {}
+
+    variables = {
+        "actionId": action,
+        "systemIds": [system_id],
+        "parameters": [{"key": k, "value": v} for k, v in args.items()]
+    }
+
+    if execution_name is not None:
+        variables["executionName"] = execution_name
+
+    result = module.send_graphql_request(EXECUTE_ACTION_MUTATION, variables=variables)
+    action_result = dict_get(result, "data", "executeSystemAction")
+
+    return action_result
+
+
+EXECUTE_ACTION_MUTATION = """
+            mutation ExecuteSystemAction (
+                $actionId: ID!,
+                $executionName: String = null,
+                $systemIds: [ID!]!,
+                $parameters: [SystemActionParameterInput!]!
+            ) {
+                executeSystemAction(actionId: $actionId,
+                    executionName: $executionName,
+                    parameter: $parameters,
+                    systemIds: $systemIds) {
+                        id
+                        name
+                        description
+                        detail
+                        status
+                        start
+                        system {
+                            id
+                            name
+                        }
+                        log
+                        timestamp
+                        user {
+                            id
+                            principal
+                        }
+                        customer {
+                            id
+                            name
+                        }
+                }
+
+            }
+        """

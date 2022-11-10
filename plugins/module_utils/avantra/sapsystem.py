@@ -18,12 +18,8 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-from datetime import datetime, timedelta
 from string import Template
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
-    AvantraAnsibleModule
-)
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.customer import (
     fetch_customer
@@ -32,7 +28,6 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.customer impo
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
     cameldict_to_snake_case,
     dict_get,
-    parse_api_date_time,
     format_api_date_time
 )
 

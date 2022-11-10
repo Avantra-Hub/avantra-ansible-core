@@ -18,10 +18,6 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
-    AvantraAnsibleModule
-)
-
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
     cameldict_to_snake_case,
     dict_get

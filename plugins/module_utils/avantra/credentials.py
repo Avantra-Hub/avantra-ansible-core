@@ -20,10 +20,6 @@ __metaclass__ = type
 
 from enum import Enum
 
-from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
-    AvantraAnsibleModule
-)
-
 
 class CredentialType(Enum):
     BASIC = 0
