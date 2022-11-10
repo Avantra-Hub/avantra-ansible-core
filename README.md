@@ -9,8 +9,8 @@ Apache License 2.0
 
 ## Prerequisites
 
-- Tested with the Ansible version 2.13 and the current development version of Ansible.
-- Requires Python version 2.7 or higher.
+- Ansible version >= 2.12 including the current development version
+- Python version >= 3.9
 
 ## Content ##
 
