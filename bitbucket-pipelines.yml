@@ -6,14 +6,14 @@ pipelines:
     - step:
         name: 'Test'
         script:
-          - ./test.sh
+          - ./scripts/test.sh
     - step:
         name: 'Build'
         script:
-          - ./build.sh
+          - ./scripts/build.sh
     - step:
         name: 'Build Documentation'
         script:
-          - ./build-docu.sh
+          - ./scripts/build-docu.sh
        
       
