@@ -1,0 +1,19 @@
+# This is an ubuntu 20.04 LTS based image
+image: atlassian/default-image:3
+
+pipelines:
+  default:    
+    - step:
+        name: 'Test'
+        script:
+          - ./test.sh
+    - step:
+        name: 'Build'
+        script:
+          - ./build.sh
+    - step:
+        name: 'Build Documentation'
+        script:
+          - ./build-docu.sh
+       
+      
