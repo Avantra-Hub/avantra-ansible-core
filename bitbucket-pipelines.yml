@@ -3,14 +3,23 @@ image: atlassian/default-image:3
 options:
   docker: true
 pipelines:
-  default:    
-    - step:
-        name: 'Test: Python 3.9'
-        image: python:3.10-bullseye
-        script:
-          - ./scripts/test.sh 2.14 2.15
-          - ./scripts/test.sh 2.13 2.14
-          - ./scripts/test.sh 2.12 2.13
+  default:
+    - parallel:
+      - step:
+          name: 'Test: Ansible 2.12 (python-3.9)'
+          image: python:3.10-bullseye
+          script:
+            - ./scripts/test.sh 2.12 2.13
+      - step:
+          name: 'Test: Ansible 2.13 (python-3.9)'
+          image: python:3.10-bullseye
+          script:
+            - ./scripts/test.sh 2.13 2.14
+      - step:
+          name: 'Test: Ansible 2.14 (python-3.9)'
+          image: python:3.10-bullseye
+          script:
+            - ./scripts/test.sh 2.14 2.15
     - step:
         name: 'Build'
         script:
