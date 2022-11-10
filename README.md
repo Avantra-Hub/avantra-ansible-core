@@ -7,6 +7,11 @@ You can create, remove servers and SAP systems. Workflows can be executed.
 
 Apache License 2.0
 
+## Prerequisites
+
+- Tested with the Ansible version 2.13 and the current development version of Ansible.
+- Requires Python version 2.7 or higher.
+
 ## Content ##
 
 ### Modules ###
