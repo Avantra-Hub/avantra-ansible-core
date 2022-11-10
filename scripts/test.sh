@@ -11,6 +11,6 @@ else
   python -m pip install "ansible-core>=$2,<$3"
 fi
 
-ansible-test sanity --junit --python "$1" --requirements
+ansible-test sanity --junit --python "$1"
 ansible-test units --coverage --python "$1" --requirements
 ansible-test coverage xml --requirements
