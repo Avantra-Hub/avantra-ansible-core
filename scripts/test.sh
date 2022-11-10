@@ -11,7 +11,7 @@ else
   python -m pip install "ansible-core>=$2,<$3"
 fi
 
-python -m pip install "coverage=4.5.4"
+python -m pip install "coverage==4.5.4"
 
 ansible-test coverage erase
 ansible-test sanity --junit --python "$1"
