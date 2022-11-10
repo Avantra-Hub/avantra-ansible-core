@@ -13,7 +13,6 @@ fi
 
 ansible-test sanity --junit --python "$1"
 
-//It contains the status of the last executed command
 if [[ $? -eq 0 ]]; then
   echo "success*********"
   exit 0
