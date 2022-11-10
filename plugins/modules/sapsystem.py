@@ -330,7 +330,8 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.system_action
     SAP_SYSTEM_WITH_DB_AND_HANA_RESTART,
     SAP_SYSTEM_WITH_DB_AND_SERVER_START,
     SAP_SYSTEM_WITH_DB_AND_SERVER_STOP,
-    SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART
+    SAP_SYSTEM_WITH_DB_AND_SERVER_RESTART,
+    execute_system_action
 )
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
@@ -397,7 +398,8 @@ def ensure_started(module, sap_system, result):
         action = SAP_SYSTEM_WITH_DB_START
 
     if prev_run_state != "started" or run_options.get("always_execute"):
-        result["action_result"] = module.execute_system_action(
+        result["action_result"] = execute_system_action(
+            module,
             action,
             system_id=sap_system["id"],
             execution_name=run_options["execution_name"],
@@ -433,7 +435,8 @@ def ensure_stopped(module, sap_system, result):
         action = SAP_SYSTEM_WITH_DB_STOP
 
     if prev_run_state != "stopped" or run_options.get("always_execute"):
-        result["action_result"] = module.execute_system_action(
+        result["action_result"] = execute_system_action(
+            module,
             action,
             system_id=sap_system["id"],
             execution_name=run_options["execution_name"],
@@ -468,7 +471,8 @@ def ensure_restarted(module, sap_system, result):
     else:
         action = SAP_SYSTEM_WITH_DB_RESTART
 
-    result["action_result"] = module.execute_system_action(
+    result["action_result"] = execute_system_action(
+        module,
         action,
         system_id=sap_system["id"],
         execution_name=run_options["execution_name"],
