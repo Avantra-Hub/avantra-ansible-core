@@ -13,7 +13,7 @@ fi
 
 ansible-test sanity --junit --python "$1"
 
-if [[ $? -eq 0 ]]; then
+if $? -eq 0 ; then
   echo "success*********"
   exit 0
 else
