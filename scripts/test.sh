@@ -14,3 +14,5 @@ fi
 ansible-test sanity --junit --python "$1"
 ansible-test units --coverage --python "$1" --requirements
 ansible-test coverage xml --requirements
+
+ln tests/output test-results
