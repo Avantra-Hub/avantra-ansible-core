@@ -19,7 +19,7 @@ pipelines:
           name: 'Test: Ansible 2.14 (python-3.9)'
           image: python:3.10-bullseye
           script:
-            - ./scripts/test.sh 2.14 2.15
+            - ./scripts/test.sh 2.14
     - step:
         name: 'Build'
         script:
