@@ -1,5 +1,6 @@
 # This is an ubuntu 20.04 LTS based image
-image: atlassian/default-image:3
+#image: atlassian/default-image:3
+image: mcr.microsoft.com/devcontainers/base:jammy
 pipelines:
   default:    
     - step:
