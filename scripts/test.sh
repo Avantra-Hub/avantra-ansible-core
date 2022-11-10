@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo Test
+ansible-test sanity
