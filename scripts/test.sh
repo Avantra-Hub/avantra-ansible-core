@@ -13,12 +13,10 @@ fi
 
 ansible-test sanity --junit --python "$1"
 
-if $? -eq 0 ; then
-  echo "success*********"
-  exit 0
-else
+return_code=$?
+if [ $return_code -ne 0 ]; then
   echo "failed************"
-  exit 1
+  exit return_code
 fi
 
 ansible-test units --coverage --python "$1" --requirements
