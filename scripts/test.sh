@@ -1,7 +1,10 @@
 #!/bin/sh
 
-cp -r . core
-mkdir -p ansible_collections/avantra
-mv core ansible_collections/avantra
-cd ansible_collections/avantra/core
-/usr/bin/ansible-test sanity --docker-privileged -vvv
+mkdir -p /tests-"$1"/ansible_collections/avantra
+cp -r . /tests-"$1"/ansible_collections/avantra/core
+cd /tests-"$1"/ansible_collections/avantra/core
+python -m venv .venv
+source .venv/bin/activate
+echo "Hello!"
+deactivate
+

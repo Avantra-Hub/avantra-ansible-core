@@ -1,15 +1,14 @@
 # This is an ubuntu 20.04 LTS based image
-#image: atlassian/default-image:3
-image: mcr.microsoft.com/devcontainers/base:jammy
+image: atlassian/default-image:3
 options:
   docker: true
 pipelines:
   default:    
     - step:
-        name: 'Test'
+        name: 'Test: Python 3.9'
+        image: python:3.10-bullseye
         script:
-          - ./scripts/setup.sh
-          - ./scripts/test.sh
+          - ./scripts/test.sh 2.13
     - step:
         name: 'Build'
         script:
