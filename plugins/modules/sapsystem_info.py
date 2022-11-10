@@ -80,7 +80,6 @@ sap_system:
 
 from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     create_argument_spec,
-    AVANTRA_TOKEN,
     AVANTRA_API_USER,
     AVANTRA_API_PASSWORD,
     AvantraAnsibleModule,
