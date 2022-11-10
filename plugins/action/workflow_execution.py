@@ -18,7 +18,6 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-from typing import Dict
 from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleActionFail
 from ansible.utils.display import Display

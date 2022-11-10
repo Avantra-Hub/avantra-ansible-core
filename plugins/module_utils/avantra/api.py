@@ -184,57 +184,6 @@ class AvantraAnsibleModule(AnsibleModule):
         else:
             return self.from_json(resp.read())["token"]
 
-    def execute_system_action(self, action, system_id, args=None, execution_name=None):
-
-        mutation = """
-            mutation ExecuteSystemAction (
-                $actionId: ID!,
-                $executionName: String = null,
-                $systemIds: [ID!]!,
-                $parameters: [SystemActionParameterInput!]!
-            ) {
-                executeSystemAction(actionId: $actionId,
-                    executionName: $executionName,
-                    parameter: $parameters,
-                    systemIds: $systemIds) {
-                        id
-                        name
-                        description
-                        detail
-                        status
-                        start
-                        system {
-                            id
-                            name
-                        }
-                        log
-                        timestamp
-                        user {
-                            id
-                            principal
-                        }
-                        customer {
-                            id
-                            name
-                        }
-                }
-
-            }
-        """
-        variables = {
-            "actionId": action,
-            "systemIds": [system_id],
-            "parameters": [{"key": k, "value": v} for k, v in args.items()]
-        }
-
-        if execution_name is not None:
-            variables["executionName"] = execution_name
-
-        result = self.send_graphql_request(mutation, variables=variables)
-        action_result = dict_get(result, "data", "executeSystemAction")
-
-        return action_result
-
 
 def _compute_avantra_auth_url(url):
     """
