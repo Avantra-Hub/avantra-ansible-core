@@ -1,19 +1,19 @@
 #!/bin/sh
 
-mkdir -p /tests-"$1"/ansible_collections/avantra
-cp -r . /tests-"$1"/ansible_collections/avantra/core
-cd /tests-"$1"/ansible_collections/avantra/core
+mkdir -p /tests-"$2"/ansible_collections/avantra
+cp -r . /tests-"$2"/ansible_collections/avantra/core
+cd /tests-"$2"/ansible_collections/avantra/core
 
-if [ -z "$2" ]
+if [ -z "$3" ]
   then
-    python -m pip install "ansible-core>=$1"
+    python -m pip install "ansible-core>=$2"
 else
-  python -m pip install "ansible-core>=$1,<$2"
+  python -m pip install "ansible-core>=$2,<$3"
 fi
 
-python -m pip install "coverage"
+python -m pip install "coverage=4.5.4"
 
 ansible-test coverage erase
-ansible-test sanity --junit
-ansible-test units --coverage
+ansible-test sanity --junit --python "$1"
+ansible-test units --coverage --python "$1"
 ansible-test coverage xml
