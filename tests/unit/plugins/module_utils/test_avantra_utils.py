@@ -32,7 +32,7 @@ def test_dict_get():
     assert dict_get(result, "data", "sapSystem") is not None
 
 
-def test_cameldict_to_snake_case():
+def test_camelcase_to_snake_case():
     assert camel_to_snake_case("CamelCase") == "camel_case"
     assert camel_to_snake_case("C1amelCase") == "c1amel_case"
     assert camel_to_snake_case("assignedSLA") == "assigned_sla", camel_to_snake_case("assignedSLA") + " != assigned_sla"
