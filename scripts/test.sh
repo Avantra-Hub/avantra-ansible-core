@@ -1,5 +1,5 @@
 #!/bin/sh
 
-whoami
+apt update && apt install -y ansible
 echo "$PATH"
 ansible-test sanity
