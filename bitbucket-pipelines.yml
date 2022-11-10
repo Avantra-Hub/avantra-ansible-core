@@ -8,7 +8,9 @@ pipelines:
         name: 'Test: Python 3.9'
         image: python:3.10-bullseye
         script:
-          - ./scripts/test.sh 2.13
+          - ./scripts/test.sh 2.14 2.15
+          - ./scripts/test.sh 2.13 2.14
+          - ./scripts/test.sh 2.12 2.13
     - step:
         name: 'Build'
         script:
