@@ -6,9 +6,9 @@ current_dir=$(pwd)
 
 
 version=$(python << EOF
-    import yaml
-    with open('galaxy.yml','r') as galaxy_yml:
-      print(yaml.safe_load(galaxy_yml).get("version"))
+import yaml
+with open('galaxy.yml','r') as galaxy_yml:
+    print(yaml.safe_load(galaxy_yml).get("version"))
 EOF
 )
 

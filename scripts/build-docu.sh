@@ -1,7 +1,14 @@
 #!/bin/bash
 
-version=$(python -m yq -r .version galaxy.yml)
-ansible-galaxy collection install avantra-core-"$version".tar.gz
+
+version=$(python << EOF
+import yaml
+with open('galaxy.yml','r') as galaxy_yml:
+    print(yaml.safe_load(galaxy_yml).get("version"))
+EOF
+)
+
+ansible-galaxy collection install build/avantra-core-"$version".tar.gz
 
 mkdir -p /root/ansible-docu
 cd /root/ansible-docu
