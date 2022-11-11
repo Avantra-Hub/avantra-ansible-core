@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 mkdir -p /tests-devel/ansible_collections/avantra
 cp -r . /tests-devel/ansible_collections/avantra/core
@@ -7,7 +7,7 @@ cd /root
 # From https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-for-development
 git clone https://github.com/ansible/ansible.git
 cd /root/ansible
-. ./hacking/env-setup
+source ./hacking/env-setup
 python3 -m pip install --user -r ./requirements.txt
 
 

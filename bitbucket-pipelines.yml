@@ -37,7 +37,7 @@ pipelines:
             - ./scripts/test.sh 3.9 2.13 2.14
       - step:
           name: 'Test: Ansible 2.14 (python-3.9)'
-          image: python:3.10-bullseye
+          image: python:3.9-bullseye
           script:
             - ./scripts/test.sh 3.9 2.14
       - step:
@@ -55,11 +55,12 @@ pipelines:
           image: python:3.8-bullseye
           script:
             - ./scripts/test.sh 3.8 2.13 2.14
-      - step:
-          name: 'Test: Ansible 2.14 (python-3.8)'
-          image: python:3.8-bullseye
-          script:
-            - ./scripts/test.sh 3.8 2.14
+# Ansible 2.14 require python >= 3.9:
+#      - step:
+#          name: 'Test: Ansible 2.14 (python-3.8)'
+#          image: python:3.8-bullseye
+#          script:
+#            - ./scripts/test.sh 3.8 2.14
       - step:
           name: 'Test: Ansible 2.15 (devel) (python-3.8)'
           image: python:3.8-bullseye
