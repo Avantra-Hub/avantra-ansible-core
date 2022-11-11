@@ -10,7 +10,10 @@ python -m pip install "ansible-core>=$1"
 
 ansible-galaxy collection build --output-path "$current_dir"
 
-python -m pip install yq jq
+python -m venv .venv
+source .venv/bin/activate
+
+pip install yq jq
 version=$(python -m yq -r .version galaxy.yml)
 echo "**************************************** $version"
 
