@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+python3 -m pip install pyyaml
 version=$(python << EOF
 import yaml
 with open('galaxy.yml','r') as galaxy_yml:
