@@ -57,6 +57,7 @@ options:
         - "Allows you to define the input parameters for the workflow to start in the form C(key: value)."
         type: dict
         required: false
+        default: {}
 
 extends_documentation_fragment:
     - avantra.core.auth_options

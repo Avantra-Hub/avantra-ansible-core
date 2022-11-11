@@ -101,6 +101,7 @@ options:
         - Allows you to configure the behaviour of the run_state changes.
         type: dict
         required: false
+        default: {}
         suboptions:
             always_execute:
                  description:
