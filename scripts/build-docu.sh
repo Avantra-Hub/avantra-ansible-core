@@ -33,6 +33,7 @@ echo "4: -----------------------------------------------------------------------
 chmod -R 644 dest
 echo "5: --------------------------------------------------------------------------------"
 cd dest || { echo "cd dest impossible"; exit 1; }
+dest_dir=$(pwd)
 echo "6: --------------------------------------------------------------------------------"
 #python3 -m venv .venv
 echo "7: --------------------------------------------------------------------------------"
@@ -40,10 +41,24 @@ echo "7: -----------------------------------------------------------------------
 echo "8: --------------------------------------------------------------------------------"
 python3 -m pip install -r requirements.txt
 echo "9: --------------------------------------------------------------------------------"^
-mkdir temp-rst
-chmod -R 744 .
 ls -la
 echo "10: --------------------------------------------------------------------------------"
-sh +x ./build.sh
+set -e
+cd "$dest_dir" || { echo "cd $dest_dir impossible"; exit 1; }
+
+mkdir temp-rst
+chmod -R 744 .
+antsibull-docs \
+    --config-file antsibull-docs.cfg \
+    collection \
+    --use-current \
+    --dest-dir temp-rst \
+    avantra.core
+
+# Copy collection documentation into source directory
+rsync -cprv --delete-after temp-rst/collections/ rst/collections/
+
+# Build Sphinx site
+sphinx-build -M html rst build -c . -W --keep-going
 echo "11: --------------------------------------------------------------------------------"
 cp -r build/* "$current_dir"/build
