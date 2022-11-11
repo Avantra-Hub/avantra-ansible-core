@@ -10,6 +10,8 @@ with open('galaxy.yml','r') as galaxy_yml:
 EOF
 )
 
+apt-get update && apt-get install rsync -y
+
 python -m pip install "ansible-core>=$1"
 
 ansible-galaxy collection install build/avantra-core-"$version".tar.gz
