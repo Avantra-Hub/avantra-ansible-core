@@ -15,11 +15,11 @@ python -m pip install "ansible-core>=$1"
 ansible-galaxy collection install build/avantra-core-"$version".tar.gz
 
 mkdir -p /root/ansible-docu
-cd /root/ansible-docu
+cd /root/ansible-docu || { echo "cd /root/ansible-docu impossible"; exit 1; }
 
 git clone https://github.com/ansible-community/antsibull-core.git
 git clone https://github.com/ansible-community/antsibull-docs.git
-cd antsibull-docs
+cd antsibull-docs || { echo "cd antsibull-docs impossible"; exit 1; }
 python3 -m pip install poetry
 poetry install
 
@@ -27,10 +27,9 @@ mkdir dest
 chmod 644 dest
 poetry run antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
 chmod -R 644 dest
-cd dest
+cd dest || { echo "cd dest impossible"; exit 1; }
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-chmod +x build.sh
-./build.sh
+bash build.sh
 cp -r build/* "$current_dir"/build
