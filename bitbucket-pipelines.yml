@@ -57,7 +57,7 @@ pipelines:
             - ./scripts/test.sh 3.8 2.13 2.14
       - step:
           name: 'Test: Ansible 2.14 (python-3.8)'
-          image: python:3.10-bullseye
+          image: python:3.8-bullseye
           script:
             - ./scripts/test.sh 3.8 2.14
       - step:
