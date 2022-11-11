@@ -4,6 +4,7 @@ mkdir -p /tests-"$2"/ansible_collections/avantra
 cp -r . /tests-"$2"/ansible_collections/avantra/core
 cd /tests-"$2"/ansible_collections/avantra/core
 rm -rf scripts
+rm -f bitbucket-pipelines.yml
 
 if [ -z "$3" ]
   then
