@@ -61,11 +61,11 @@ pipelines:
 #          image: python:3.8-bullseye
 #          script:
 #            - ./scripts/test.sh 3.8 2.14
-      - step:
-          name: 'Test: Ansible 2.15 (devel) (python-3.8)'
-          image: python:3.8-bullseye
-          script:
-            - ./scripts/test-devel.sh 3.8
+#      - step:
+#          name: 'Test: Ansible 2.15 (devel) (python-3.8)'
+#          image: python:3.8-bullseye
+#          script:
+#            - ./scripts/test-devel.sh 3.8
     - step:
         name: 'Build'
         script:
