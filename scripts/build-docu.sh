@@ -22,6 +22,7 @@ python3 -m pip install poetry
 poetry install
 
 mkdir dest
+chmod 644 dest
 poetry run antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
 cd dest
 python3 -m venv .venv
