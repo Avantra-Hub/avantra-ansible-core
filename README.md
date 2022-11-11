@@ -9,8 +9,10 @@ Apache License 2.0
 
 ## Prerequisites
 
+The module is tests for the following versions of python and Ansible:
+
 - Ansible version >= 2.12 including the current development version
-- Python version >= 3.9
+- Python version >= 3.8
 
 ## Content ##
 
