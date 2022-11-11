@@ -77,9 +77,10 @@ pipelines:
 #          script:
 #            - ./scripts/test-devel.sh 3.8
     - step:
-        name: 'Build'
+        name: 'Build with Ansible 2.14 and python-3.11'
+        image: python:3.11-bullseye
         script:
-          - ./scripts/build.sh
+          - ./scripts/build.sh 2.14
     - step:
         name: 'Build Documentation'
         script:
