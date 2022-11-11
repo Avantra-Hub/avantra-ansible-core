@@ -1,3 +1,7 @@
+scripts/build.sh shebang
+scripts/build-docu.sh shebang
+scripts/test.sh shebang
+scripts/test-devel.sh shebang
 plugins/modules/login.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/sapsystem.py validate-modules:missing-gplv3-license # ignore license check
 plugins/modules/sapsystem_info.py validate-modules:missing-gplv3-license # ignore license check
