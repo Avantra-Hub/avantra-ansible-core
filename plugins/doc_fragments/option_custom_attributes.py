@@ -31,4 +31,5 @@ options:
           for an explanation.
         required: false
         type: dict
+        default: {}
 """

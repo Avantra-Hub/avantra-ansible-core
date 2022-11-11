@@ -23,7 +23,7 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.api import (
     _compute_avantra_graphql_url,
     create_argument_spec, AVANTRA_API_URL,
     AVANTRA_API_USER, AVANTRA_API_PASSWORD,
-    AVANTRA_TOKEN, dict_get)
+    AVANTRA_TOKEN)
 
 import pytest
 
