@@ -9,3 +9,5 @@ python -m pip install "ansible-core>=$1"
 ansible-galaxy collection build
 
 ls -la
+
+echo "****************************************"
