@@ -1,16 +1,18 @@
 #!/bin/sh
 
-mkdir -p /tests-"$2"/ansible_collections/avantra
-cp -r . /tests-"$2"/ansible_collections/avantra/core
-cd /tests-"$2"/ansible_collections/avantra/core
+mkdir -p /tests-devel/ansible_collections/avantra
+cp -r . /tests-devel/ansible_collections/avantra/core
 
-if [ -z "$3" ]
-  then
-    python -m pip install "ansible-core>=$2"
-else
-  python -m pip install "ansible-core>=$2,<$3"
-fi
+cd /root
+# From https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-for-development
+git clone https://github.com/ansible/ansible.git
+cd /root/ansible
+. ./hacking/env-setup
+python3 -m pip install --user -r ./requirements.txt
 
+
+
+cd /tests-devel/ansible_collections/avantra/core
 ansible-test sanity --junit --python "$1"
 
 return_code=$?
