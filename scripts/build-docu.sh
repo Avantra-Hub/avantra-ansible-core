@@ -8,6 +8,8 @@ with open('galaxy.yml','r') as galaxy_yml:
 EOF
 )
 
+python -m pip install "ansible-core>=$1"
+
 ansible-galaxy collection install build/avantra-core-"$version".tar.gz
 
 mkdir -p /root/ansible-docu
