@@ -8,7 +8,7 @@ python -m pip install "ansible-core>=$1" yq jq
 
 ansible-galaxy collection build
 
-version=$(yq -r .version galaxy.yml)
+version=$(python -m yq -r .version galaxy.yml)
 echo "**************************************** $version"
 
 ls -la
