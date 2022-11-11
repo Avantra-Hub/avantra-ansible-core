@@ -87,6 +87,6 @@ pipelines:
         name: 'Build Documentation'
         image: python:3.9-bullseye
         script:
-          - ./scripts/build-docu.sh
+          - ./scripts/build-docu.sh 2.14
        
       
