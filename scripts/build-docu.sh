@@ -24,27 +24,13 @@ git clone https://github.com/ansible-community/antsibull-docs.git
 cd antsibull-docs || { echo "cd antsibull-docs impossible"; exit 1; }
 python3 -m pip install poetry
 poetry install
-
-echo "1: --------------------------------------------------------------------------------"
 mkdir dest
-echo "2: --------------------------------------------------------------------------------"
 chmod 644 dest
-echo "3: --------------------------------------------------------------------------------"
 poetry run antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
-echo "4: --------------------------------------------------------------------------------"
 chmod -R 644 dest
-echo "5: --------------------------------------------------------------------------------"
 cd dest || { echo "cd dest impossible"; exit 1; }
 dest_dir=$(pwd)
-echo "6: --------------------------------------------------------------------------------"
-#python3 -m venv .venv
-echo "7: --------------------------------------------------------------------------------"
-#source .venv/bin/activate
-echo "8: --------------------------------------------------------------------------------"
 python3 -m pip install -r requirements.txt
-echo "9: --------------------------------------------------------------------------------"^
-ls -la
-echo "10: --------------------------------------------------------------------------------"
 set -e
 cd "$dest_dir" || { echo "cd $dest_dir impossible"; exit 1; }
 
@@ -62,5 +48,4 @@ rsync -cprv --delete-after temp-rst/collections/ rst/collections/
 
 # Build Sphinx site
 sphinx-build -M html rst build -c . -W --keep-going
-echo "11: --------------------------------------------------------------------------------"
 cp -r build/* "$current_dir"/build
