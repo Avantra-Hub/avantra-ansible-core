@@ -1,5 +1,7 @@
 #!/bin/bash
 
+current_dir=$(pwd)
+
 python3 -m pip install pyyaml
 version=$(python << EOF
 import yaml
@@ -26,10 +28,9 @@ chmod 644 dest
 poetry run antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
 chmod -R 644 dest
 cd dest
-ls -la
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+chmod +x build.sh
 ./build.sh
-
-ls -la
+cp -r build/* "$current_dir"/build
