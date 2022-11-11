@@ -83,6 +83,7 @@ pipelines:
           - ./scripts/build.sh 2.14
     - step:
         name: 'Build Documentation'
+        image: python:3.11-bullseye
         script:
           - ./scripts/build-docu.sh
        
