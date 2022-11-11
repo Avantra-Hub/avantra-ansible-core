@@ -24,10 +24,12 @@ poetry install
 mkdir dest
 chmod 644 dest
 poetry run antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
+chmod -R 644 dest
 cd dest
+ls -la
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ./build.sh
 
-ls -la dest
+ls -la
