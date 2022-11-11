@@ -82,7 +82,7 @@ pipelines:
         script:
           - ./scripts/build.sh 2.14
         artifacts:
-          - "avantra-core-*.tar.gz"
+          - build/**
     - step:
         name: 'Build Documentation'
         image: python:3.9-bullseye
