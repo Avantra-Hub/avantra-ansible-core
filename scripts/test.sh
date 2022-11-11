@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 mkdir -p /tests-"$2"/ansible_collections/avantra
 cp -r . /tests-"$2"/ansible_collections/avantra/core
