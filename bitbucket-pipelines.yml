@@ -85,7 +85,7 @@ pipelines:
           - "avantra-core-*.tar.gz"
     - step:
         name: 'Build Documentation'
-        image: python:3.11-bullseye
+        image: python:3.9-bullseye
         script:
           - ./scripts/build-docu.sh
        
