@@ -80,4 +80,3 @@ pipelines:
             - ./scripts/build-docu.sh 2.14
           artifacts:
             - build/**
-
