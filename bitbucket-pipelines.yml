@@ -5,77 +5,66 @@ options:
 pipelines:
   default:
     - parallel:
-      - step:
-          name: 'Test: Ansible 2.14 (python-3.11)'
-          image: python:3.11-bullseye
-          script:
-            - ./scripts/test.sh 3.11 2.14
-      - step:
-          name: 'Test: Ansible 2.15 (devel) (python-3.11)'
-          image: python:3.11-bullseye
-          script:
-            - ./scripts/test-devel.sh 3.11
-      - step:
-          name: 'Test: Ansible 2.12 (python-3.10)'
-          image: python:3.10-bullseye
-          script:
-            - ./scripts/test.sh 3.10 2.12 2.13
-      - step:
-          name: 'Test: Ansible 2.13 (python-3.10)'
-          image: python:3.10-bullseye
-          script:
-            - ./scripts/test.sh 3.10 2.13 2.14
-      - step:
-          name: 'Test: Ansible 2.14 (python-3.10)'
-          image: python:3.10-bullseye
-          script:
-            - ./scripts/test.sh 3.10 2.14
-      - step:
-          name: 'Test: Ansible 2.15 (devel) (python-3.10)'
-          image: python:3.10-bullseye
-          script:
-            - ./scripts/test-devel.sh 3.10
-      - step:
-          name: 'Test: Ansible 2.12 (python-3.9)'
-          image: python:3.9-bullseye
-          script:
-            - ./scripts/test.sh 3.9 2.12 2.13
-      - step:
-          name: 'Test: Ansible 2.13 (python-3.9)'
-          image: python:3.9-bullseye
-          script:
-            - ./scripts/test.sh 3.9 2.13 2.14
-      - step:
-          name: 'Test: Ansible 2.14 (python-3.9)'
-          image: python:3.9-bullseye
-          script:
-            - ./scripts/test.sh 3.9 2.14
-      - step:
-          name: 'Test: Ansible 2.15 (devel) (python-3.9)'
-          image: python:3.9-bullseye
-          script:
-            - ./scripts/test-devel.sh 3.9
-      - step:
-          name: 'Test: Ansible 2.12 (python-3.8)'
-          image: python:3.8-bullseye
-          script:
-            - ./scripts/test.sh 3.8 2.12 2.13
-      - step:
-          name: 'Test: Ansible 2.13 (python-3.8)'
-          image: python:3.8-bullseye
-          script:
-            - ./scripts/test.sh 3.8 2.13 2.14
-# Ansible 2.14 require python >= 3.9:
-#      - step:
-#          name: 'Test: Ansible 2.14 (python-3.8)'
-#          image: python:3.8-bullseye
-#          script:
-#            - ./scripts/test.sh 3.8 2.14
-#      - step:
-#          name: 'Test: Ansible 2.15 (devel) (python-3.8)'
-#          image: python:3.8-bullseye
-#          script:
-#            - ./scripts/test-devel.sh 3.8
+        - step:
+            name: 'Test: Ansible 2.14 (python-3.11)'
+            image: python:3.11-bullseye
+            script:
+              - ./scripts/test.sh 3.11 2.14
+        - step:
+            name: 'Test: Ansible 2.15 (devel) (python-3.11)'
+            image: python:3.11-bullseye
+            script:
+              - ./scripts/test-devel.sh 3.11
+        - step:
+            name: 'Test: Ansible 2.12 (python-3.10)'
+            image: python:3.10-bullseye
+            script:
+              - ./scripts/test.sh 3.10 2.12 2.13
+        - step:
+            name: 'Test: Ansible 2.13 (python-3.10)'
+            image: python:3.10-bullseye
+            script:
+              - ./scripts/test.sh 3.10 2.13 2.14
+        - step:
+            name: 'Test: Ansible 2.14 (python-3.10)'
+            image: python:3.10-bullseye
+            script:
+              - ./scripts/test.sh 3.10 2.14
+        - step:
+            name: 'Test: Ansible 2.15 (devel) (python-3.10)'
+            image: python:3.10-bullseye
+            script:
+              - ./scripts/test-devel.sh 3.10
+        - step:
+            name: 'Test: Ansible 2.12 (python-3.9)'
+            image: python:3.9-bullseye
+            script:
+              - ./scripts/test.sh 3.9 2.12 2.13
+        - step:
+            name: 'Test: Ansible 2.13 (python-3.9)'
+            image: python:3.9-bullseye
+            script:
+              - ./scripts/test.sh 3.9 2.13 2.14
+        - step:
+            name: 'Test: Ansible 2.14 (python-3.9)'
+            image: python:3.9-bullseye
+            script:
+              - ./scripts/test.sh 3.9 2.14
+        - step:
+            name: 'Test: Ansible 2.15 (devel) (python-3.9)'
+            image: python:3.9-bullseye
+            script:
+              - ./scripts/test-devel.sh 3.9
+        - step:
+            name: 'Test: Ansible 2.12 (python-3.8)'
+            image: python:3.8-bullseye
+            script:
+              - ./scripts/test.sh 3.8 2.12 2.13
+        - step:
+            name: 'Test: Ansible 2.13 (python-3.8)'
+            image: python:3.8-bullseye
+            script:
+              - ./scripts/test.sh 3.8 2.13 2.14
     - step:
         name: 'Build with Ansible 2.14 and python-3.11'
         image: python:3.11-bullseye
@@ -88,5 +77,6 @@ pipelines:
         image: python:3.9-bullseye
         script:
           - ./scripts/build-docu.sh 2.14
-       
+        artifacts:
+          - build/**
       
