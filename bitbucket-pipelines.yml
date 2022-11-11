@@ -20,6 +20,11 @@ pipelines:
           image: python:3.10-bullseye
           script:
             - ./scripts/test.sh 3.10 2.14
+      - step:
+          name: 'Test: Ansible 2.15 (devel) (python-3.10)'
+          image: python:3.10-bullseye
+          script:
+            - ./scripts/test-devel.sh
     - step:
         name: 'Build'
         script:
