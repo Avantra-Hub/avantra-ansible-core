@@ -49,7 +49,7 @@ ansible-galaxy collection install avantra.core
 or directly from the git repository:
 
 ```shell
-ansible-galaxy collection install git+https://bitbucket.org/syslink-software/avantra-ansible-core.git,release/23.0.0
+ansible-galaxy collection install git+https://bitbucket.org/syslink-software/avantra-ansible-core.git,release/23.0.x
 ```
 
 ## References ##
