@@ -14,7 +14,7 @@ The module is tests for the following versions of python and Ansible:
 - Ansible version >= 2.12 including the current development version
 - Python version >= 3.8
 
-### Detailed Table  ###
+### Matrix  ###
 
 |             | Ansible 2.12 | Ansible 2.13 | Ansible 2.14 | Ansible 2.15 (devel) |
 |-------------|--------------|--------------|--------------|:---------------------|
