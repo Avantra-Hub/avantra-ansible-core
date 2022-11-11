@@ -24,7 +24,7 @@ from uuid import uuid1
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (dict_get, xmldict)
+from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (xmldict)
 
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
