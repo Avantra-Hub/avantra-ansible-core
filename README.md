@@ -14,15 +14,14 @@ The module is tests for the following versions of python and Ansible:
 - Ansible version >= 2.12 including the current development version
 - Python version >= 3.8
 
-Detailed Table
+### Detailed Table  ###
 
 |             | Ansible 2.12 | Ansible 2.13 | Ansible 2.14 | Ansible 2.15 (devel) |
 |-------------|--------------|--------------|--------------|:---------------------|
-| Python 3.11 |              |              |              |                      |
-| Python 3.10 |              |              |              |                      |
-| Python 3.9  |              |              |              |                      |
-| Python 3.8  |              |              |              |                      |
-
+| Python 3.11 | unsupported  | unsupported  | tested       | tested               |
+| Python 3.10 | tested       | tested       | tested       | tested               |
+| Python 3.9  | tested       | tested       | tested       | tested               |
+| Python 3.8  | tested       | tested       | unsupported  | unsupported          |
 
 ## Content ##
 
@@ -52,7 +51,6 @@ or directly from the git repository:
 ```shell
 ansible-galaxy collection install git+https://bitbucket.org/syslink-software/avantra-ansible-core.git,release/23.0.0
 ```
-
 
 ## References ##
 
