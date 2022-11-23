@@ -52,6 +52,10 @@ or directly from the git repository:
 ansible-galaxy collection install git+https://bitbucket.org/syslink-software/avantra-ansible-core.git,release/23.0.x
 ```
 
+## Documentation ##
+
+This collection documentation can be found here: https://syslink-software.bitbucket.io/ansible/avantra.core
+
 ## References ##
 
 - [Avantra: Documentation](https://docs.avantra.com)
