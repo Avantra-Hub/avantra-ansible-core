@@ -42,7 +42,7 @@ dependencies: {}
 repository: https://bitbucket.org/syslink-software/avantra-ansible-core.git
 
 # The URL to any online docs
-documentation: https://docs.avantra.com
+documentation: https://syslink-software.bitbucket.io/ansible/avantra.core
 
 # The URL to the homepage of the collection/project
 homepage: https://www.avantra.com
