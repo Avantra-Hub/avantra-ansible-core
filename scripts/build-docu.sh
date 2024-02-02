@@ -31,7 +31,7 @@ poetry run antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
 chmod -R 644 dest
 cd dest || { echo "cd dest impossible"; exit 1; }
 dest_dir=$(pwd)
-python3 -m pip install -r requirements.txt
+#python3 -m pip install -r requirements.txt
 set -e
 cd "$dest_dir" || { echo "cd $dest_dir impossible"; exit 1; }
 
