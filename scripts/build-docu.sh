@@ -14,6 +14,7 @@ apt-get update && apt-get install rsync -y
 
 python -m pip install "ansible-core>=$1"
 
+ls -la
 ansible-galaxy collection install build/avantra-core-"$version".tar.gz
 
 mkdir -p /root/ansible-docu
