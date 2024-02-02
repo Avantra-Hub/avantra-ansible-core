@@ -23,7 +23,7 @@ cd /root/ansible-docu || { echo "cd /root/ansible-docu impossible"; exit 1; }
 git clone https://github.com/ansible-community/antsibull-core.git
 git clone https://github.com/ansible-community/antsibull-docs.git
 cd antsibull-docs || { echo "cd antsibull-docs impossible"; exit 1; }
-python3 -m pip install poetry
+python3 -m pip install poetry==1.2.2
 poetry install
 mkdir dest
 chmod 644 dest
