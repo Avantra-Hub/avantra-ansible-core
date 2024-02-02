@@ -22,7 +22,7 @@ pipelines:
               script:
                 - ./scripts/test.sh 3.11 2.14 2.15 2.16
           - step:
-              name: 'Test: Ansible 2.17 (devel) (python-3.10)'
+              name: 'Test: Ansible 2.17 (devel) (python-3.11)'
               image: python:3.11-bullseye
               script:
                 - ./scripts/test-devel.sh 3.11
