@@ -1,0 +1,15 @@
+ancestor: null
+releases:
+  23.0.2:
+    changes:
+      release_summary: This release fixed some minor bugs.
+    fragments:
+    - 23.0.2.release_summary.yml
+    release_date: '2022-11-11'
+  24.0.0:
+    changes:
+      release_summary: 'This version of the collection was released to support the
+        Ansible versions: 2.14, 2.15, 2.16'
+    fragments:
+    - 24.0.0.release_summary.yml
+    release_date: '2024-02-02'
