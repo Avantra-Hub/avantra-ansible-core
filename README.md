@@ -1,5 +1,7 @@
 # Avantra Core Ansible Collection #
 
+Current version: 24.0.0 (release 2024-02-02)
+
 This collection offers core functions to work with Avantra.
 You can create, remove servers and SAP systems. Workflows can be executed.
 
@@ -11,7 +13,7 @@ Apache License 2.0
 
 The module is tests for the following versions of python and Ansible:
 
-- Ansible version >= 2.12 including the current development version
+- Ansible version >= 2.14 including the current development version
 - Python version >= 3.9
 
 ### Matrix  ###
