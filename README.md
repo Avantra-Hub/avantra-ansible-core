@@ -12,16 +12,16 @@ Apache License 2.0
 The module is tests for the following versions of python and Ansible:
 
 - Ansible version >= 2.12 including the current development version
-- Python version >= 3.8
+- Python version >= 3.9
 
 ### Matrix  ###
 
-|             | Ansible 2.12 | Ansible 2.13 | Ansible 2.14 | Ansible 2.15 (devel) |
+|             | Ansible 2.14 | Ansible 2.15 | Ansible 2.16 | Ansible 2.17 (devel) |
 |-------------|--------------|--------------|--------------|:---------------------|
-| Python 3.11 | unsupported  | unsupported  | tested       | tested               |
+| Python 3.12 | unsupported  | unsupported  | tested       | tested               |
+| Python 3.11 | tested       | tested       | tested       | tested               |
 | Python 3.10 | tested       | tested       | tested       | tested               |
-| Python 3.9  | tested       | tested       | tested       | tested               |
-| Python 3.8  | tested       | tested       | unsupported  | unsupported          |
+| Python 3.9  | tested       | tested       | unsupported  | unsupported          |
 
 ## Content ##
 

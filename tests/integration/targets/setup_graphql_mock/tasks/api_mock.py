@@ -15,11 +15,10 @@
 # limitations under the License.
 
 import uvicorn
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
-from typing import Union
 from strawberry.fastapi import GraphQLRouter
-from ariadne import gql, load_schema_from_path, QueryType, make_executable_schema
+from ariadne import load_schema_from_path, QueryType, make_executable_schema
 from ariadne.asgi import GraphQL
 
 schema_str = load_schema_from_path("/tmp/mock/schema.graphql")

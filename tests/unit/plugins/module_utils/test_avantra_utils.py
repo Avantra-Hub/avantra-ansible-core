@@ -24,7 +24,6 @@ from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import 
 )
 
 import json
-import pytest
 
 
 def test_dict_get():
