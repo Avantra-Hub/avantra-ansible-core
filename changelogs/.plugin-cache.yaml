@@ -1,0 +1,46 @@
+objects: {}
+plugins:
+  become: {}
+  cache: {}
+  callback: {}
+  cliconf: {}
+  connection: {}
+  httpapi: {}
+  inventory: {}
+  lookup: {}
+  module:
+    login:
+      description: authentication operations
+      name: login
+      namespace: ''
+      version_added: 23.0.0
+    sapsystem:
+      description: manage SAP systems in Avantra
+      name: sapsystem
+      namespace: ''
+      version_added: 23.0.0
+    sapsystem_info:
+      description: load SAP system information
+      name: sapsystem_info
+      namespace: ''
+      version_added: 23.0.0
+    server:
+      description: manage Avantra servers
+      name: server
+      namespace: ''
+      version_added: 23.0.0
+    server_info:
+      description: load server information
+      name: server_info
+      namespace: ''
+      version_added: 23.0.0
+    workflow_execution:
+      description: execute Avantra workflows
+      name: workflow_execution
+      namespace: ''
+      version_added: 23.0.0
+  netconf: {}
+  shell: {}
+  strategy: {}
+  vars: {}
+version: 24.0.0
