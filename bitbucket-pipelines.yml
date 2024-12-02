@@ -67,7 +67,7 @@ pipelines:
               script:
                 - ./scripts/test.sh 3.13 2.19
       - step:
-          name: 'Build with Ansible 2.16 and python-3.12'
+          name: 'Build with Ansible 2.18 and python-3.12'
           image: python:3.12-bullseye
           script:
             - ./scripts/build.sh 2.18
