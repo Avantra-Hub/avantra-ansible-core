@@ -2,6 +2,8 @@
 
 current_dir=$(pwd)
 
+echo "---- [READING VERSION] ------------------------------------------------------------------------------------------------"
+
 python3 -m pip install pyyaml
 version=$(python << EOF
 import yaml
@@ -10,25 +12,33 @@ with open('galaxy.yml','r') as galaxy_yml:
 EOF
 )
 
+echo "---- [INSTALL RSYNC] --------------------------------------------------------------------------------------------------"
 apt-get update && apt-get install rsync -y
 python3 -m pip install "ansible-core>=$1"
+
+echo "---- [INSTALL 'avantra-core-$version] ---------------------------------------------------------------------------------"
 ansible-galaxy collection install build/avantra-core-"$version".tar.gz
 
 mkdir -p  $current_dir/target/ansible-docu
 cd $current_dir//target/ansible-docu || { echo "cd $current_dir//target/ansible-docu impossible"; exit 1; }
 
+echo "---- [CREATE VIRTUALENV] ----------------------------------------------------------------------------------------------"
 python3 -m venv .antsibull-docs-venv
 . .antsibull-docs-venv/bin/activate
+
+echo "---- [INSTALL ansible-core and antsibull-docs] ------------------------------------------------------------------------"
 python -m pip install ansible-core antsibull-docs
 
+echo "---- [CREATE 'dest' directory] ----------------------------------------------------------------------------------------"
 mkdir dest
+
+echo "---- [INIT sphinx directory -> dest] ----------------------------------------------------------------------------------"
 antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
 cd dest || { echo "cd dest impossible"; exit 1; }
 dest_dir=$(pwd)
-python -m pip install -r requirements.txt
+#python -m pip install -r requirements.txt
 
-echo "1. ************************************************************************************"
-
+echo "---- [Build ansible documentation] ------------------------------------------------------------------------------------"
 mkdir temp-rst
 chmod -R 700 temp-rst
 antsibull-docs \
@@ -38,8 +48,7 @@ antsibull-docs \
     avantra.core
 
 # Copy collection documentation into source directory
-echo "2. ************************************************************************************"
-
+echo "---- [RSYNC to rst/collections] ---------------------------------------------------------------------------------------"
 # Check if the directory exists
 if [ ! -d "rst" ]; then
   # Create the directory with permission 700
@@ -50,8 +59,11 @@ else
 fi
 
 rsync -cprv --delete-after temp-rst/collections/ rst/collections/
-echo "3. ************************************************************************************"
+
 
 # Build Sphinx site
+echo "---- [SPHINX BUILD] ---------------------------------------------------------------------------------------------------"
 sphinx-build -M html rst build -c . -W --keep-going
+
+
 cp -r build/* "$current_dir"/build
