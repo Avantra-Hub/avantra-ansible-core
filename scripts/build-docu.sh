@@ -32,7 +32,7 @@ python3 -m venv .antsibull-docs-venv
 
 echo
 echo "---- [INSTALL ansible-core and antsibull-docs] ------------------------------------------------------------------------"
-python -m pip install ansible-core antsibull-docs
+python -m pip install ansible-core antsibull-docs sphinx_ansible_theme
 
 echo
 echo "---- [CREATE 'dest' directory] ----------------------------------------------------------------------------------------"
