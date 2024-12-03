@@ -39,6 +39,16 @@ antsibull-docs \
 
 # Copy collection documentation into source directory
 echo "2. ************************************************************************************"
+
+# Check if the directory exists
+if [ ! -d "rst" ]; then
+  # Create the directory with permission 700
+  mkdir -m 700 "rst"
+  echo "Directory 'rst' created with permission 700."
+else
+  echo "Directory 'rst' already exists."
+fi
+
 rsync -cprv --delete-after temp-rst/collections/ rst/collections/
 echo "3. ************************************************************************************"
 
