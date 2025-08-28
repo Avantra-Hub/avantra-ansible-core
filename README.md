@@ -18,12 +18,12 @@ The module is tests for the following versions of python and Ansible:
 
 ### Matrix  ###
 
-|             | Ansible 2.14 | Ansible 2.15 | Ansible 2.16 | Ansible 2.17 (devel) |
+|             | Ansible 2.17 | Ansible 2.18 | Ansible 2.19 | Ansible 2.20 (devel) |
 |-------------|--------------|--------------|--------------|:---------------------|
-| Python 3.12 | unsupported  | unsupported  | tested       | tested               |
-| Python 3.11 | tested       | tested       | tested       | tested               |
-| Python 3.10 | tested       | tested       | tested       | tested               |
-| Python 3.9  | tested       | tested       | unsupported  | unsupported          |
+| Python 3.13 | unsupported  | tested       | tested       | tested               |
+| Python 3.12 | tested       | tested       | tested       | tested               |
+| Python 3.11 | tested       | tested       | unsupported  | unsupported          |
+| Python 3.10 | tested       | unsupported  | unsupported  | unsupported          |
 
 ## Content ##
 
