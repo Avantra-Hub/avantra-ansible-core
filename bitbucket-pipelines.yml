@@ -37,21 +37,6 @@ pipelines:
               script:
                 - ./scripts/test.sh 3.13 2.18
           - step:
-              name: 'Test: Ansible 2.16 (python-3.10)'
-              image: python:3.10-bullseye
-              script:
-                - ./scripts/test.sh 3.10 2.16
-          - step:
-              name: 'Test: Ansible 2.16 (python-3.11)'
-              image: python:3.11-bullseye
-              script:
-                - ./scripts/test.sh 3.11 2.16
-          - step:
-              name: 'Test: Ansible 2.16 (python-3.12)'
-              image: python:3.12-bullseye
-              script:
-                - ./scripts/test.sh 3.12 2.16
-          - step:
               name: 'Test: Ansible 2.19 (python-3.11)'
               image: python:3.11-bullseye
               script:
