@@ -20,20 +20,17 @@ __metaclass__ = type
 
 from string import Template
 
-
+from ansible_collections.avantra.core.plugins.module_utils.avantra.credentials import (
+    CredentialType,
+    handle_credentials
+)
 from ansible_collections.avantra.core.plugins.module_utils.avantra.customer import (
     fetch_customer
 )
-
 from ansible_collections.avantra.core.plugins.module_utils.avantra.utils import (
     cameldict_to_snake_case,
     dict_get,
     format_api_date_time
-)
-
-from ansible_collections.avantra.core.plugins.module_utils.avantra.credentials import (
-    CredentialType,
-    handle_credentials
 )
 
 
@@ -60,11 +57,26 @@ def create_sapsystem(module, unified_sap_sid, customer_name):
     _assign("real_sap_sid", "realSapSid")
     _assign("description", only_if_not_none=True)
     _assign("notes", only_if_not_none=True)
-    _assign("remote_monitoring_entry_point", "remoteMonitoringEntryPoint")
-    _assign("remote_monitoring_server_system_id", "remoteMonitoringServerSystemId")
     _assign("system_role", "systemRole")
     _assign("timezone", only_if_not_none=True)
     _assign("application_type", "applicationType", only_if_not_none=True)
+
+    # if remote_monitoring_entry_point is set and remote_monitoring_server_system_id is set,
+    # then use remoteOptions
+    if module.params.get("remote_monitoring_entry_point") is not None and \
+            module.params.get("remote_monitoring_server_system_id") is not None:
+        sap_system_input["remoteOptions"] = {
+            "withSapControl": {
+                "monitoringServerId": module.params.get("remote_monitoring_server_system_id"),
+                "sapControlUrl": module.params.get("remote_monitoring_entry_point")
+            }
+        }
+    elif module.params.get("remote_monitoring_server_system_id") is not None:
+        sap_system_input["remoteOptions"] = {
+            "withoutSapControl": {
+                "monitoringServerId": module.params.get("remote_monitoring_server_system_id")
+            }
+        }
 
     if module.params.get("monitoring") is None:
         sap_system_input["monitoring"] = True
@@ -116,7 +128,6 @@ def create_sapsystem(module, unified_sap_sid, customer_name):
 
 
 def update_sapsystem(module, sap_system_id):
-
     # Prepare the input
     sap_system_input = {"id": sap_system_id}
 
@@ -131,12 +142,27 @@ def update_sapsystem(module, sap_system_id):
     _assign("real_sap_sid", "realSapSid")
     _assign("description")
     _assign("notes")
-    _assign("remote_monitoring_entry_point", "remoteMonitoringEntryPoint")
-    _assign("remote_monitoring_server_system_id", "remoteMonitoringServerSystemId")
-    _assign("monitoring")
+    # _assign("monitoring")
     _assign("system_role", "systemRole")
     _assign("timezone")
     _assign("application_type", "applicationType")
+
+    # if remote_monitoring_entry_point is set and remote_monitoring_server_system_id is set,
+    # then use remoteOptions
+    if module.params.get("remote_monitoring_entry_point") is not None and \
+            module.params.get("remote_monitoring_server_system_id") is not None:
+        sap_system_input["remoteOptions"] = {
+            "withSapControl": {
+                "monitoringServerId": module.params.get("remote_monitoring_server_system_id"),
+                "sapControlUrl": module.params.get("remote_monitoring_entry_point")
+            }
+        }
+    elif module.params.get("remote_monitoring_server_system_id") is not None:
+        sap_system_input["remoteOptions"] = {
+            "withoutSapControl": {
+                "monitoringServerId": module.params.get("remote_monitoring_server_system_id")
+            }
+        }
 
     database = module.params["database"]
     if database is not None and len(database) > 0:
@@ -346,9 +372,11 @@ FRAGMENT = """
     #         sapControlUser
     #         sapInstances
     sapInstancesCount
-    remoteMonitoringServer {
-        id
-        name
+    remoteOptions {
+        monitoringServer {
+            id
+            name
+        }
     }
     databaseMonitoringServer {
         id
