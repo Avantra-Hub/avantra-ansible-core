@@ -331,7 +331,7 @@ def ensure_server_present(module, customer_name, server_name):
         success, msg, server = create_server(module, customer_name=customer_name, server_name=server_name)
         if success:
             module.log(f"Server '{server_name}' created successfully")
-            result.update(changed=True,server=server)
+            result.update(changed=True, server=server)
 
         else:
             module.fail_json(msg=msg, result=result)
