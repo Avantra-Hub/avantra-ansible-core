@@ -50,3 +50,5 @@ Thumbs.db
 .venv/
 tests/output
 .devcontainer/
+
+tests/secrets.yml

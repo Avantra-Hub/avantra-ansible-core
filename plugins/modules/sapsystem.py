@@ -535,7 +535,8 @@ def ensure_sapsystem_present(module, customer_name, unified_sap_sid):
 
         if module.params.get("system_role") is None:
             module.fail_json(msg="system_role argument is missing", result=result)
-        elif module.params.get("real_sap_sid") is None:
+
+        if module.params.get("real_sap_sid") is None:
             module.fail_json(msg="real_sap_sid argument is missing", result=result)
 
         success, msg, sap_system = create_sapsystem(module, customer_name=customer_name,

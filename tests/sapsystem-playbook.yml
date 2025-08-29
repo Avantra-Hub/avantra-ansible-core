@@ -1,9 +1,9 @@
 # ansible-playbook simple-playbook.yml
 - hosts: localhost
+  vars_files:
+    - secrets.yml
   vars:
     avantra_api_url: http://localhost:8090/xn
-    avantra_api_user: mis2
-    avantra_api_password: REDACTED
 
   tasks:
 
@@ -53,9 +53,9 @@
         notes: "This is a simple note."
         description: "This is a simple description."
         remote_monitoring_entry_point: "http://10.103.15.117:50013"
-        remote_monitoring_server_system_id: 1
+        remote_monitoring_server_system_id: 23
         database:
-          monitoring_server_system_id: 1
+          monitoring_server_system_id: 23
           host: "golf"
           name: "SMA"
           port: 2222
