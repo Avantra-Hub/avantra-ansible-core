@@ -1,6 +1,12 @@
 name: CI Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this?"
+        required: false
+        default: "Testing"
   push:
     branches:
       - 'release/*'
