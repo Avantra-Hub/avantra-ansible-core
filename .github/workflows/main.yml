@@ -1,0 +1,118 @@
+name: CI Release
+
+on:
+  push:
+    branches:
+      - 'release/*'
+
+jobs:
+  tests:
+    name: Test matrix
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ansible 2.17
+          - python-version: '3.10'
+            ansible-version: '2.17'
+            test-script: './scripts/test.sh'
+          - python-version: '3.11'
+            ansible-version: '2.17'
+            test-script: './scripts/test.sh'
+          - python-version: '3.12'
+            ansible-version: '2.17'
+            test-script: './scripts/test.sh'
+
+          # Ansible 2.18
+          - python-version: '3.11'
+            ansible-version: '2.18'
+            test-script: './scripts/test.sh'
+          - python-version: '3.12'
+            ansible-version: '2.18'
+            test-script: './scripts/test.sh'
+          - python-version: '3.13'
+            ansible-version: '2.18'
+            test-script: './scripts/test.sh'
+
+          # Ansible 2.16
+          - python-version: '3.10'
+            ansible-version: '2.16'
+            test-script: './scripts/test.sh'
+          - python-version: '3.11'
+            ansible-version: '2.16'
+            test-script: './scripts/test.sh'
+          - python-version: '3.12'
+            ansible-version: '2.16'
+            test-script: './scripts/test.sh'
+
+          # Ansible 2.19 (devel tests)
+          - python-version: '3.11'
+            ansible-version: '2.19'
+            test-script: './scripts/test-devel.sh'
+          - python-version: '3.12'
+            ansible-version: '2.19'
+            test-script: './scripts/test-devel.sh'
+          - python-version: '3.13'
+            ansible-version: '2.19'
+            test-script: './scripts/test-devel.sh'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run tests (Ansible ${{ matrix.ansible-version }}, Python ${{ matrix.python-version }})
+        run: |
+          ${{ matrix.test-script }} ${{ matrix.python-version }} ${{ matrix.ansible-version }}
+
+  build:
+    name: Build with Ansible 2.18 and Python 3.12
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build
+        run: ./scripts/build.sh 2.18
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: build/**
+
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build documentation
+        run: ./scripts/build-docu.sh 2.18
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: build/**
