@@ -11,7 +11,16 @@ on:
     branches:
       - 'release/*'
 
+env:
+  ANSIBLE_TARGET_VERSION: "2.18"
+  LANG: "C.UTF-8"
+  LC_ALL: "C.UTF-8"
+
 jobs:
+
+  ###############################################################################################
+  # Run Tests
+  ###############################################################################################
   tests:
     name: Test matrix
     runs-on: ubuntu-latest
@@ -19,50 +28,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Ansible 2.17
-          - python-version: '3.10'
-            ansible-version: '2.17'
-            test-script: './scripts/test.sh'
-          - python-version: '3.11'
-            ansible-version: '2.17'
-            test-script: './scripts/test.sh'
-          - python-version: '3.12'
-            ansible-version: '2.17'
-            test-script: './scripts/test.sh'
+        ansible-version: ['2.16', '2.17', '2.18', '2.19']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Old Ansible (2.16, 2.17) does not support Python 3.13
+          - ansible-version: '2.16'
+            python-version: '3.13'
+          - ansible-version: '2.17'
+            python-version: '3.13'
 
-          # Ansible 2.18
-          - python-version: '3.11'
-            ansible-version: '2.18'
-            test-script: './scripts/test.sh'
-          - python-version: '3.12'
-            ansible-version: '2.18'
-            test-script: './scripts/test.sh'
-          - python-version: '3.13'
-            ansible-version: '2.18'
-            test-script: './scripts/test.sh'
-
-          # Ansible 2.16
-          - python-version: '3.10'
-            ansible-version: '2.16'
-            test-script: './scripts/test.sh'
-          - python-version: '3.11'
-            ansible-version: '2.16'
-            test-script: './scripts/test.sh'
-          - python-version: '3.12'
-            ansible-version: '2.16'
-            test-script: './scripts/test.sh'
-
-          # Ansible 2.19 (devel tests)
-          - python-version: '3.11'
-            ansible-version: '2.19'
-            test-script: './scripts/test-devel.sh'
-          - python-version: '3.12'
-            ansible-version: '2.19'
-            test-script: './scripts/test-devel.sh'
-          - python-version: '3.13'
-            ansible-version: '2.19'
-            test-script: './scripts/test-devel.sh'
+          # New Ansible (2.18, 2.19) does not support Python 3.10
+          - ansible-version: '2.18'
+            python-version: '3.10'
+          - ansible-version: '2.19'
+            python-version: '3.10'
 
     steps:
       - name: Checkout
@@ -72,11 +51,57 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
-      - name: Run tests (Ansible ${{ matrix.ansible-version }}, Python ${{ matrix.python-version }})
+      - name: Install Ansible Core
         run: |
-          ${{ matrix.test-script }} ${{ matrix.python-version }} ${{ matrix.ansible-version }}
+          python -m pip install "ansible-core>=${{ matrix.ansible-version }}"
 
+      - name: Setup Collection Structure
+        run: |
+          COLLECTION_PATH="${{ runner.temp }}/tests-${{ matrix.ansible-version }}/ansible_collections/avantra/core"
+          
+          echo "Setting up collection at: $COLLECTION_PATH"
+          mkdir -p "$COLLECTION_PATH"
+          
+          # Copy current directory to the temp path
+          cp -r . "$COLLECTION_PATH"
+          
+          # Clean up specific files as per original script
+          cd "$COLLECTION_PATH"
+          rm -rf scripts
+          rm -f bitbucket-pipelines.yml
+          
+          # Set the working directory for subsequent steps via GHA env
+          echo "COLLECTION_PATH=$COLLECTION_PATH" >> $GITHUB_ENV
+
+      - name: Run Sanity Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          # The exit code check is handled automatically by GHA (step fails if non-zero)
+          ansible-test sanity --junit --python "${{ matrix.python-version }}" --verbose
+
+      - name: Run Unit Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test units --coverage --python "${{ matrix.python-version }}" --requirements --verbose
+
+      - name: Generate Coverage Report
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test coverage report --requirements
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.ansible-version }}
+          path: ${{ env.COLLECTION_PATH }}/tests/output/junit/*.xml
+
+
+  ###############################################################################################
+  # Build and Publish Artifacts
+  ###############################################################################################
   build:
     name: Build with Ansible 2.18 and Python 3.12
     runs-on: ubuntu-latest
@@ -90,16 +115,47 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: '3.12'
+          cache: 'pip'
 
-      - name: Build
-        run: ./scripts/build.sh 2.18
+      - name: Prepare Directory Structure
+        id: prep_dir
+        run: |
+          # Define the target path based on runner temp and matrix version
+          # Corresponds to: mkdir -p $RUNNER_TEMP/build-"$1"/ansible_collections/avantra
+          TARGET_PATH="${{ runner.temp }}/ansible_collections/avantra/core"
+          
+          mkdir -p "$TARGET_PATH"
+          
+          # Copy current repo to target
+          # Corresponds to: cp -r . ...
+          cp -r . "$TARGET_PATH"
+          
+          # Export this path to environment variables for the next step to use
+          echo "COLLECTION_ROOT=$TARGET_PATH" >> $GITHUB_ENV
 
-      - name: Upload build artifact
+      - name: Install Dependencies and Build
+        working-directory: ${{ env.COLLECTION_ROOT }}
+        run: |
+          # Install Ansible Core version from matrix
+          python -m pip install "ansible-core>=${{ env.ANSIBLE_TARGET_VERSION }}"
+
+          # Prepare output directory in the original workspace
+          mkdir -p ${{ github.workspace }}/build
+
+          # Build the collection
+          # Corresponds to: ansible-galaxy collection build ...
+          ansible-galaxy collection build --output-path ${{ github.workspace }}/build
+
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: build
-          path: build/**
+          name: avantra-core-ansible-${{ env.ANSIBLE_TARGET_VERSION }}
+          path: ${{ github.workspace }}/build/*.tar.gz
 
+
+  ###############################################################################################
+  # Render Documentation
+  ###############################################################################################
   docs:
     name: Build Documentation
     runs-on: ubuntu-latest
@@ -113,12 +169,82 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: '3.12'
+          cache: 'pip'
 
-      - name: Build documentation
-        run: ./scripts/build-docu.sh 2.18
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
 
-      - name: Upload documentation artifact
+      - name: Install Python Helper Dependencies
+        run: python3 -m pip install pyyaml
+
+      - name: Get Collection Version
+        id: get_version
+        run: |
+          # We extract the version and save it to GITHUB_OUTPUT for other steps to use
+          VERSION=$(python3 -c "import yaml; print(yaml.safe_load(open('galaxy.yml')).get('version'))")
+          echo "Detected version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          pattern: avantra-core-ansible-${{ env.ANSIBLE_TARGET_VERSION }}*
+          path: build/
+
+      - name: Install Ansible Core and Collection
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          python3 -m pip install "ansible-core>=${{ env.ANSIBLE_TARGET_VERSION }}"          
+          ansible-galaxy collection install "build/avantra-core-${{ env.VERSION }}.tar.gz"
+
+      - name: Setup Documentation Tools
+        run: |
+          # We install directly to runner, no need for venv in CI
+          python3 -m pip install antsibull-docs sphinx_ansible_theme
+
+      - name: Build Sphinx Documentation
+        run: |
+          # Set up directory variables
+          CURRENT_DIR=$(pwd)
+          TARGET_DIR="$CURRENT_DIR/target/ansible-docu"
+          DEST_DIR="$TARGET_DIR/dest"
+          
+          mkdir -p "$TARGET_DIR"
+          
+          echo "---- [INIT SPHINX] ----"
+          mkdir -p -m 700 "$DEST_DIR"
+          
+          # Use specific working directory for antsibull logic
+          cd "$TARGET_DIR"
+          antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
+          
+          cd dest
+          
+          echo "---- [BUILD DOCU (Temp RST)] ----"
+          mkdir -p temp-rst
+          chmod -R 700 temp-rst
+          
+          antsibull-docs \
+              collection \
+              --use-current \
+              --dest-dir temp-rst \
+              avantra.core
+          
+          echo "---- [RSYNC] ----"
+          if [ ! -d "rst" ]; then
+            mkdir -m 700 "rst"
+          fi
+          
+          rsync -cprv --delete-after temp-rst/collections/ rst/collections/
+          
+          echo "---- [SPHINX BUILD] ----"
+          sphinx-build -M html rst build -c . -W --keep-going
+
+      - name: Upload Documentation Artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: docs
-          path: build/**
+          name: ansible-documentation-html
+          path: target/ansible-docu/dest/build/html/
