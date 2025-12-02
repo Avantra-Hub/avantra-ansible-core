@@ -13,8 +13,6 @@ on:
 
 env:
   ANSIBLE_TARGET_VERSION: "2.18"
-  LANG: "C.UTF-8"
-  LC_ALL: "C.UTF-8"
 
 jobs:
 
@@ -55,7 +53,7 @@ jobs:
 
       - name: Install Ansible Core
         run: |
-          python -m pip install "ansible-core>=${{ matrix.ansible-version }}"
+          python -m pip install "ansible-core==${{ matrix.ansible-version }}.*"
 
       - name: Setup Collection Structure
         run: |
@@ -137,7 +135,7 @@ jobs:
         working-directory: ${{ env.COLLECTION_ROOT }}
         run: |
           # Install Ansible Core version from matrix
-          python -m pip install "ansible-core>=${{ env.ANSIBLE_TARGET_VERSION }}"
+          python -m pip install "ansible-core==${{ matrix.ansible-version }}.*"
 
           # Prepare output directory in the original workspace
           mkdir -p ${{ github.workspace }}/build
@@ -197,7 +195,7 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
         run: |
-          python3 -m pip install "ansible-core>=${{ env.ANSIBLE_TARGET_VERSION }}"          
+          python3 -m pip install "ansible-core==${{ env.ANSIBLE_TARGET_VERSION }}.*"          
           ansible-galaxy collection install "build/avantra-core-${{ env.VERSION }}.tar.gz"
 
       - name: Setup Documentation Tools
