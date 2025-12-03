@@ -134,8 +134,8 @@ jobs:
       - name: Install Dependencies and Build
         working-directory: ${{ env.COLLECTION_ROOT }}
         run: |
-          # Install Ansible Core version from matrix
-          python -m pip install "ansible-core==${{ matrix.ansible-version }}.*"
+          # Install Ansible Core ${{ env.ANSIBLE_TARGET_VERSION }}
+          python -m pip install "ansible-core==${{ env.ANSIBLE_TARGET_VERSION }}.*"
 
           # Prepare output directory in the original workspace
           mkdir -p ${{ github.workspace }}/build
