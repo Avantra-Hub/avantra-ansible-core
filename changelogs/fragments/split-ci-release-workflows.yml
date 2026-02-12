@@ -1,0 +1,6 @@
+minor_changes:
+  - Split CI into separate test (``ci.yml``) and release (``release.yml``) workflows.
+  - Add Galaxy publish approval gate via ``galaxy-publish`` GitHub Environment.
+  - Add tag/version validation that blocks Galaxy publish on mismatch.
+  - Add PR template with changelog fragment reminder.
+  - Add ``RELEASE-PROCESS.md`` documenting the release workflow.
