@@ -14,7 +14,6 @@ python3 -m pip install --user -r ./requirements.txt
 
 cd /tests-devel/ansible_collections/avantra/core
 rm -rf scripts
-rm -f bitbucket-pipelines.yml
 
 ansible-test sanity --junit --python "$1"
 
