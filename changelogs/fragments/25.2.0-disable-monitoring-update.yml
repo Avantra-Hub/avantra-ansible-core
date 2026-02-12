@@ -1,0 +1,3 @@
+bugfixes:
+  - server - Disable ``monitoring`` field in server update to prevent unintended changes.
+  - sapsystem - Disable ``monitoring`` field in SAP system update to prevent unintended changes.

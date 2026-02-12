@@ -1,0 +1,3 @@
+minor_changes:
+  - sapsystem - Use new ``remoteOptions`` API structure for remote monitoring configuration, replacing the flat ``remoteMonitoringEntryPoint`` and ``remoteMonitoringServerSystemId`` fields.
+  - sapsystem - Support ``withSapControl`` and ``withoutSapControl`` remote monitoring modes.

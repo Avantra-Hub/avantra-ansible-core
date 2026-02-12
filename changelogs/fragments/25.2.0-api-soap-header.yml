@@ -1,0 +1,2 @@
+bugfixes:
+  - api - Remove ``soapenv:mustUnderstand`` attribute from SOAP security header to fix compatibility issues.
