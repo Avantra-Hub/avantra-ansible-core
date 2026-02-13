@@ -1,15 +1,15 @@
 # ansible-playbook simple-playbook.yml
 - hosts: localhost
+  vars_files:
+    - secrets.yml
   vars:
     avantra_api_url: http://localhost:8090/xn
-    avantra_api_user: mis2
-    avantra_api_password: 111111111111
 
   tasks:
     - name: "Workflow Start"
       avantra.core.workflow_execution:
-        name: "Test_1"
-        namespace: "mis1"
+        name: "Test_2"
+        namespace: "mis"
         args:
           parameter1: string
           parameter2: 42

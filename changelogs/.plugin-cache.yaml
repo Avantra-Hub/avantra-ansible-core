@@ -1,10 +1,12 @@
-objects: {}
+objects:
+  role: {}
 plugins:
   become: {}
   cache: {}
   callback: {}
   cliconf: {}
   connection: {}
+  filter: {}
   httpapi: {}
   inventory: {}
   lookup: {}
@@ -42,5 +44,6 @@ plugins:
   netconf: {}
   shell: {}
   strategy: {}
+  test: {}
   vars: {}
-version: 24.0.0
+version: 25.2.0

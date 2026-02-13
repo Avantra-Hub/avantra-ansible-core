@@ -320,17 +320,19 @@ def ensure_server_present(module, customer_name, server_name):
     if prev_exists_state_state == "absent":
 
         if module.params.get("system_role") is None:
-            module.fail_json(msg="system_role argument is missing", result=result)
-        elif module.params.get("fqdn_or_ip_address") is None:
-            module.fail_json(msg="fqdn_or_ip_address argument is missing", result=result)
+            module.fail_json(msg="system_role argument is missing (it is needed when a server has to be created)",
+                             result=result)
+
+        if module.params.get("fqdn_or_ip_address") is None:
+            module.fail_json(
+                msg="fqdn_or_ip_address argument is missing (it is needed when a server has to be created)",
+                result=result)
 
         success, msg, server = create_server(module, customer_name=customer_name, server_name=server_name)
         if success:
+            module.log(f"Server '{server_name}' created successfully")
+            result.update(changed=True, server=server)
 
-            result.update(
-                changed=True,
-                server=server
-            )
         else:
             module.fail_json(msg=msg, result=result)
 

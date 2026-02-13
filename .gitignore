@@ -42,6 +42,12 @@ Thumbs.db
 *.mov
 *.wmv
 
+.artifacts/
+.python-version
 .venv/
+pyproject.toml
+uv.lock
 tests/output
 .devcontainer/
+
+tests/secrets.yml

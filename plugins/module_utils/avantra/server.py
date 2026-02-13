@@ -119,7 +119,7 @@ def update_server(module, server_system_id):
     _assign("description")
     _assign("notes")
     _assign("fqdn_or_ip_address", "ipAddress")
-    _assign("monitoring")
+    # _assign("monitoring")
     _assign("system_role", "systemRole")
     _assign("timezone")
     _assign("dns_domain")

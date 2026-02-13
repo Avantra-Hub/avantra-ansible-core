@@ -13,3 +13,33 @@ releases:
     fragments:
     - 24.0.0.release_summary.yml
     release_date: '2024-02-02'
+  25.2.0:
+    release_date: '2026-02-13'
+  25.2.1:
+    changes:
+      bugfixes:
+      - api - Remove ``soapenv:mustUnderstand`` attribute from SOAP security header
+        to fix compatibility issues.
+      - sapsystem - Disable ``monitoring`` field in SAP system update to prevent unintended
+        changes.
+      - server - Disable ``monitoring`` field in server update to prevent unintended
+        changes.
+      minor_changes:
+      - sapsystem - Support ``withSapControl`` and ``withoutSapControl`` remote monitoring
+        modes.
+      - sapsystem - Use new ``remoteOptions`` API structure for remote monitoring
+        configuration, replacing the flat ``remoteMonitoringEntryPoint`` and ``remoteMonitoringServerSystemId``
+        fields.
+      - server - Add log message on successful server creation.
+      - server - Improve error messages for missing ``system_role`` and ``fqdn_or_ip_address``
+        arguments during server creation.
+      release_summary: Release for Avantra 25.2.0 with SOAP API compatibility fixes,
+        improved remote monitoring configuration for SAP systems, and better error
+        handling for server module operations.
+    fragments:
+    - 25.2.0-api-soap-header.yml
+    - 25.2.0-disable-monitoring-update.yml
+    - 25.2.0-sapsystem-remote-options.yml
+    - 25.2.0-server-error-messages.yml
+    - 25.2.1-release-summary.yml
+    release_date: '2026-02-13'
