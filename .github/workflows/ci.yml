@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  ###############################################################################################
+  # Run Tests
+  ###############################################################################################
+  tests:
+    name: Test matrix
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible-version: ['2.16', '2.17', '2.18', '2.19']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Old Ansible (2.16, 2.17) does not support Python 3.13
+          - ansible-version: '2.16'
+            python-version: '3.13'
+          - ansible-version: '2.17'
+            python-version: '3.13'
+
+          # New Ansible (2.18, 2.19) does not support Python 3.10
+          - ansible-version: '2.18'
+            python-version: '3.10'
+          - ansible-version: '2.19'
+            python-version: '3.10'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Ansible Core
+        run: |
+          python -m pip install "ansible-core==${{ matrix.ansible-version }}.*"
+
+      - name: Setup Collection Structure
+        run: |
+          COLLECTION_PATH="${{ runner.temp }}/tests-${{ matrix.ansible-version }}/ansible_collections/avantra/core"
+
+          echo "Setting up collection at: $COLLECTION_PATH"
+          mkdir -p "$COLLECTION_PATH"
+
+          # Copy current directory to the temp path
+          cp -r . "$COLLECTION_PATH"
+
+          # Clean up specific files as per original script
+          cd "$COLLECTION_PATH"
+          rm -rf scripts
+          # Set the working directory for subsequent steps via GHA env
+          echo "COLLECTION_PATH=$COLLECTION_PATH" >> $GITHUB_ENV
+
+      - name: Run Sanity Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test sanity --junit --python "${{ matrix.python-version }}" --verbose
+
+      - name: Run Unit Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test units --coverage --python "${{ matrix.python-version }}" --requirements --verbose
+
+      - name: Generate Coverage Report
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test coverage report --requirements
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.ansible-version }}
+          path: ${{ env.COLLECTION_PATH }}/tests/output/junit/*.xml
