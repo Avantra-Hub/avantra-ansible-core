@@ -1,3 +1,4 @@
 fastapi[all]
 strawberry-graphql[fastapi]
 ariadne
+uvicorn
