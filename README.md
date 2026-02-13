@@ -1,6 +1,6 @@
 # Avantra Core Ansible Collection #
 
-Current version: 24.0.0 (release 2024-02-02)
+Current version: 25.0.0 (release 2026-02-16)
 
 This collection offers core functions to work with Avantra.
 You can create, remove servers and SAP systems. Workflows can be executed.
@@ -13,8 +13,8 @@ Apache License 2.0
 
 The module is tests for the following versions of python and Ansible:
 
-- Ansible version >= 2.14 including the current development version
-- Python version >= 3.9
+- Ansible version >= 2.16 including the current development version
+- Python version >= 3.10
 
 ### Matrix  ###
 
@@ -51,12 +51,12 @@ ansible-galaxy collection install avantra.core
 or directly from the git repository:
 
 ```shell
-ansible-galaxy collection install git+https://bitbucket.org/syslink-software/avantra-ansible-core.git,release/23.0.x
+ansible-galaxy collection install git+https://github.com/Avantra-Hub/avantra-ansible-core.git,release/25.0.x
 ```
 
 ## Documentation ##
 
-This collection documentation can be found here: https://syslink-software.bitbucket.io/ansible/avantra.core
+This collection documentation can be found here: https://avantra-hub.github.io/avantra-ansible-core/
 
 ## References ##
 

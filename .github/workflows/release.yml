@@ -1,0 +1,434 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this?"
+        required: false
+        default: "Manual release"
+  push:
+    tags:
+      - '*.*.*'
+
+env:
+  ANSIBLE_TARGET_VERSION: "2.18"
+
+jobs:
+
+  ###############################################################################################
+  # Run Tests
+  ###############################################################################################
+  tests:
+    name: Test matrix
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ansible-version: ['2.16', '2.17', '2.18', '2.19']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+        exclude:
+          # Old Ansible (2.16, 2.17) does not support Python 3.13
+          - ansible-version: '2.16'
+            python-version: '3.13'
+          - ansible-version: '2.17'
+            python-version: '3.13'
+
+          # New Ansible (2.18, 2.19) does not support Python 3.10
+          - ansible-version: '2.18'
+            python-version: '3.10'
+          - ansible-version: '2.19'
+            python-version: '3.10'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Ansible Core
+        run: |
+          python -m pip install "ansible-core==${{ matrix.ansible-version }}.*"
+
+      - name: Setup Collection Structure
+        run: |
+          COLLECTION_PATH="${{ runner.temp }}/tests-${{ matrix.ansible-version }}/ansible_collections/avantra/core"
+
+          echo "Setting up collection at: $COLLECTION_PATH"
+          mkdir -p "$COLLECTION_PATH"
+
+          cp -r . "$COLLECTION_PATH"
+
+          cd "$COLLECTION_PATH"
+          rm -rf scripts
+          echo "COLLECTION_PATH=$COLLECTION_PATH" >> $GITHUB_ENV
+
+      - name: Run Sanity Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test sanity --junit --python "${{ matrix.python-version }}" --verbose
+
+      - name: Run Unit Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test units --coverage --python "${{ matrix.python-version }}" --requirements --verbose
+
+      - name: Generate Coverage Report
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test coverage report --requirements
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: test-results-${{ matrix.python-version }}-${{ matrix.ansible-version }}
+          path: ${{ env.COLLECTION_PATH }}/tests/output/junit/*.xml
+
+
+  ###############################################################################################
+  # Validate Tag vs galaxy.yml Version
+  ###############################################################################################
+  validate-tag:
+    name: Validate tag matches galaxy.yml
+    runs-on: ubuntu-latest
+    needs: tests
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.12'
+
+      - name: Compare tag with galaxy.yml version
+        run: |
+          python3 -m pip install pyyaml
+          GALAXY_VERSION=$(python3 -c "import yaml; print(yaml.safe_load(open('galaxy.yml')).get('version'))")
+          TAG_VERSION="${{ github.ref_name }}"
+
+          echo "galaxy.yml version: $GALAXY_VERSION"
+          echo "Git tag: $TAG_VERSION"
+
+          if [ "$GALAXY_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Version mismatch — galaxy.yml has '$GALAXY_VERSION' but git tag is '$TAG_VERSION'"
+            exit 1
+          fi
+
+          echo "Versions match."
+
+
+  ###############################################################################################
+  # Build Collection Artifact
+  ###############################################################################################
+  build:
+    name: Build collection
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Prepare Directory Structure
+        run: |
+          TARGET_PATH="${{ runner.temp }}/ansible_collections/avantra/core"
+          mkdir -p "$TARGET_PATH"
+          cp -r . "$TARGET_PATH"
+          echo "COLLECTION_ROOT=$TARGET_PATH" >> $GITHUB_ENV
+
+      - name: Install Dependencies and Build
+        working-directory: ${{ env.COLLECTION_ROOT }}
+        run: |
+          python -m pip install "ansible-core==${{ env.ANSIBLE_TARGET_VERSION }}.*"
+          mkdir -p ${{ github.workspace }}/build
+          ansible-galaxy collection build --output-path ${{ github.workspace }}/build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: avantra-core-collection
+          path: ${{ github.workspace }}/build/*.tar.gz
+
+
+  ###############################################################################################
+  # Build Documentation
+  ###############################################################################################
+  docs:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
+
+      - name: Install Python Helper Dependencies
+        run: python3 -m pip install pyyaml
+
+      - name: Get Collection Version
+        id: get_version
+        run: |
+          VERSION=$(python3 -c "import yaml; print(yaml.safe_load(open('galaxy.yml')).get('version'))")
+          echo "Detected version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: avantra-core-collection
+          path: build/
+
+      - name: Install Ansible Core and Collection
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          python3 -m pip install "ansible-core==${{ env.ANSIBLE_TARGET_VERSION }}.*"
+          ansible-galaxy collection install "build/avantra-core-${{ env.VERSION }}.tar.gz"
+
+      - name: Setup Documentation Tools
+        run: |
+          python3 -m pip install antsibull-docs sphinx_ansible_theme
+
+      - name: Build Sphinx Documentation
+        run: |
+          CURRENT_DIR=$(pwd)
+          TARGET_DIR="$CURRENT_DIR/target/ansible-docu"
+          DEST_DIR="$TARGET_DIR/dest"
+
+          mkdir -p "$TARGET_DIR"
+
+          echo "---- [INIT SPHINX] ----"
+          mkdir -p -m 700 "$DEST_DIR"
+
+          cd "$TARGET_DIR"
+          antsibull-docs sphinx-init --use-current --dest-dir dest avantra.core
+
+          cd dest
+
+          echo "---- [BUILD DOCU (Temp RST)] ----"
+          mkdir -p temp-rst
+          chmod -R 700 temp-rst
+
+          antsibull-docs \
+              collection \
+              --use-current \
+              --dest-dir temp-rst \
+              avantra.core
+
+          echo "---- [RSYNC] ----"
+          if [ ! -d "rst" ]; then
+            mkdir -m 700 "rst"
+          fi
+
+          rsync -cprv --delete-after temp-rst/collections/ rst/collections/
+
+          echo "---- [SPHINX BUILD] ----"
+          sphinx-build -M html rst build -c . -W --keep-going
+
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: ansible-documentation-html
+          path: target/ansible-docu/dest/build/html/
+
+
+  ###############################################################################################
+  # Publish to Ansible Galaxy (requires manual approval)
+  ###############################################################################################
+  publish-galaxy:
+    name: Publish to Ansible Galaxy
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - validate-tag
+    if: startsWith(github.ref, 'refs/tags/')
+    environment: galaxy-publish
+
+    steps:
+      - name: Set up Python 3.12
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.12'
+
+      - name: Install Ansible Core
+        run: python -m pip install "ansible-core==${{ env.ANSIBLE_TARGET_VERSION }}.*"
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: avantra-core-collection
+          path: build/
+
+      - name: Publish Collection
+        run: |
+          ansible-galaxy collection publish build/*.tar.gz --api-key "${{ secrets.GALAXY_API_KEY }}"
+
+
+  ###############################################################################################
+  # Create GitHub Release
+  ###############################################################################################
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: publish-galaxy
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: avantra-core-collection
+          path: build/
+
+      - name: Extract Changelog for Version
+        id: changelog
+        run: |
+          TAG="${{ github.ref_name }}"
+
+          # Extract the section for this version from CHANGELOG.rst
+          # Matches from "vX.Y.Z" header until the next version header or end of file
+          NOTES=$(awk -v tag="v${TAG}" '
+            BEGIN { found=0 }
+            $0 ~ "^" tag "$" { found=1; next }
+            found && /^v[0-9]+\.[0-9]+\.[0-9]+$/ { exit }
+            found && /^=+$/ { next }
+            found { print }
+          ' CHANGELOG.rst)
+
+          # Write to file to avoid quoting issues
+          echo "$NOTES" > /tmp/changelog-notes.md
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          gh release create "$TAG" \
+            --title "v${TAG}" \
+            --notes-file /tmp/changelog-notes.md \
+            --generate-notes \
+            build/*.tar.gz
+
+
+  ###############################################################################################
+  # Deploy Documentation to GitHub Pages
+  ###############################################################################################
+  deploy-docs:
+    name: Deploy documentation to GitHub Pages
+    runs-on: ubuntu-latest
+    needs:
+      - docs
+      - publish-galaxy
+    permissions:
+      contents: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    steps:
+      - name: Download Documentation Artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          name: ansible-documentation-html
+          path: docs-html/
+
+      - name: Extract Tag Version
+        id: version
+        run: |
+          echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout gh-pages Branch
+        id: checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+        with:
+          ref: gh-pages
+          path: gh-pages-dir
+          fetch-depth: 1
+        continue-on-error: true
+
+      - name: Initialize gh-pages Branch if Missing
+        if: steps.checkout.outcome == 'failure'
+        run: |
+          mkdir gh-pages-dir
+          cd gh-pages-dir
+          git init
+          git checkout --orphan gh-pages
+          git commit --allow-empty -m "Initialize gh-pages branch"
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+
+      - name: Configure Git Identity
+        run: |
+          cd gh-pages-dir
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Copy Documentation to Version Subfolder
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          rm -rf "gh-pages-dir/$TAG"
+          cp -r docs-html "gh-pages-dir/$TAG"
+
+      - name: Generate Root Redirect and Disable Jekyll
+        run: |
+          touch gh-pages-dir/.nojekyll
+
+          # Find the latest semver among version directories on gh-pages
+          LATEST=$(find gh-pages-dir -maxdepth 1 -mindepth 1 -type d \
+            -regex '.*/[0-9]+\.[0-9]+\.[0-9]+' -printf '%f\n' \
+            | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+
+          if [ -z "$LATEST" ]; then
+            echo "No version directories found, skipping index.html generation"
+            exit 0
+          fi
+
+          echo "Latest version: $LATEST"
+          cat > gh-pages-dir/index.html << HEREDOC
+          <!DOCTYPE html>
+          <html><head>
+            <meta http-equiv="refresh" content="0; url=./$LATEST/">
+          </head><body>
+            <p>Redirecting to <a href="./$LATEST/">$LATEST</a>...</p>
+          </body></html>
+          HEREDOC
+
+      - name: Commit and Push to gh-pages
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          cd gh-pages-dir
+          git add -A
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Deploy documentation for $TAG"
+          git push origin HEAD:gh-pages
