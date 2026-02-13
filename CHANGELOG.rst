@@ -4,7 +4,7 @@ Avantra Core Ansible Collection Release Notes
 
 .. contents:: Topics
 
-v25.2.1
+v25.2.0
 =======
 
 Release Summary
