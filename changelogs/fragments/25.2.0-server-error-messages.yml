@@ -1,3 +1,0 @@
-minor_changes:
-  - server - Improve error messages for missing ``system_role`` and ``fqdn_or_ip_address`` arguments during server creation.
-  - server - Add log message on successful server creation.
