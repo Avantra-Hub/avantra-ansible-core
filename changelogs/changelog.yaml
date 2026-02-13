@@ -13,6 +13,8 @@ releases:
     fragments:
     - 24.0.0.release_summary.yml
     release_date: '2024-02-02'
+  25.2.0:
+    release_date: '2026-02-13'
   25.2.1:
     changes:
       bugfixes:
@@ -31,9 +33,9 @@ releases:
       - server - Add log message on successful server creation.
       - server - Improve error messages for missing ``system_role`` and ``fqdn_or_ip_address``
         arguments during server creation.
-      release_summary: 'Release for Avantra 25.2.0 with SOAP API compatibility fixes,
+      release_summary: Release for Avantra 25.2.0 with SOAP API compatibility fixes,
         improved remote monitoring configuration for SAP systems, and better error
-        handling for server module operations.'
+        handling for server module operations.
     fragments:
     - 25.2.0-api-soap-header.yml
     - 25.2.0-disable-monitoring-update.yml
