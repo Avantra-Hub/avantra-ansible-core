@@ -1,7 +1,5 @@
 # Avantra Core Ansible Collection #
 
-Current version: 25.0.0 (release 2026-02-16)
-
 This collection offers core functions to work with Avantra.
 You can create, remove servers and SAP systems. Workflows can be executed.
 
