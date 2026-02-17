@@ -11,6 +11,9 @@ on:
     tags:
       - '*.*.*'
 
+permissions:
+  contents: read
+
 env:
   ANSIBLE_TARGET_VERSION: "2.18"
 
