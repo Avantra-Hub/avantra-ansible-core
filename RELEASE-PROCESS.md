@@ -11,7 +11,8 @@ This document describes how to create and publish a new release of the `avantra.
 
 ## Versioning
 
-This collection uses **year-based major versions** (e.g., `25.x.x` for 2025). Minor and patch versions are incremented for features and fixes within the year.
+This collection uses **year-based major versions** (e.g., `25.x.x` for 2025). Minor and patch versions are incremented
+for features and fixes within the year.
 
 ## Steps
 
@@ -87,11 +88,13 @@ After approval, the pipeline automatically:
 
 ## Changelog Fragments
 
-Each PR should include a changelog fragment in `changelogs/fragments/`. Create a YAML file named descriptively (e.g., `fix-login-timeout.yml`):
+Each PR should include a changelog fragment in `changelogs/fragments/`. Create a YAML file named descriptively (e.g.,
+`fix-login-timeout.yml`):
 
 ```yaml
 bugfixes:
   - Fix login module timeout when server is unreachable.
 ```
 
-Available categories: `major_changes`, `minor_changes`, `breaking_changes`, `deprecated_features`, `removed_features`, `security_fixes`, `bugfixes`, `known_issues`.
+Available categories: `major_changes`, `minor_changes`, `breaking_changes`, `deprecated_features`, `removed_features`,
+`security_fixes`, `bugfixes`, `known_issues`.
