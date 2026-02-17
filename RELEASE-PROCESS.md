@@ -5,7 +5,7 @@ This document describes how to create and publish a new release of the `avantra.
 ## Prerequisites
 
 - Write access to the repository
-- `antsibull-changelog` installed locally (`pip install antsibull-changelog && uv pip install antsibull-core`)
+- `antsibull-changelog` installed locally (`uv pip install antsibull-changelog && uv pip install antsibull-core`)
 - The `galaxy-publish` GitHub Environment must be configured with required reviewers
 - The `GALAXY_API_KEY` secret must be set on the `galaxy-publish` environment (Ansible Galaxy API token)
 
@@ -35,7 +35,7 @@ version: 25.1.0
 Ensure all merged PRs have added their changelog fragments to `changelogs/fragments/`. Then compile them:
 
 ```shell
-antsibull-changelog release
+uv run antsibull-changelog release
 ```
 
 This updates `CHANGELOG.rst` and removes the processed fragment files.
