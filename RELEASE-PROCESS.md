@@ -5,13 +5,14 @@ This document describes how to create and publish a new release of the `avantra.
 ## Prerequisites
 
 - Write access to the repository
-- `antsibull-changelog` installed locally (`pip install antsibull-changelog && uv pip install antsibull-core`)
+- `antsibull-changelog` installed locally (`uv pip install antsibull-changelog && uv pip install antsibull-core`)
 - The `galaxy-publish` GitHub Environment must be configured with required reviewers
 - The `GALAXY_API_KEY` secret must be set on the `galaxy-publish` environment (Ansible Galaxy API token)
 
 ## Versioning
 
-This collection uses **year-based major versions** (e.g., `25.x.x` for 2025). Minor and patch versions are incremented for features and fixes within the year.
+This collection uses **year-based major versions** (e.g., `25.x.x` for 2025). Minor and patch versions are incremented
+for features and fixes within the year.
 
 ## Steps
 
@@ -35,7 +36,7 @@ version: 25.1.0
 Ensure all merged PRs have added their changelog fragments to `changelogs/fragments/`. Then compile them:
 
 ```shell
-antsibull-changelog release
+uv run antsibull-changelog release
 ```
 
 This updates `CHANGELOG.rst` and removes the processed fragment files.
@@ -87,11 +88,13 @@ After approval, the pipeline automatically:
 
 ## Changelog Fragments
 
-Each PR should include a changelog fragment in `changelogs/fragments/`. Create a YAML file named descriptively (e.g., `fix-login-timeout.yml`):
+Each PR should include a changelog fragment in `changelogs/fragments/`. Create a YAML file named descriptively (e.g.,
+`fix-login-timeout.yml`):
 
 ```yaml
 bugfixes:
   - Fix login module timeout when server is unreachable.
 ```
 
-Available categories: `major_changes`, `minor_changes`, `breaking_changes`, `deprecated_features`, `removed_features`, `security_fixes`, `bugfixes`, `known_issues`.
+Available categories: `major_changes`, `minor_changes`, `breaking_changes`, `deprecated_features`, `removed_features`,
+`security_fixes`, `bugfixes`, `known_issues`.
