@@ -78,7 +78,7 @@ def _etree_to_dict(t):
 def xmldict(xml):
     it = ElementTree.iterparse(StringIO(xml.decode("UTF-8")))
     for evt, el in it:
-        before, sep, el.tag = el.tag.rpartition('}')  # strip ns
+        _, __, el.tag = el.tag.rpartition('}')  # strip ns
     return _etree_to_dict(it.root)
 
 
