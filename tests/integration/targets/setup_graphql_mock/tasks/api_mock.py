@@ -37,6 +37,7 @@ app = FastAPI()
 async def login(auth: AuthRequest, response: Response):
     if auth.username != "testuser" or auth.password != "testpwd":
         response.status_code = 401
+        return {"detail": "Unauthorized"}
     else:
         return {"token": "###TestToken###"}
 
