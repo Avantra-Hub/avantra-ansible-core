@@ -5,14 +5,14 @@ You can create, remove servers and SAP systems. Workflows can be executed.
 
 ## License ##
 
-Apache License 2.0
+[Apache License 2.0](https://github.com/Avantra-Hub/avantra-ansible-core/blob/main/LICENSE)
 
 ## Prerequisites
 
-The module is tests for the following versions of python and Ansible:
+The collection is tested for the following versions of Python and Ansible:
 
-- Ansible version >= 2.16 including the current development version
-- Python version >= 3.10
+- Ansible version >= 2.16
+- Python version >= 3.12
 
 ### Matrix  ###
 
@@ -20,8 +20,6 @@ The module is tests for the following versions of python and Ansible:
 |-------------|--------------|--------------|--------------|:---------------------|
 | Python 3.13 | unsupported  | unsupported  | tested       | tested               |
 | Python 3.12 | tested       | tested       | tested       | tested               |
-| Python 3.11 | tested       | tested       | tested       | tested               |
-| Python 3.10 | tested       | tested       | unsupported  | unsupported          |
 
 ## Content ##
 
@@ -55,6 +53,18 @@ ansible-galaxy collection install git+https://github.com/Avantra-Hub/avantra-ans
 ## Documentation ##
 
 This collection documentation can be found here: https://avantra-hub.github.io/avantra-ansible-core/
+
+## Support ##
+
+For support with this certified Ansible collection, please open an issue at
+[Avantra Support](https://support.avantra.com).
+
+For questions about Red Hat Ansible Automation Platform subscriptions, please
+contact [Red Hat Support](https://access.redhat.com/support/).
+
+## Release Notes ##
+
+See the [changelog](https://github.com/Avantra-Hub/avantra-ansible-core/blob/main/CHANGELOG.rst).
 
 ## References ##
 

@@ -1,6 +1,0 @@
-plugins/modules/login.py validate-modules:missing-gplv3-license # ignore license check
-plugins/modules/sapsystem.py validate-modules:missing-gplv3-license # ignore license check
-plugins/modules/sapsystem_info.py validate-modules:missing-gplv3-license # ignore license check
-plugins/modules/server.py validate-modules:missing-gplv3-license # ignore license check
-plugins/modules/server_info.py validate-modules:missing-gplv3-license # ignore license check
-plugins/modules/workflow_execution.py validate-modules:missing-gplv3-license # ignore license check
