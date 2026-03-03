@@ -51,3 +51,5 @@ tests/output
 .devcontainer/
 
 tests/secrets.yml
+
+.mcp.json
