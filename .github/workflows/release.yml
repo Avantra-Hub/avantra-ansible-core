@@ -269,7 +269,7 @@ jobs:
 
 
   ###############################################################################################
-  # Publish to Red Hat Automation Hub (requires manual approval)
+  # Publish to Red Hat Automation Hub
   ###############################################################################################
   publish-automation-hub:
     name: Publish to Automation Hub
@@ -303,7 +303,7 @@ jobs:
 
 
   ###############################################################################################
-  # Publish to Ansible Galaxy (requires manual approval)
+  # Publish to Ansible Galaxy (after Automation Hub)
   ###############################################################################################
   publish-galaxy:
     name: Publish to Ansible Galaxy
