@@ -15,7 +15,7 @@ releases:
     release_date: '2024-02-02'
   25.2.0:
     release_date: '2026-02-13'
-  25.2.1:
+  25.3.0:
     changes:
       bugfixes:
       - api - Remove ``soapenv:mustUnderstand`` attribute from SOAP security header
@@ -25,6 +25,14 @@ releases:
       - server - Disable ``monitoring`` field in server update to prevent unintended
         changes.
       minor_changes:
+      - collection - Update ``requires_ansible`` to ``>=2.16.0`` for Red Hat Automation
+        Hub certification compliance.
+      - collection - Add Support and Release Notes sections to README per Red Hat
+        certified collection requirements.
+      - collection - Add automated publishing to Red Hat Automation Hub in release
+        workflow.
+      - collection - Remove Python 3.10 and 3.11 from test matrix, require Python
+        >=3.12.
       - sapsystem - Support ``withSapControl`` and ``withoutSapControl`` remote monitoring
         modes.
       - sapsystem - Use new ``remoteOptions`` API structure for remote monitoring
@@ -33,13 +41,15 @@ releases:
       - server - Add log message on successful server creation.
       - server - Improve error messages for missing ``system_role`` and ``fqdn_or_ip_address``
         arguments during server creation.
-      release_summary: Release for Avantra 25.2.0 with SOAP API compatibility fixes,
-        improved remote monitoring configuration for SAP systems, and better error
-        handling for server module operations.
+      release_summary: Release for Red Hat Automation Hub certification. Updates minimum
+        Ansible requirement to 2.16.0, adds Support section to README, and includes
+        automated Automation Hub publishing. Also includes SOAP API compatibility fixes,
+        improved remote monitoring for SAP systems, and better server module error
+        handling.
     fragments:
     - 25.2.0-api-soap-header.yml
     - 25.2.0-disable-monitoring-update.yml
     - 25.2.0-sapsystem-remote-options.yml
     - 25.2.0-server-error-messages.yml
-    - 25.2.1-release-summary.yml
-    release_date: '2026-02-13'
+    - 25.3.0-release-summary.yml
+    release_date: '2026-03-03'
