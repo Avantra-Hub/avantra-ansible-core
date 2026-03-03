@@ -21,19 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         ansible-version: ['2.16', '2.17', '2.18', '2.19']
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.12', '3.13']
         exclude:
           # Old Ansible (2.16, 2.17) does not support Python 3.13
           - ansible-version: '2.16'
             python-version: '3.13'
           - ansible-version: '2.17'
             python-version: '3.13'
-
-          # New Ansible (2.18, 2.19) does not support Python 3.10
-          - ansible-version: '2.18'
-            python-version: '3.10'
-          - ansible-version: '2.19'
-            python-version: '3.10'
 
     steps:
       - name: Checkout

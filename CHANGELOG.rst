@@ -4,17 +4,21 @@ Avantra Core Ansible Collection Release Notes
 
 .. contents:: Topics
 
-v25.2.0
+v25.3.0
 =======
 
 Release Summary
 ---------------
 
-Release for Avantra 25.2.0 with SOAP API compatibility fixes, improved remote monitoring configuration for SAP systems, and better error handling for server module operations.
+Release for Red Hat Automation Hub certification. Updates minimum Ansible requirement to 2.16.0, adds Support section to README, and includes automated Automation Hub publishing. Also includes SOAP API compatibility fixes, improved remote monitoring for SAP systems, and better server module error handling.
 
 Minor Changes
 -------------
 
+- collection - Update ``requires_ansible`` to ``>=2.16.0`` for Red Hat Automation Hub certification compliance.
+- collection - Add Support and Release Notes sections to README per Red Hat certified collection requirements.
+- collection - Add automated publishing to Red Hat Automation Hub in release workflow.
+- collection - Remove Python 3.10 and 3.11 from test matrix, require Python >=3.12.
 - sapsystem - Support ``withSapControl`` and ``withoutSapControl`` remote monitoring modes.
 - sapsystem - Use new ``remoteOptions`` API structure for remote monitoring configuration, replacing the flat ``remoteMonitoringEntryPoint`` and ``remoteMonitoringServerSystemId`` fields.
 - server - Add log message on successful server creation.
