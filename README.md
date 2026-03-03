@@ -16,10 +16,10 @@ The collection is tested for the following versions of Python and Ansible:
 
 ### Matrix  ###
 
-|             | Ansible 2.16 | Ansible 2.17 | Ansible 2.18 | Ansible 2.19 | Ansible 2.20 |
-|-------------|--------------|--------------|--------------|--------------|--------------|
-| Python 3.13 | unsupported  | unsupported  | tested       | tested       | tested       |
-| Python 3.12 | tested       | tested       | tested       | tested       | tested       |
+|             | Ansible 2.16 | Ansible 2.17 | Ansible 2.18 | Ansible 2.19 | Ansible 2.20 | Ansible 2.21 (devel) |
+|-------------|--------------|--------------|--------------|--------------|--------------|:---------------------|
+| Python 3.13 | unsupported  | unsupported  | tested       | tested       | tested       | tested               |
+| Python 3.12 | tested       | tested       | tested       | tested       | tested       | tested               |
 
 ## Content ##
 
