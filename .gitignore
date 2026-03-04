@@ -53,3 +53,4 @@ tests/output
 tests/secrets.yml
 
 .mcp.json
+.secrets

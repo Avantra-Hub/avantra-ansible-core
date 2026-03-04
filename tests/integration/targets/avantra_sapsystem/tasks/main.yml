@@ -1,0 +1,193 @@
+---
+# Integration tests for avantra.core.sapsystem and avantra.core.sapsystem_info
+
+- name: Set connection variables
+  ansible.builtin.set_fact:
+    avantra_api_url: "{{ lookup('env', 'AVANTRA_API_URL') }}"
+    avantra_api_user: "{{ lookup('env', 'AVANTRA_API_USER') }}"
+    avantra_api_password: "{{ lookup('env', 'AVANTRA_API_PASSWORD') }}"
+    customer_name: "{{ lookup('env', 'AVANTRA_CUSTOMER_NAME') }}"
+
+- name: Verify environment variables are set
+  ansible.builtin.assert:
+    that:
+      - avantra_api_url | length > 0
+      - avantra_api_user | length > 0
+      - avantra_api_password | length > 0
+      - customer_name | length > 0
+    fail_msg: "AVANTRA_API_URL, AVANTRA_API_USER, AVANTRA_API_PASSWORD, and AVANTRA_CUSTOMER_NAME must be set"
+
+# --------------------------------------------------------------------------
+# Login
+# --------------------------------------------------------------------------
+- name: Login to get token
+  avantra.core.login:
+    avantra_api_url: "{{ avantra_api_url }}"
+    avantra_api_user: "{{ avantra_api_user }}"
+    avantra_api_password: "{{ avantra_api_password }}"
+  register: login_result
+
+- name: Set token fact
+  ansible.builtin.set_fact:
+    avantra_token: "{{ login_result.token }}"
+
+# --------------------------------------------------------------------------
+# Test block with cleanup
+# --------------------------------------------------------------------------
+- name: SAP System CRUD tests
+  block:
+
+    # ------------------------------------------------------------------
+    # Create
+    # ------------------------------------------------------------------
+    - name: Create test SAP system
+      avantra.core.sapsystem:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        real_sap_sid: "{{ test_real_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        description: "{{ test_sapsystem_description }}"
+        exists_state: present
+      register: create_result
+
+    - name: Assert SAP system was created
+      ansible.builtin.assert:
+        that:
+          - create_result is changed
+          - create_result.sap_system is defined
+          - create_result.sap_system.unified_sap_sid == test_unified_sap_sid
+
+    # ------------------------------------------------------------------
+    # Read
+    # ------------------------------------------------------------------
+    - name: Fetch SAP system info
+      avantra.core.sapsystem_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+      register: info_result
+
+    - name: Assert SAP system info matches
+      ansible.builtin.assert:
+        that:
+          - info_result.sap_system is defined
+          - info_result.sap_system.unified_sap_sid == test_unified_sap_sid
+          - info_result.sap_system.real_sap_sid == test_real_sap_sid
+
+    # ------------------------------------------------------------------
+    # Idempotency
+    # ------------------------------------------------------------------
+    - name: Create same SAP system again (idempotency)
+      avantra.core.sapsystem:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        real_sap_sid: "{{ test_real_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        description: "{{ test_sapsystem_description }}"
+        exists_state: present
+      register: idempotent_result
+
+    - name: Assert no change on second create
+      ansible.builtin.assert:
+        that:
+          - idempotent_result is not changed
+
+    # ------------------------------------------------------------------
+    # Update
+    # ------------------------------------------------------------------
+    - name: Update SAP system description
+      avantra.core.sapsystem:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        real_sap_sid: "{{ test_real_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        description: "{{ test_sapsystem_description_updated }}"
+        exists_state: present
+      register: update_result
+
+    - name: Assert SAP system was updated
+      ansible.builtin.assert:
+        that:
+          - update_result is changed
+
+    - name: Verify updated description
+      avantra.core.sapsystem_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+      register: updated_info
+
+    - name: Assert description changed
+      ansible.builtin.assert:
+        that:
+          - updated_info.sap_system.description == test_sapsystem_description_updated
+
+    # ------------------------------------------------------------------
+    # Monitoring off/on
+    # ------------------------------------------------------------------
+    - name: Turn monitoring off
+      avantra.core.sapsystem:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        monitoring: false
+        exists_state: present
+      register: moni_off_result
+
+    - name: Verify monitoring is off
+      avantra.core.sapsystem_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+      register: moni_off_info
+
+    - name: Assert monitoring is off
+      ansible.builtin.assert:
+        that:
+          - moni_off_info.sap_system.monitor_off == true
+
+    - name: Turn monitoring back on
+      avantra.core.sapsystem:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        monitoring: true
+        exists_state: present
+      register: moni_on_result
+
+  # --------------------------------------------------------------------------
+  # Cleanup — always runs
+  # --------------------------------------------------------------------------
+  always:
+    - name: Delete test SAP system
+      avantra.core.sapsystem:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        exists_state: absent
+      register: delete_result
+      ignore_errors: true
+
+    - name: Verify SAP system is deleted
+      avantra.core.sapsystem_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        unified_sap_sid: "{{ test_unified_sap_sid }}"
+        customer_name: "{{ customer_name }}"
+        fail_if_not_found: false
+      register: deleted_info
+
+    - name: Assert SAP system no longer exists
+      ansible.builtin.assert:
+        that:
+          - deleted_info.sap_system is not defined or deleted_info.sap_system == None
+      ignore_errors: true
