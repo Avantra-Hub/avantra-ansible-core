@@ -39,6 +39,13 @@ options:
         - We highly recommend to use Ansible Vaults to protect you sensitive content.
         required: true
         type: str
+    validate_certs:
+        description:
+        - If C(false), SSL certificate verification is disabled.
+        - Use this when connecting to Avantra instances with self-signed certificates.
+        required: false
+        type: bool
+        default: true
 """
     TOKEN = r"""
 options:
@@ -66,4 +73,11 @@ options:
             defined I(avantra_api_user) and I(avantra_api_password) are not necessary.
         required: false
         type: str
+    validate_certs:
+        description:
+        - If C(false), SSL certificate verification is disabled.
+        - Use this when connecting to Avantra instances with self-signed certificates.
+        required: false
+        type: bool
+        default: true
 """
