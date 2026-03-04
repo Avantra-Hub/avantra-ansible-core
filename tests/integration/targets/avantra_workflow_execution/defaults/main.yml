@@ -1,0 +1,3 @@
+---
+test_workflow_name: "{{ lookup('env', 'AVANTRA_WORKFLOW_NAME') }}"
+test_workflow_namespace: "{{ lookup('env', 'AVANTRA_WORKFLOW_NAMESPACE') | default('', true) }}"
