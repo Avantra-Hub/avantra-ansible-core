@@ -310,9 +310,19 @@ jobs:
           path: build/
 
       - name: Publish Collection
+        env:
+          AH_TOKEN: ${{ secrets.AH_TOKEN }}
         run: |
+          # Exchange offline token for access token
+          ACCESS_TOKEN=$(curl -s \
+            https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token \
+            -d grant_type=refresh_token \
+            -d client_id=cloud-services \
+            -d "refresh_token=${AH_TOKEN}" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
           ansible-galaxy collection publish build/*.tar.gz \
-            --api-key "${{ secrets.AH_TOKEN }}" \
+            --api-key "${ACCESS_TOKEN}" \
             --server "https://console.redhat.com/api/automation-hub/"
 
 
