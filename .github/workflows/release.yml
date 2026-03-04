@@ -269,15 +269,29 @@ jobs:
 
 
   ###############################################################################################
+  # Approve Publish (single manual approval gate for both publish jobs)
+  ###############################################################################################
+  approve-publish:
+    name: Approve publish
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - docs
+      - validate-tag
+    if: startsWith(github.ref, 'refs/tags/')
+    environment: publish-approval
+    steps:
+      - name: Approval confirmed
+        run: echo "Publishing approved"
+
+
+  ###############################################################################################
   # Publish to Red Hat Automation Hub
   ###############################################################################################
   publish-automation-hub:
     name: Publish to Automation Hub
     runs-on: ubuntu-latest
-    needs:
-      - build
-      - validate-tag
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: approve-publish
     environment: automation-hub-publish
 
     steps:
@@ -303,16 +317,12 @@ jobs:
 
 
   ###############################################################################################
-  # Publish to Ansible Galaxy (after Automation Hub)
+  # Publish to Ansible Galaxy (parallel with Automation Hub)
   ###############################################################################################
   publish-galaxy:
     name: Publish to Ansible Galaxy
     runs-on: ubuntu-latest
-    needs:
-      - build
-      - validate-tag
-      - publish-automation-hub
-    if: startsWith(github.ref, 'refs/tags/')
+    needs: approve-publish
     environment: galaxy-publish
 
     steps:
@@ -394,7 +404,7 @@ jobs:
     name: Deploy documentation to GitHub Pages
     runs-on: ubuntu-latest
     needs:
-      - docs
+      - publish-automation-hub
       - publish-galaxy
     permissions:
       contents: write
