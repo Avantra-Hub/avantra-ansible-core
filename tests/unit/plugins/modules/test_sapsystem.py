@@ -79,14 +79,14 @@ class TestEnsureSapsystemMonitoring:
         module = self._make_module(monitoring=True)
         sap_system = {"id": "1", "monitor_off": False}
         result = {"changed": False}
-        ret = ensure_sapsystem_monitoring(module, sap_system, result)
+        ensure_sapsystem_monitoring(module, sap_system, result)
         assert result["changed"] is False
 
     def test_monitoring_off_already_off_no_change(self):
         module = self._make_module(monitoring=False)
         sap_system = {"id": "1", "monitor_off": True}
         result = {"changed": False}
-        ret = ensure_sapsystem_monitoring(module, sap_system, result)
+        ensure_sapsystem_monitoring(module, sap_system, result)
         assert result["changed"] is False
 
     # -- API call fails → changed stays False ----------------------------
