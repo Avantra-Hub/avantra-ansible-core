@@ -238,7 +238,7 @@ def turn_monitoring_off(module, server_id,
     if server is None:
         return False, "Could not turn off monitoring for the server with ID {0}".format(server_id), None
     else:
-        return True, "Turned off monitoring for the server with ID {0}".format(server_id), server
+        return True, "Turned off monitoring for the server with ID {0}".format(server_id), cameldict_to_snake_case(server)
 
 
 def turn_monitoring_on(module, server_id,
@@ -258,7 +258,7 @@ def turn_monitoring_on(module, server_id,
     if server is None:
         return False, "Could not turn on monitoring for the server with ID {0}".format(server_id), None
     else:
-        return True, "Turned on monitoring for the server with ID {0}".format(server_id), server
+        return True, "Turned on monitoring for the server with ID {0}".format(server_id), cameldict_to_snake_case(server)
 
 
 FRAGMENT = """
@@ -523,7 +523,7 @@ UPDATE_MUTATION = Template("""
 
 
 MONI_OFF_MUTATION = Template("""
-    mutation TurnMonitoringOffForServer($$id: ID!, $$cascade: Boolean, $$note: String, $$until) {
+    mutation TurnMonitoringOffForServer($$id: ID!, $$cascade: Boolean, $$note: String, $$until: DateTime) {
         turnMonitoringOffForServer(
             id: $$id
             cascade: $$cascade

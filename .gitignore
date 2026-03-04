@@ -54,3 +54,4 @@ tests/secrets.yml
 
 .mcp.json
 .secrets
+tests/integration/integration_config.yml

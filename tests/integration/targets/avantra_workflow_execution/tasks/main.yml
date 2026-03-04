@@ -2,19 +2,17 @@
 # Integration tests for avantra.core.workflow_execution
 # Note: This module uses SOAP (WS-Security auth), not GraphQL/JWT.
 
-- name: Set connection variables
+- name: Set derived variables
   ansible.builtin.set_fact:
-    avantra_api_url: "{{ lookup('env', 'AVANTRA_API_URL') }}"
-    avantra_api_user: "{{ lookup('env', 'AVANTRA_API_USER') }}"
-    avantra_api_password: "{{ lookup('env', 'AVANTRA_API_PASSWORD') }}"
+    _validate_certs: "{{ avantra_validate_certs | default(true) }}"
 
-- name: Verify environment variables are set
+- name: Verify connection variables are set
   ansible.builtin.assert:
     that:
-      - avantra_api_url | length > 0
-      - avantra_api_user | length > 0
-      - avantra_api_password | length > 0
-    fail_msg: "AVANTRA_API_URL, AVANTRA_API_USER, and AVANTRA_API_PASSWORD must be set"
+      - avantra_api_url is defined and avantra_api_url | length > 0
+      - avantra_api_user is defined and avantra_api_user | length > 0
+      - avantra_api_password is defined and avantra_api_password | length > 0
+    fail_msg: "avantra_api_url, avantra_api_user, and avantra_api_password must be set in integration_config.yml"
 
 # --------------------------------------------------------------------------
 # Check if workflow name is configured
@@ -47,6 +45,7 @@
         avantra_api_password: "{{ avantra_api_password }}"
         name: "{{ test_workflow_name }}"
         namespace: "{{ test_workflow_namespace }}"
+        validate_certs: "{{ _validate_certs }}"
       register: workflow_result
 
     - name: Assert workflow execution returned an ID
@@ -71,6 +70,7 @@
         avantra_api_password: "{{ avantra_api_password }}"
         name: "integration-test-nonexistent-{{ lookup('pipe', 'date +%s') }}"
         namespace: "nonexistent"
+        validate_certs: "{{ _validate_certs }}"
       register: bad_workflow_result
       ignore_errors: true
 
