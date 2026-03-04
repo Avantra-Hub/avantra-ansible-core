@@ -6,8 +6,6 @@ __metaclass__ = type
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from ansible_collections.avantra.core.plugins.modules.server import (
     ensure_server_monitoring,
     _get_server_run_state,

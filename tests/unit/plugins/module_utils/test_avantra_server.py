@@ -6,8 +6,6 @@ __metaclass__ = type
 
 from unittest.mock import MagicMock
 
-import pytest
-
 from ansible_collections.avantra.core.plugins.module_utils.avantra.server import (
     fetch_server,
     delete_server,
