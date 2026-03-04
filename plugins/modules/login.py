@@ -77,6 +77,7 @@ def run_module():
         avantra_api_url=dict(type='str', required=True),
         avantra_api_user=dict(type='str', required=True),
         avantra_api_password=dict(type='str', required=True, no_log=True),
+        validate_certs=dict(type='bool', required=False, default=True),
     )
 
     result = dict(

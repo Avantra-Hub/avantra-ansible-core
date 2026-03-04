@@ -288,7 +288,7 @@ def turn_monitoring_off(module,
     if sap_system is None:
         return False, "Could not turn off monitoring for the SAP system with ID {0}".format(sap_system_id), None
     else:
-        return True, "Turned off monitoring for the SAP system with ID {0}".format(sap_system_id), sap_system
+        return True, "Turned off monitoring for the SAP system with ID {0}".format(sap_system_id), cameldict_to_snake_case(sap_system)
 
 
 def turn_monitoring_on(module,
@@ -309,7 +309,7 @@ def turn_monitoring_on(module,
     if sap_system is None:
         return False, "Could not turn on monitoring for the server with ID {0}".format(sap_system_id), None
     else:
-        return True, "Turned on monitoring for the server with ID {0}".format(sap_system_id), sap_system
+        return True, "Turned on monitoring for the server with ID {0}".format(sap_system_id), cameldict_to_snake_case(sap_system)
 
 
 FRAGMENT = """

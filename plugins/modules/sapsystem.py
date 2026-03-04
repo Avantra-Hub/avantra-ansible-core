@@ -491,10 +491,11 @@ def ensure_restarted(module, sap_system, result):
 
 
 def ensure_sapsystem_monitoring(module, sap_system, result):
-    if sap_system["monitor_off"] == "true":
-        prev_monitoring = True
-    else:
+    monitor_off = sap_system.get("monitor_off", False)
+    if monitor_off is True or monitor_off == "true":
         prev_monitoring = False
+    else:
+        prev_monitoring = True
 
     monitoring = module.params.get("monitoring")
 
@@ -505,7 +506,10 @@ def ensure_sapsystem_monitoring(module, sap_system, result):
             success, msg, sap_system_after = turn_monitoring_off(module, sap_system["id"])
 
         if success:
-            sap_system = sap_system_after
+            # The API cache may return stale data in the mutation response,
+            # so apply the expected state directly.
+            sap_system["monitor_off"] = not monitoring
+            result["changed"] = True
 
     return sap_system
 

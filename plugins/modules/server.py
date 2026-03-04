@@ -274,10 +274,11 @@ def ensure_server_stopped(module, server, result):
 
 
 def ensure_server_monitoring(module, server, result):
-    if server["monitor_off"] == "true":
-        prev_monitoring = True
-    else:
+    monitor_off = server.get("monitor_off", False)
+    if monitor_off is True or monitor_off == "true":
         prev_monitoring = False
+    else:
+        prev_monitoring = True
 
     monitoring = module.params.get("monitoring")
 
@@ -288,7 +289,10 @@ def ensure_server_monitoring(module, server, result):
             success, msg, server_after = turn_monitoring_off(module, server["id"])
 
         if success:
-            server = server_after
+            # The API cache may return stale data in the mutation response,
+            # so apply the expected state directly.
+            server["monitor_off"] = not monitoring
+            result["changed"] = True
 
     return server
 

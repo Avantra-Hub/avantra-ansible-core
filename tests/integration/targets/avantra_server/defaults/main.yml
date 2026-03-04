@@ -1,5 +1,5 @@
 ---
-test_server_name: "integration-test-server-{{ lookup('pipe', 'date +%s') }}"
 test_server_ip: "192.168.99.99"
 test_server_description: "Integration test server"
 test_server_description_updated: "Integration test server (updated)"
+test_system_role: "Development"

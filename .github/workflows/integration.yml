@@ -47,7 +47,7 @@ jobs:
           rm -rf scripts
           echo "COLLECTION_PATH=$COLLECTION_PATH" >> $GITHUB_ENV
 
-      - name: Run Integration Tests
+      - name: Write integration config
         working-directory: ${{ env.COLLECTION_PATH }}
         env:
           AVANTRA_API_URL: ${{ secrets.AVANTRA_API_URL }}
@@ -57,4 +57,17 @@ jobs:
           AVANTRA_WORKFLOW_NAME: ${{ secrets.AVANTRA_WORKFLOW_NAME }}
           AVANTRA_WORKFLOW_NAMESPACE: ${{ secrets.AVANTRA_WORKFLOW_NAMESPACE }}
         run: |
-          ansible-test integration --python 3.12 --requirements --verbose
+          cat > tests/integration/integration_config.yml <<EOF
+          avantra_api_url: "${AVANTRA_API_URL}"
+          avantra_api_user: "${AVANTRA_API_USER}"
+          avantra_api_password: "${AVANTRA_API_PASSWORD}"
+          avantra_customer_name: "${AVANTRA_CUSTOMER_NAME}"
+          avantra_workflow_name: "${AVANTRA_WORKFLOW_NAME}"
+          avantra_workflow_namespace: "${AVANTRA_WORKFLOW_NAMESPACE}"
+          avantra_validate_certs: false
+          EOF
+
+      - name: Run Integration Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test integration --allow-disabled avantra_login avantra_server avantra_sapsystem avantra_workflow_execution --python 3.12 --requirements --verbose

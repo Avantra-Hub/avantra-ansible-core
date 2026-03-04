@@ -1,5 +1,5 @@
 ---
-test_unified_sap_sid: "INT{{ lookup('pipe', 'date +%s') | regex_search('[0-9]{6}$') }}"
 test_real_sap_sid: "INT"
 test_sapsystem_description: "Integration test SAP system"
 test_sapsystem_description_updated: "Integration test SAP system (updated)"
+test_system_role: "Development"

@@ -276,13 +276,15 @@ def create_argument_spec(allow_token=True):
             avantra_api_url=dict(type='str', required=True),
             avantra_api_user=dict(type='str', required=False),
             avantra_api_password=dict(type='str', required=False, no_log=True),
-            token=dict(type='str', required=False, no_log=True)
+            token=dict(type='str', required=False, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True)
         )
     else:
         return dict(
             avantra_api_url=dict(type='str', required=True),
             avantra_api_user=dict(type='str', required=True),
             avantra_api_password=dict(type='str', required=True, no_log=True),
+            validate_certs=dict(type='bool', required=False, default=True)
         )
 
 
