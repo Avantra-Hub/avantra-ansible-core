@@ -62,7 +62,7 @@ The `release.yml` workflow includes a `publish-automation-hub` job that:
 
 | Purpose | URL |
 |---------|-----|
-| Automation Hub API (publish) | `https://console.redhat.com/api/automation-hub/` |
+| Automation Hub API (publish) | `https://cloud.redhat.com/api/automation-hub/` |
 | Certified content (sync) | `https://console.redhat.com/api/automation-hub/content/published/` |
 | Validated content (sync) | `https://console.redhat.com/api/automation-hub/content/validated/` |
 | SSO Token Auth | `https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token` |
