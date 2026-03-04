@@ -108,7 +108,7 @@ class TestEnsureServerMonitoring:
         module = self._make_module(monitoring=True)
         server = {"id": "1", "monitor_off": False}
         result = {"changed": False}
-        ret = ensure_server_monitoring(module, server, result)
+        ensure_server_monitoring(module, server, result)
         assert result["changed"] is False
 
     # -- monitoring=False, already OFF → no-op ---------------------------
@@ -117,7 +117,7 @@ class TestEnsureServerMonitoring:
         module = self._make_module(monitoring=False)
         server = {"id": "1", "monitor_off": True}
         result = {"changed": False}
-        ret = ensure_server_monitoring(module, server, result)
+        ensure_server_monitoring(module, server, result)
         assert result["changed"] is False
 
     # -- API call fails → changed stays False ----------------------------
