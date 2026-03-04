@@ -6,8 +6,6 @@ __metaclass__ = type
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from ansible_collections.avantra.core.plugins.modules.sapsystem import (
     ensure_sapsystem_monitoring,
 )
