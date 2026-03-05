@@ -62,28 +62,28 @@
         credentials:
           avantra.defaultRfcUser:
             cred_type: rfc
-            username: default_adm
-            password: REDACTED
+            username: "{{ test_default_rfc_user }}"
+            password: "{{ test_default_rfc_password }}"
           avantra.sapControl:
             cred_type: sap_control
-            username: smaadm
-            password: REDACTED
+            username: "{{ test_sap_control_user }}"
+            password: "{{ test_sap_control_password }}"
           avantra.sap:
             cred_type: rfc
-            username: REDACTED
-            password: REDACTED
+            username: "{{ test_sap_user }}"
+            password: "{{ test_sap_password }}"
           avantra.j2eeUser:
             cred_type: basic
-            username: hello
-            password: basic
+            username: "{{ test_j2ee_user }}"
+            password: "{{ test_j2ee_password }}"
           avantra.abapDbSchema:
             cred_type: basic
-            username: hello2
-            password: REDACTED
+            username: "{{ test_abap_db_user }}"
+            password: "{{ test_abap_db_password }}"
           avantra.javaDbSchema:
             cred_type: basic
-            username: hello3
-            password: REDACTED
+            username: "{{ test_java_db_user }}"
+            password: "{{ test_java_db_password }}"
       register: result
 
     - name: Show result
