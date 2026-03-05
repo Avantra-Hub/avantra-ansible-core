@@ -1,0 +1,65 @@
+---
+# Integration tests for avantra.core.login
+
+- name: Verify connection variables are set
+  ansible.builtin.assert:
+    that:
+      - avantra_api_url is defined and avantra_api_url | length > 0
+      - avantra_api_user is defined and avantra_api_user | length > 0
+      - avantra_api_password is defined and avantra_api_password | length > 0
+    fail_msg: "avantra_api_url, avantra_api_user, and avantra_api_password must be set in integration_config.yml"
+
+# --------------------------------------------------------------------------
+# Test 1: Successful login
+# --------------------------------------------------------------------------
+- name: Login with valid credentials
+  avantra.core.login:
+    avantra_api_url: "{{ avantra_api_url }}"
+    avantra_api_user: "{{ avantra_api_user }}"
+    avantra_api_password: "{{ avantra_api_password }}"
+    validate_certs: "{{ avantra_validate_certs | default(true) }}"
+  register: login_result
+
+- name: Assert login succeeded
+  ansible.builtin.assert:
+    that:
+      - login_result is not failed
+      - login_result.token is defined
+      - login_result.token | length > 0
+    fail_msg: "Login should return a non-empty token"
+
+# --------------------------------------------------------------------------
+# Test 2: Login with invalid credentials
+# --------------------------------------------------------------------------
+- name: Login with bad password (expect failure)
+  avantra.core.login:
+    avantra_api_url: "{{ avantra_api_url }}"
+    avantra_api_user: "{{ avantra_api_user }}"
+    avantra_api_password: "invalid-password-{{ lookup('pipe', 'date +%s') }}"
+    validate_certs: "{{ avantra_validate_certs | default(true) }}"
+  register: bad_login_result
+  ignore_errors: true
+
+- name: Assert bad login failed
+  ansible.builtin.assert:
+    that:
+      - bad_login_result is failed
+    fail_msg: "Login with invalid credentials should fail"
+
+# --------------------------------------------------------------------------
+# Test 3: Login with invalid URL
+# --------------------------------------------------------------------------
+- name: Login with bad URL (expect failure)
+  avantra.core.login:
+    avantra_api_url: "https://nonexistent.invalid:9999/xn"
+    avantra_api_user: "{{ avantra_api_user }}"
+    avantra_api_password: "{{ avantra_api_password }}"
+    validate_certs: "{{ avantra_validate_certs | default(true) }}"
+  register: bad_url_result
+  ignore_errors: true
+
+- name: Assert bad URL login failed
+  ansible.builtin.assert:
+    that:
+      - bad_url_result is failed
+    fail_msg: "Login with invalid URL should fail"

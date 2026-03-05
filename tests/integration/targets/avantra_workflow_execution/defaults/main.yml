@@ -1,0 +1,3 @@
+---
+test_workflow_name: "{{ avantra_workflow_name | default('', true) }}"
+test_workflow_namespace: "{{ avantra_workflow_namespace | default('', true) }}"

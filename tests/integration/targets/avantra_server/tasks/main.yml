@@ -1,0 +1,199 @@
+---
+# Integration tests for avantra.core.server and avantra.core.server_info
+
+- name: Set derived variables
+  ansible.builtin.set_fact:
+    customer_name: "{{ avantra_customer_name }}"
+    _validate_certs: "{{ avantra_validate_certs | default(true) }}"
+    test_server_name: "int-srv-{{ lookup('pipe', 'date +%s') }}"
+
+- name: Verify connection variables are set
+  ansible.builtin.assert:
+    that:
+      - avantra_api_url is defined and avantra_api_url | length > 0
+      - avantra_api_user is defined and avantra_api_user | length > 0
+      - avantra_api_password is defined and avantra_api_password | length > 0
+      - customer_name | length > 0
+    fail_msg: "avantra_api_url, avantra_api_user, avantra_api_password, and avantra_customer_name must be set in integration_config.yml"
+
+# --------------------------------------------------------------------------
+# Login
+# --------------------------------------------------------------------------
+- name: Login to get token
+  avantra.core.login:
+    avantra_api_url: "{{ avantra_api_url }}"
+    avantra_api_user: "{{ avantra_api_user }}"
+    avantra_api_password: "{{ avantra_api_password }}"
+    validate_certs: "{{ _validate_certs }}"
+  register: login_result
+
+- name: Set token fact
+  ansible.builtin.set_fact:
+    avantra_token: "{{ login_result.token }}"
+
+# --------------------------------------------------------------------------
+# Test block with cleanup
+# --------------------------------------------------------------------------
+- name: Server CRUD tests
+  block:
+
+    # ------------------------------------------------------------------
+    # Create
+    # ------------------------------------------------------------------
+    - name: Create test server
+      avantra.core.server:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        fqdn_or_ip_address: "{{ test_server_ip }}"
+        description: "{{ test_server_description }}"
+        system_role: "{{ test_system_role }}"
+        exists_state: present
+        validate_certs: "{{ _validate_certs }}"
+      register: create_result
+
+    - name: Assert server was created
+      ansible.builtin.assert:
+        that:
+          - create_result is changed
+          - create_result.server is defined
+          - create_result.server.name == test_server_name
+
+    # ------------------------------------------------------------------
+    # Read
+    # ------------------------------------------------------------------
+    - name: Fetch server info
+      avantra.core.server_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        validate_certs: "{{ _validate_certs }}"
+      register: info_result
+
+    - name: Assert server info matches
+      ansible.builtin.assert:
+        that:
+          - info_result.server is defined
+          - info_result.server.name == test_server_name
+          - info_result.server.ip_address == test_server_ip
+
+    # ------------------------------------------------------------------
+    # Idempotency
+    # ------------------------------------------------------------------
+    - name: Create same server again (idempotency)
+      avantra.core.server:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        fqdn_or_ip_address: "{{ test_server_ip }}"
+        description: "{{ test_server_description }}"
+        system_role: "{{ test_system_role }}"
+        exists_state: present
+        validate_certs: "{{ _validate_certs }}"
+      register: idempotent_result
+
+    - name: Assert same server returned (no duplicate created)
+      ansible.builtin.assert:
+        that:
+          - idempotent_result.server.id == create_result.server.id
+        fail_msg: "Duplicate created: expected id={{ create_result.server.id }}, got id={{ idempotent_result.server.id }}"
+
+    # ------------------------------------------------------------------
+    # Update
+    # ------------------------------------------------------------------
+    - name: Update server description
+      avantra.core.server:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        fqdn_or_ip_address: "{{ test_server_ip }}"
+        description: "{{ test_server_description_updated }}"
+        system_role: "{{ test_system_role }}"
+        exists_state: present
+        validate_certs: "{{ _validate_certs }}"
+      register: update_result
+
+    - name: Assert server was updated
+      ansible.builtin.assert:
+        that:
+          - update_result is changed
+
+    - name: Verify updated description
+      avantra.core.server_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        validate_certs: "{{ _validate_certs }}"
+      register: updated_info
+
+    - name: Assert description changed
+      ansible.builtin.assert:
+        that:
+          - updated_info.server.description == test_server_description_updated
+
+    # ------------------------------------------------------------------
+    # Monitoring off/on
+    # ------------------------------------------------------------------
+    - name: Turn monitoring off
+      avantra.core.server:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        monitoring: false
+        exists_state: present
+        validate_certs: "{{ _validate_certs }}"
+      register: moni_off_result
+
+    - name: Assert monitoring off reflected in module result
+      ansible.builtin.assert:
+        that:
+          - moni_off_result is changed
+          - moni_off_result.server.monitor_off == true
+
+    - name: Turn monitoring back on
+      avantra.core.server:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        monitoring: true
+        exists_state: present
+        validate_certs: "{{ _validate_certs }}"
+      register: moni_on_result
+
+  # --------------------------------------------------------------------------
+  # Cleanup — always runs
+  # --------------------------------------------------------------------------
+  always:
+    - name: Delete test server
+      avantra.core.server:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        exists_state: absent
+        validate_certs: "{{ _validate_certs }}"
+      register: delete_result
+      ignore_errors: true
+
+    - name: Verify server is deleted
+      avantra.core.server_info:
+        avantra_api_url: "{{ avantra_api_url }}"
+        token: "{{ avantra_token }}"
+        server_name: "{{ test_server_name }}"
+        customer_name: "{{ customer_name }}"
+        fail_if_not_found: false
+        validate_certs: "{{ _validate_certs }}"
+      register: deleted_info
+
+    - name: Assert server no longer exists
+      ansible.builtin.assert:
+        that:
+          - deleted_info.server is not defined or deleted_info.server == None
+      ignore_errors: true

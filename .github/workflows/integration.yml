@@ -1,0 +1,73 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you running this?"
+        required: false
+        default: "Manual integration test run"
+
+permissions:
+  contents: read
+
+env:
+  ANSIBLE_TARGET_VERSION: "2.18"
+
+jobs:
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Ansible Core
+        run: |
+          python -m pip install "ansible-core==${{ env.ANSIBLE_TARGET_VERSION }}.*"
+
+      - name: Setup Collection Structure
+        run: |
+          COLLECTION_PATH="${{ runner.temp }}/integration/ansible_collections/avantra/core"
+
+          echo "Setting up collection at: $COLLECTION_PATH"
+          mkdir -p "$COLLECTION_PATH"
+
+          cp -r . "$COLLECTION_PATH"
+
+          cd "$COLLECTION_PATH"
+          rm -rf scripts
+          echo "COLLECTION_PATH=$COLLECTION_PATH" >> $GITHUB_ENV
+
+      - name: Write integration config
+        working-directory: ${{ env.COLLECTION_PATH }}
+        env:
+          AVANTRA_API_URL: ${{ secrets.AVANTRA_API_URL }}
+          AVANTRA_API_USER: ${{ secrets.AVANTRA_API_USER }}
+          AVANTRA_API_PASSWORD: ${{ secrets.AVANTRA_API_PASSWORD }}
+          AVANTRA_CUSTOMER_NAME: ${{ secrets.AVANTRA_CUSTOMER_NAME }}
+          AVANTRA_WORKFLOW_NAME: ${{ secrets.AVANTRA_WORKFLOW_NAME }}
+          AVANTRA_WORKFLOW_NAMESPACE: ${{ secrets.AVANTRA_WORKFLOW_NAMESPACE }}
+        run: |
+          cat > tests/integration/integration_config.yml <<EOF
+          avantra_api_url: "${AVANTRA_API_URL}"
+          avantra_api_user: "${AVANTRA_API_USER}"
+          avantra_api_password: "${AVANTRA_API_PASSWORD}"
+          avantra_customer_name: "${AVANTRA_CUSTOMER_NAME}"
+          avantra_workflow_name: "${AVANTRA_WORKFLOW_NAME}"
+          avantra_workflow_namespace: "${AVANTRA_WORKFLOW_NAMESPACE}"
+          avantra_validate_certs: false
+          EOF
+
+      - name: Run Integration Tests
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          ansible-test integration --allow-disabled avantra_login avantra_server avantra_sapsystem avantra_workflow_execution --python 3.12 --requirements --verbose

@@ -1,0 +1,81 @@
+---
+# Integration tests for avantra.core.workflow_execution
+# Note: This module uses SOAP (WS-Security auth), not GraphQL/JWT.
+
+- name: Set derived variables
+  ansible.builtin.set_fact:
+    _validate_certs: "{{ avantra_validate_certs | default(true) }}"
+
+- name: Verify connection variables are set
+  ansible.builtin.assert:
+    that:
+      - avantra_api_url is defined and avantra_api_url | length > 0
+      - avantra_api_user is defined and avantra_api_user | length > 0
+      - avantra_api_password is defined and avantra_api_password | length > 0
+    fail_msg: "avantra_api_url, avantra_api_user, and avantra_api_password must be set in integration_config.yml"
+
+# --------------------------------------------------------------------------
+# Check if workflow name is configured
+# --------------------------------------------------------------------------
+- name: Check if workflow is configured
+  ansible.builtin.set_fact:
+    workflow_configured: "{{ test_workflow_name | length > 0 }}"
+
+- name: Skip notice if no workflow configured
+  ansible.builtin.debug:
+    msg: >-
+      Skipping workflow execution tests — AVANTRA_WORKFLOW_NAME is not set.
+      Set it in .secrets to enable these tests.
+  when: not workflow_configured
+
+# --------------------------------------------------------------------------
+# Test block (only if workflow is configured)
+# --------------------------------------------------------------------------
+- name: Workflow execution tests
+  when: workflow_configured
+  block:
+
+    # ------------------------------------------------------------------
+    # Execute workflow
+    # ------------------------------------------------------------------
+    - name: Execute workflow
+      avantra.core.workflow_execution:
+        avantra_api_url: "{{ avantra_api_url }}"
+        avantra_api_user: "{{ avantra_api_user }}"
+        avantra_api_password: "{{ avantra_api_password }}"
+        name: "{{ test_workflow_name }}"
+        namespace: "{{ test_workflow_namespace }}"
+        validate_certs: "{{ _validate_certs }}"
+      register: workflow_result
+
+    - name: Assert workflow execution returned an ID
+      ansible.builtin.assert:
+        that:
+          - workflow_result is not failed
+          - workflow_result.execution_id is defined
+          - workflow_result.execution_id | int > 0
+        fail_msg: "Workflow execution should return a valid execution_id"
+
+    - name: Display execution ID
+      ansible.builtin.debug:
+        msg: "Workflow execution started with ID: {{ workflow_result.execution_id }}"
+
+    # ------------------------------------------------------------------
+    # Execute with invalid workflow name (expect failure)
+    # ------------------------------------------------------------------
+    - name: Execute non-existent workflow (expect failure)
+      avantra.core.workflow_execution:
+        avantra_api_url: "{{ avantra_api_url }}"
+        avantra_api_user: "{{ avantra_api_user }}"
+        avantra_api_password: "{{ avantra_api_password }}"
+        name: "integration-test-nonexistent-{{ lookup('pipe', 'date +%s') }}"
+        namespace: "nonexistent"
+        validate_certs: "{{ _validate_certs }}"
+      register: bad_workflow_result
+      ignore_errors: true
+
+    - name: Assert non-existent workflow failed
+      ansible.builtin.assert:
+        that:
+          - bad_workflow_result is failed
+        fail_msg: "Executing a non-existent workflow should fail"

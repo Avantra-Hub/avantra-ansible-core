@@ -1,0 +1,5 @@
+---
+test_real_sap_sid: "INT"
+test_sapsystem_description: "Integration test SAP system"
+test_sapsystem_description_updated: "Integration test SAP system (updated)"
+test_system_role: "Development"

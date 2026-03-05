@@ -8,7 +8,7 @@ namespace: avantra
 name: core
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 25.3.0
+version: 25.3.1
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -55,4 +55,4 @@ issues: https://support.avantra.com
 # uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
 # and '.git' are always filtered
 build_ignore: [ ".artifacts", ".devcontainer", ".claude", ".python-version", "pyproject.toml", "uv.lock", ".venv",
-                "venv", ".idea", "*.tar.gz", "*.iml", "scripts", "REDHAT.md" ]
+                "venv", ".idea", "*.tar.gz", "*.iml", "scripts", "REDHAT.md", "docs" ]
