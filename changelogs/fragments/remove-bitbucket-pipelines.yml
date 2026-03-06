@@ -1,2 +1,0 @@
-minor_changes:
-  - Remove Bitbucket Pipelines configuration and legacy build scripts in favor of GitHub Actions.
