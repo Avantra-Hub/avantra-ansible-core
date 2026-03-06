@@ -135,6 +135,15 @@ jobs:
 
           echo "Versions match."
 
+      - name: Verify changelog entry exists
+        run: |
+          TAG_VERSION="${{ github.ref_name }}"
+          if ! grep -q "^v${TAG_VERSION}$" CHANGELOG.rst; then
+            echo "::error::No changelog entry found for v${TAG_VERSION} in CHANGELOG.rst"
+            exit 1
+          fi
+          echo "Changelog entry found for v${TAG_VERSION}."
+
 
   ###############################################################################################
   # Build Collection Artifact
