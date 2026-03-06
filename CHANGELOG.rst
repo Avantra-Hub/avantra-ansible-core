@@ -4,6 +4,31 @@ Avantra Core Ansible Collection Release Notes
 
 .. contents:: Topics
 
+v25.3.1
+=======
+
+Release Summary
+---------------
+
+Bugfix release addressing monitoring toggle logic, SSL certificate validation support, and GraphQL mutation syntax. Adds ``validate_certs`` option to all modules.
+
+Minor Changes
+-------------
+
+- auth_options - Add ``validate_certs`` option to disable SSL certificate verification for self-signed certificates.
+- login - Add ``validate_certs`` to login module argument spec.
+
+Bugfixes
+--------
+
+- server - Fix monitoring toggle logic inverting the ``monitor_off`` state.
+- server - Return snake_case response from monitoring toggle mutations.
+- server - Fix GraphQL ``MONI_OFF_MUTATION`` missing ``DateTime`` type for ``$until`` parameter.
+- server - Apply expected monitoring state directly instead of relying on stale API cache response.
+- sapsystem - Fix monitoring toggle logic inverting the ``monitor_off`` state.
+- sapsystem - Return snake_case response from monitoring toggle mutations.
+- sapsystem - Apply expected monitoring state directly instead of relying on stale API cache response.
+
 v25.3.0
 =======
 
