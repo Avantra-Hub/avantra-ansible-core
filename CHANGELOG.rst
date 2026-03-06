@@ -4,6 +4,19 @@ Avantra Core Ansible Collection Release Notes
 
 .. contents:: Topics
 
+v25.3.2
+=======
+
+Minor Changes
+-------------
+
+- Add Galaxy publish approval gate via ``galaxy-publish`` GitHub Environment.
+- Add PR template with changelog fragment reminder.
+- Add ``RELEASE-PROCESS.md`` documenting the release workflow.
+- Add tag/version validation that blocks Galaxy publish on mismatch.
+- Remove Bitbucket Pipelines configuration and legacy build scripts in favor of GitHub Actions.
+- Split CI into separate test (``ci.yml``) and release (``release.yml``) workflows.
+
 v25.3.1
 =======
 
@@ -21,13 +34,13 @@ Minor Changes
 Bugfixes
 --------
 
-- server - Fix monitoring toggle logic inverting the ``monitor_off`` state.
-- server - Return snake_case response from monitoring toggle mutations.
-- server - Fix GraphQL ``MONI_OFF_MUTATION`` missing ``DateTime`` type for ``$until`` parameter.
-- server - Apply expected monitoring state directly instead of relying on stale API cache response.
+- sapsystem - Apply expected monitoring state directly instead of relying on stale API cache response.
 - sapsystem - Fix monitoring toggle logic inverting the ``monitor_off`` state.
 - sapsystem - Return snake_case response from monitoring toggle mutations.
-- sapsystem - Apply expected monitoring state directly instead of relying on stale API cache response.
+- server - Apply expected monitoring state directly instead of relying on stale API cache response.
+- server - Fix GraphQL ``MONI_OFF_MUTATION`` missing ``DateTime`` type for ``$until`` parameter.
+- server - Fix monitoring toggle logic inverting the ``monitor_off`` state.
+- server - Return snake_case response from monitoring toggle mutations.
 
 v25.3.0
 =======
@@ -40,10 +53,10 @@ Release for Red Hat Automation Hub certification. Updates minimum Ansible requir
 Minor Changes
 -------------
 
-- collection - Update ``requires_ansible`` to ``>=2.16.0`` for Red Hat Automation Hub certification compliance.
 - collection - Add Support and Release Notes sections to README per Red Hat certified collection requirements.
 - collection - Add automated publishing to Red Hat Automation Hub in release workflow.
 - collection - Remove Python 3.10 and 3.11 from test matrix, require Python >=3.12.
+- collection - Update ``requires_ansible`` to ``>=2.16.0`` for Red Hat Automation Hub certification compliance.
 - sapsystem - Support ``withSapControl`` and ``withoutSapControl`` remote monitoring modes.
 - sapsystem - Use new ``remoteOptions`` API structure for remote monitoring configuration, replacing the flat ``remoteMonitoringEntryPoint`` and ``remoteMonitoringServerSystemId`` fields.
 - server - Add log message on successful server creation.
@@ -55,6 +68,9 @@ Bugfixes
 - api - Remove ``soapenv:mustUnderstand`` attribute from SOAP security header to fix compatibility issues.
 - sapsystem - Disable ``monitoring`` field in SAP system update to prevent unintended changes.
 - server - Disable ``monitoring`` field in server update to prevent unintended changes.
+
+v25.2.0
+=======
 
 v24.0.0
 =======
