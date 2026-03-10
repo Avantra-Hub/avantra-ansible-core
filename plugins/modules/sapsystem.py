@@ -267,7 +267,7 @@ EXAMPLES = r"""
         cred_type: rfc
         username: <user>
         password: <password>
-        client: 000
+        client: "000"
       # ABAP database user
       avantra.abapDbSchema:
         cred_type: basic

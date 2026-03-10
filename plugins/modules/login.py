@@ -56,7 +56,6 @@ EXAMPLES = r"""
     token: "{{auth.token}}"
     server_name: aservername
     customer_name: acustomername
-
 """
 
 RETURN = r"""
