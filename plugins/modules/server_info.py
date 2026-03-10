@@ -55,7 +55,6 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = r"""
-
 """
 
 RETURN = r"""

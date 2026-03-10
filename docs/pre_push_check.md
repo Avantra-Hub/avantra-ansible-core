@@ -18,7 +18,26 @@ Quick local check (no venv needed):
 pylint --disable=all --enable=unused-import tests/ plugins/
 ```
 
-## 2. Sanity Tests
+## 2. Ansible-Lint (Automation Hub Certification)
+
+`ansible-lint` checks are required by Automation Hub for collection certification.
+The `.ansible-lint` config at the repo root excludes `.github/`, `changelogs/`, and `tests/`.
+
+Common violations to watch for in `plugins/`:
+- **yaml[empty-lines]** — no blank lines inside YAML doc-string blocks (`EXAMPLES`, `DOCUMENTATION`, `RETURN`). Especially watch for blank lines before closing `"""`
+- **yaml[octal-values]** — numeric strings like `000` must be quoted (`"000"`) to prevent YAML octal interpretation
+- **fqcn[action-core]** — use fully qualified collection names for built-in modules (e.g. `ansible.builtin.debug` not `debug`)
+
+Quick local check:
+
+```bash
+# From the repo root
+ansible-lint
+```
+
+If you see zero violations you are good to push.
+
+## 3. Sanity Tests
 
 Requires `ansible-test` (ships with `ansible-core`).
 
@@ -47,7 +66,7 @@ Located in `tests/sanity/ignore-{version}.txt`. Currently all versions (2.16–2
 
 If a sanity test failure is a known false positive, add it to the appropriate ignore file(s).
 
-## 3. Unit Tests
+## 4. Unit Tests
 
 ```bash
 # From the collection root
@@ -70,7 +89,7 @@ If you don't want to use `ansible-test`, you can run pytest directly, but you mu
 PYTHONPATH=~/.ansible/collections pytest tests/unit/ -v
 ```
 
-## 4. CI Matrix
+## 5. CI Matrix
 
 The CI workflow (`.github/workflows/ci.yml`) tests against:
 
@@ -83,14 +102,14 @@ The CI workflow (`.github/workflows/ci.yml`) tests against:
 | 2.20    | 3.12, 3.13, 3.14 |
 | devel   | 3.12, 3.13, 3.14 |
 
-## 5. Git Hygiene
+## 6. Git Hygiene
 
 - [ ] `git diff --cached` — review staged changes
 - [ ] No secrets in committed files (check `integration_config.yml` is in `.gitignore`)
 - [ ] No debug `print()` statements left in production code
 - [ ] Commit messages follow conventional format: `type(scope): description`
 
-## 6. Integration Tests (Manual)
+## 7. Integration Tests (Manual)
 
 Integration tests run against a live Avantra instance and are **not** triggered on push.
 They require `tests/integration/integration_config.yml` (gitignored).
