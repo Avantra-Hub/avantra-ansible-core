@@ -4,6 +4,40 @@ Avantra Core Ansible Collection Release Notes
 
 .. contents:: Topics
 
+v25.3.3
+=======
+
+Release Summary
+---------------
+
+Maintenance release with Red Hat Automation Hub certification,
+ansible-lint compliance, expanded CI matrix, integration test
+framework, and documentation improvements.
+
+Minor Changes
+-------------
+
+- Add GitHub Pages deployment for collection documentation (https://github.com/Avantra-Hub/avantra-ansible-core/pull/15).
+- Add ``validate_certs`` option to ``auth_options`` doc fragment (https://github.com/Avantra-Hub/avantra-ansible-core/pull/12).
+- Add approval gate and parallelize Galaxy/Automation Hub publish jobs in release workflow (https://github.com/Avantra-Hub/avantra-ansible-core/pull/10).
+- Add integration test framework with GraphQL API mock and API documentation (https://github.com/Avantra-Hub/avantra-ansible-core/pull/12).
+- Add pre-push checklist documentation for sanity, unit, and lint checks (https://github.com/Avantra-Hub/avantra-ansible-core/pull/12).
+- Add unit tests for server, sapsystem, and customer modules (https://github.com/Avantra-Hub/avantra-ansible-core/pull/12).
+- Expand CI matrix with ansible-core 2.20, 2.21 (devel), and Python 3.14 (https://github.com/Avantra-Hub/avantra-ansible-core/pull/9).
+- Prepare collection for Red Hat Automation Hub certification (https://github.com/Avantra-Hub/avantra-ansible-core/pull/9).
+
+Security Fixes
+--------------
+
+- Replace hardcoded credentials with Ansible Vault variable references in integration test playbooks (https://github.com/Avantra-Hub/avantra-ansible-core/pull/12).
+
+Bugfixes
+--------
+
+- Fix Automation Hub token exchange to use ansible.cfg auth_url for offline-to-access token swap (https://github.com/Avantra-Hub/avantra-ansible-core/pull/11).
+- Fix ansible-lint violations (yaml[empty-lines], yaml[octal-values], yaml[brackets]) for Automation Hub certification (https://github.com/Avantra-Hub/avantra-ansible-core/pull/17).
+- Fix monitoring toggle, SSL certificate validation, and version bump handling (https://github.com/Avantra-Hub/avantra-ansible-core/pull/12).
+
 v25.3.2
 =======
 
