@@ -276,18 +276,34 @@ def simulate_tournament(rng: random.Random) -> str:
     order = standard_bracket_order(len(qualifiers))   # 1-based seed slots
     bracket = [qualifiers[s - 1] for s in order]
 
+    # Snapshot which teams reach each stage. The bracket size when a round
+    # begins names the teams that "reached" that stage: 8 = quarter-finalists,
+    # 4 = semi-finalists, 2 = finalists, 1 = champion.
+    reached: dict[str, list[str]] = {}
+    stage_by_size = {8: "QF", 4: "SF", 2: "F"}
     while len(bracket) > 1:
+        if len(bracket) in stage_by_size:
+            reached[stage_by_size[len(bracket)]] = list(bracket)
         bracket = [play_knockout(strength, bracket[i], bracket[i + 1], rng)
                    for i in range(0, len(bracket), 2)]
-    return bracket[0]
+    reached["W"] = list(bracket)   # champion
+    return reached
 
 
-def run(num_sims: int, seed: int | None) -> dict[str, int]:
+# Stages tracked, from deepest to shallowest, with display labels.
+STAGES = [("W", "Win %"), ("F", "Final %"), ("SF", "Semi %"), ("QF", "QF %")]
+
+
+def run(num_sims: int, seed: int | None) -> dict[str, dict[str, int]]:
+    """Return per-stage appearance counts: counts[stage][team]."""
     rng = random.Random(seed)
-    wins: dict[str, int] = defaultdict(int)
+    counts: dict[str, dict[str, int]] = {s: defaultdict(int) for s, _ in STAGES}
     for _ in range(num_sims):
-        wins[simulate_tournament(rng)] += 1
-    return wins
+        reached = simulate_tournament(rng)
+        for stage, _ in STAGES:
+            for team in reached.get(stage, ()):
+                counts[stage][team] += 1
+    return counts
 
 
 def main() -> None:
@@ -302,22 +318,26 @@ def main() -> None:
 
     print(f"Running {args.num_sims:,} simulations of the 2026 World Cup "
           f"(seed={args.seed})...\n")
-    wins = run(args.num_sims, args.seed)
-
-    ranked = sorted(wins.items(), key=lambda kv: kv[1], reverse=True)
+    counts = run(args.num_sims, args.seed)
     total = args.num_sims
 
-    print(f"{'Rank':<5}{'Team':<16}{'Win %':>8}{'Decimal odds':>14}")
-    print("-" * 43)
-    for i, (team, w) in enumerate(ranked[:args.top], start=1):
-        pct = 100.0 * w / total
-        dec_odds = total / w if w else float("inf")
-        print(f"{i:<5}{team:<16}{pct:>7.2f}%{dec_odds:>13.1f}x")
+    # Rank by title probability.
+    ranked = sorted(counts["W"].items(), key=lambda kv: kv[1], reverse=True)
 
-    # Tail check: how much probability sits outside the reported teams.
+    header = (f"{'Rank':<5}{'Team':<16}" +
+              "".join(f"{label:>10}" for _, label in STAGES) +
+              f"{'Title odds':>13}")
+    print(header)
+    print("-" * len(header))
+    for i, (team, w) in enumerate(ranked[:args.top], start=1):
+        cells = "".join(f"{100.0 * counts[s][team] / total:>9.2f}%"
+                        for s, _ in STAGES)
+        dec_odds = total / w if w else float("inf")
+        print(f"{i:<5}{team:<16}{cells}{dec_odds:>12.1f}x")
+
     reported = sum(w for _, w in ranked[:args.top])
-    print("-" * 43)
-    print(f"Top {args.top} combined: {100.0 * reported / total:.1f}%  "
+    print("-" * len(header))
+    print(f"Top {args.top} combined title prob: {100.0 * reported / total:.1f}%  "
           f"| field of {len(TEAMS_ELO)} teams")
 
 

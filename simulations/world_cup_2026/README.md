@@ -13,6 +13,20 @@ python3 world_cup_mc.py --seed 7        # different RNG seed
 
 No dependencies (no numpy) — runs anywhere with Python 3.9+.
 
+For each team the output reports the probability of reaching the
+**Quarter-finals, Semi-finals, Final**, and winning the **title** (plus
+decimal title odds):
+
+```
+Rank Team                 Win %   Final %    Semi %      QF %   Title odds
+--------------------------------------------------------------------------
+1    Spain               23.23%    39.97%    63.36%    86.35%         4.3x
+2    France              19.43%    35.01%    58.62%    83.64%         5.1x
+3    Argentina           16.98%    31.51%    55.12%    81.55%         5.9x
+4    England             12.20%    24.13%    46.19%    75.78%         8.2x
+5    Brazil               8.40%    17.80%    37.18%    68.72%        11.9x
+```
+
 ## Model
 
 | Stage | How it's simulated |
